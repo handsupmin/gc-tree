@@ -92,9 +92,11 @@ test('update-global-context creates a proposal by default and requires approval 
       approval_required: boolean;
       proposal_path: string;
       next_command: string;
+      next_args: string[];
     };
     assert.equal(proposalOnly.approval_required, true);
     assert.match(proposalOnly.next_command, /apply-update/);
+    assert.deepEqual(proposalOnly.next_args.slice(0, 2), ['apply-update', '--proposal']);
 
     const docBefore = await readFile(
       join(home, 'branches', 'main', 'docs', 'project-identity.md'),

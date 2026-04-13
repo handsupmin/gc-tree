@@ -125,6 +125,7 @@ async function main(): Promise<void> {
               branch: proposed.proposal.branch,
               summary: proposed.proposal.summary,
               next_command: `gctree apply-update --proposal ${shellQuote(proposed.proposal_path)}`,
+              next_args: ['apply-update', '--proposal', proposed.proposal_path],
             },
             null,
             2,
