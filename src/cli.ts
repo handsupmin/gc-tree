@@ -5,6 +5,7 @@ import { onboardBranch } from './onboard.js';
 import { DEFAULT_BRANCH, resolveHome } from './paths.js';
 import { applyProposal, listProposals, proposalBasename, proposeUpdate } from './proposals.js';
 import { resolveContext } from './resolve.js';
+import { scaffoldHostIntegration } from './scaffold.js';
 import { checkoutBranch, initHome, listBranches, readHead, statusForBranch } from './store.js';
 import type { GcTreeOnboardingInput, GcTreeProposalInput } from './types.js';
 
@@ -15,6 +16,10 @@ function readArg(flag: string): string | undefined {
 
 function hasFlag(flag: string): boolean {
   return process.argv.includes(flag);
+}
+
+function shellQuote(value: string): string {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
 function usage(): never {
@@ -28,6 +33,8 @@ function usage(): never {
   gctree resolve --query TEXT [--home DIR]
   gctree propose-update --input FILE [--home DIR] [--branch NAME]
   gctree apply-update --proposal FILE [--home DIR]
+  gctree update-global-context --input FILE [--home DIR] [--branch NAME] [--yes]
+  gctree scaffold --host <codex|claude-code> [--target DIR] [--force]
   gctree proposals [--home DIR]
 `);
   process.exit(1);
@@ -96,6 +103,62 @@ async function main(): Promise<void> {
       const proposalPath = readArg('--proposal');
       if (!proposalPath) usage();
       const result = await applyProposal({ home, proposalPath });
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    case 'update-global-context': {
+      const inputPath = readArg('--input');
+      if (!inputPath) usage();
+      const input = await readJsonFile<GcTreeProposalInput>(inputPath);
+      const proposed = await proposeUpdate({
+        home,
+        input,
+        branch: readArg('--branch') || undefined,
+      });
+      if (!hasFlag('--yes')) {
+        console.log(
+          JSON.stringify(
+            {
+              mode: 'proposal_only',
+              approval_required: true,
+              proposal_path: proposed.proposal_path,
+              branch: proposed.proposal.branch,
+              summary: proposed.proposal.summary,
+              next_command: `gctree apply-update --proposal ${shellQuote(proposed.proposal_path)}`,
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      const applied = await applyProposal({
+        home,
+        proposalPath: proposed.proposal_path,
+      });
+      console.log(
+        JSON.stringify(
+          {
+            mode: 'proposed_and_applied',
+            proposal_path: proposed.proposal_path,
+            applied,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    case 'scaffold': {
+      const host = readArg('--host');
+      if (host !== 'codex' && host !== 'claude-code') usage();
+      const targetDir = readArg('--target') || process.cwd();
+      const result = await scaffoldHostIntegration({
+        host,
+        targetDir,
+        force: hasFlag('--force'),
+      });
       console.log(JSON.stringify(result, null, 2));
       return;
     }
