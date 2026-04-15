@@ -61,7 +61,7 @@ A typical home directory looks like this:
 ```
 
 - `HEAD` tracks the fallback active gc-branch.
-- `settings.json` stores the preferred provider.
+- `settings.json` stores the provider mode, the onboarding provider chosen for runtime launch, and the preferred workflow language.
 - `branch-repo-map.json` stores which repositories are included or excluded for each gc-branch.
 - `branch.json` stores lightweight gc-branch metadata.
 - `index.md` is the compact entry point for tools.

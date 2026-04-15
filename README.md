@@ -20,7 +20,7 @@ When a single `AGENTS.md`, `CLAUDE.md`, or prompt snippet is no longer enough, `
 ## Key Features
 
 - **Provider-driven onboarding**  
-  `gctree init` asks whether you use Codex or Claude Code, saves that choice, scaffolds the right command surface, and starts guided onboarding for the default `main` gc-branch.
+  `gctree init` asks which provider mode you want (`claude-code`, `codex`, or `both`), then asks which language to use for responses, saves both choices, scaffolds the right command surface, and starts guided onboarding for the default `main` gc-branch.
 - **Repo-aware gc-branch scope**  
   `gctree` can map a gc-branch to specific repositories through `~/.gctree/branch-repo-map.json`, so one branch can apply to B/C/D while being ignored in F.
 - **Interactive scope guard**  
@@ -56,9 +56,11 @@ This command:
 
 - creates `~/.gctree`
 - creates the default `main` gc-branch
-- asks which provider you want to use (`codex` or `claude-code`)
-- saves that provider in `~/.gctree/settings.json`
-- scaffolds the current environment for that provider
+- asks which provider mode you want to use (`claude-code`, `codex`, or `both`)
+- if you choose `both`, asks which provider should start onboarding now
+- asks which language the workflow should use (`English`, `Korean`, or a custom language)
+- saves provider mode, onboarding provider, and language in `~/.gctree/settings.json`
+- scaffolds the current environment for the selected provider mode
 - launches guided onboarding for the active gc-branch when `main` is still empty
 
 #### 2) Resolve the active context
@@ -120,7 +122,7 @@ After scaffolding, the visible commands are:
 - **Codex:** `$gc-onboard`, `$gc-update-global-context`
 - **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
 
-Those commands should always mention the current active gc-branch before gathering or updating durable context.
+Those commands should always mention the current active gc-branch before gathering or updating durable context, and they should keep using the saved workflow language unless the user explicitly asks to switch.
 
 ### Core commands at a glance
 

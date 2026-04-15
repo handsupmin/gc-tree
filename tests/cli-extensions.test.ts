@@ -44,20 +44,73 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
 
     const parsed = JSON.parse(result.stdout) as {
       gc_branch: string;
+      provider_mode: string;
       preferred_provider: string;
-      launch: { provider_command: string; launched: boolean };
-      scaffold: { written: string[] };
+      preferred_language: string;
+      launch: { provider_command: string; launched: boolean; preferred_language: string; args: string[] };
+      scaffold: { written: string[]; hosts: string };
     };
     assert.equal(parsed.gc_branch, 'main');
+    assert.equal(parsed.provider_mode, 'codex');
     assert.equal(parsed.preferred_provider, 'codex');
+    assert.equal(parsed.preferred_language, 'English');
     assert.equal(parsed.launch.provider_command, '$gc-onboard');
+    assert.equal(parsed.launch.preferred_language, 'English');
+    assert.match(parsed.launch.args[0]!, /Use English for every message/i);
     assert.equal(parsed.launch.launched, false);
+    assert.equal(parsed.scaffold.hosts, 'codex');
     assert.equal(parsed.scaffold.written.length, 5);
 
-    const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as { preferred_provider: string };
+    const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as {
+      provider_mode: string;
+      preferred_provider: string;
+      preferred_language: string;
+    };
+    assert.equal(settings.provider_mode, 'codex');
     assert.equal(settings.preferred_provider, 'codex');
+    assert.equal(settings.preferred_language, 'English');
     assert.match(await readFile(join(targetDir, 'AGENTS.md'), 'utf8'), /gc-branch/i);
     assert.match(await readFile(join(targetDir, '.codex', 'skills', 'gc-onboard', 'SKILL.md'), 'utf8'), /active gc-branch/i);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(targetDir, { recursive: true, force: true });
+  }
+});
+
+test('init supports provider mode both, scaffolds both runtimes, and stores preferred language', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-cli-home-'));
+  const targetDir = await mkdtemp(join(tmpdir(), 'gctree-cli-target-'));
+
+  try {
+    const result = await runCli(['init', '--home', home, '--provider', 'both', '--language', 'Korean', '--target', targetDir]);
+    assert.equal(result.code, 0, result.stderr);
+
+    const parsed = JSON.parse(result.stdout) as {
+      provider_mode: string;
+      preferred_provider: string;
+      preferred_language: string;
+      launch: { provider_command: string; preferred_language: string; args: string[] };
+      scaffold: { written: string[]; hosts: string };
+    };
+    assert.equal(parsed.provider_mode, 'both');
+    assert.equal(parsed.preferred_provider, 'claude-code');
+    assert.equal(parsed.preferred_language, 'Korean');
+    assert.equal(parsed.launch.provider_command, '/gc-onboard');
+    assert.equal(parsed.launch.preferred_language, 'Korean');
+    assert.match(parsed.launch.args[0]!, /Use Korean for every message/i);
+    assert.equal(parsed.scaffold.hosts, 'both');
+    assert.equal(parsed.scaffold.written.length, 10);
+
+    const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as {
+      provider_mode: string;
+      preferred_provider: string;
+      preferred_language: string;
+    };
+    assert.equal(settings.provider_mode, 'both');
+    assert.equal(settings.preferred_provider, 'claude-code');
+    assert.equal(settings.preferred_language, 'Korean');
+    assert.match(await readFile(join(targetDir, 'AGENTS.md'), 'utf8'), /gc-branch/i);
+    assert.match(await readFile(join(targetDir, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });

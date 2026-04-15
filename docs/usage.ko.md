@@ -9,19 +9,21 @@
 ## 기본 흐름
 
 1. `gctree init` 실행
-2. 선호 provider(`codex` 또는 `claude-code`) 선택
-3. 기본 `main` gc-branch에 대한 가이드형 온보딩 완료
-4. `gctree resolve --query "..."`로 관련 컨텍스트 조회
-5. `gctree checkout`으로 gc-branch 생성 또는 전환
-6. 비어 있는 gc-branch에서만 `gctree onboard` 실행
-7. gc-branch가 실제 관련 레포에만 적용되도록 레포 범위 매핑 관리
-8. 이후 장기 변경은 `gctree update-global-context`로 반영
+2. 선호 provider 모드(`claude-code`, `codex`, `both`) 선택
+3. 사용할 언어(`English`, `Korean`, 또는 직접 입력한 언어) 선택
+4. `both`를 골랐다면 이번 온보딩을 어느 provider로 시작할지 선택
+5. 기본 `main` gc-branch에 대한 가이드형 온보딩 완료
+6. `gctree resolve --query "..."`로 관련 컨텍스트 조회
+7. `gctree checkout`으로 gc-branch 생성 또는 전환
+8. 비어 있는 gc-branch에서만 `gctree onboard` 실행
+9. gc-branch가 실제 관련 레포에만 적용되도록 레포 범위 매핑 관리
+10. 이후 장기 변경은 `gctree update-global-context`로 반영
 
 ## 핵심 명령
 
 | 명령 | 설명 |
 | --- | --- |
-| `gctree init` | `~/.gctree`와 기본 `main` gc-branch를 만들고, provider를 저장하고, 현재 환경을 스캐폴딩한 뒤, `main`이 비어 있으면 가이드형 온보딩을 시작합니다. |
+| `gctree init` | `~/.gctree`와 기본 `main` gc-branch를 만들고, provider 모드, 실제 온보딩 provider, 선호 언어를 저장하고, 현재 환경을 스캐폴딩한 뒤, `main`이 비어 있으면 가이드형 온보딩을 시작합니다. |
 | `gctree checkout <branch>` | 활성 gc-branch를 전환합니다. |
 | `gctree checkout -b <branch>` | 새 빈 gc-branch를 만들고 전환합니다. |
 | `gctree branches` | 사용 가능한 gc-branch와 현재 gc-branch를 보여줍니다. |
@@ -104,7 +106,7 @@ gctree ugc
 ### Codex CLI / Claude Code CLI
 
 `gctree scaffold`는 가이드형 온보딩과 가이드형 업데이트 같은 provider용 명령을 설치합니다.
-이 명령들은 항상 현재 활성 gc-branch가 무엇인지 먼저 명시해야 합니다.
+이 명령들은 항상 현재 활성 gc-branch가 무엇인지 먼저 명시해야 하며, 사용자가 명시적으로 바꾸라고 하지 않는 한 저장된 워크플로 언어를 끝까지 유지해야 합니다.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

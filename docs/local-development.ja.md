@@ -49,6 +49,8 @@ npm test
 
 現在のテストスイートでは次を検証しています。
 
+- provider モード（`claude-code`、`codex`、`both`）の保存
+- 優先言語の保存と launch prompt での強い言語固定
 - リポジトリに応じた gc-branch 選択
 - `resolve` 中の include/exclude インタラクション
 - branch repo map の更新

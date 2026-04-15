@@ -9,19 +9,21 @@ A standard `gctree` workflow is: initialize gc-tree, choose a provider, onboard 
 ## Standard workflow
 
 1. run `gctree init`
-2. choose your preferred provider (`codex` or `claude-code`)
-3. complete guided onboarding for the default `main` gc-branch
-4. resolve relevant context with `gctree resolve --query "..."`
-5. create or switch gc-branches with `gctree checkout`
-6. run `gctree onboard` only for an empty gc-branch
-7. use repo scope mapping so a gc-branch only applies where it belongs
-8. use `gctree update-global-context` for durable changes later
+2. choose your preferred provider mode (`claude-code`, `codex`, or `both`)
+3. choose the workflow language (`English`, `Korean`, or a custom language)
+4. if you picked `both`, choose which provider should start onboarding now
+5. complete guided onboarding for the default `main` gc-branch
+6. resolve relevant context with `gctree resolve --query "..."`
+7. create or switch gc-branches with `gctree checkout`
+8. run `gctree onboard` only for an empty gc-branch
+9. use repo scope mapping so a gc-branch only applies where it belongs
+10. use `gctree update-global-context` for durable changes later
 
 ## Core commands
 
 | Command | Purpose |
 | --- | --- |
-| `gctree init` | Create `~/.gctree`, create the default `main` gc-branch, save the preferred provider, scaffold the current environment, and start guided onboarding when `main` is empty. |
+| `gctree init` | Create `~/.gctree`, create the default `main` gc-branch, save the provider mode, onboarding provider, and preferred language, scaffold the current environment, and start guided onboarding when `main` is empty. |
 | `gctree checkout <branch>` | Switch the active gc-branch. |
 | `gctree checkout -b <branch>` | Create and switch to a new empty gc-branch. |
 | `gctree branches` | List available gc-branches and show the active one. |
@@ -106,7 +108,7 @@ If a newly relevant repo should also become part of the durable context, the nat
 ### Codex CLI / Claude Code CLI
 
 `gctree scaffold` installs provider-facing commands such as guided onboarding and guided updates.
-Those commands should explicitly mention the current active gc-branch before they start gathering or applying durable context.
+Those commands should explicitly mention the current active gc-branch before they start gathering or applying durable context, and they should keep using the saved workflow language unless the user explicitly asks to switch.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

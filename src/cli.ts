@@ -3,7 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { stdin } from 'node:process';
 
 import { onboardBranch } from './onboard.js';
-import { buildProviderLaunchPlan, maybeLaunchProvider, promptProviderSelection } from './provider.js';
+import {
+  buildProviderLaunchPlan,
+  maybeLaunchProvider,
+  promptLanguageSelection,
+  promptLaunchProviderSelection,
+  promptProviderSelection,
+} from './provider.js';
 import { DEFAULT_BRANCH, resolveHome } from './paths.js';
 import {
   branchRepoMapPath,
@@ -18,7 +24,7 @@ import { resolveContext } from './resolve.js';
 import { scaffoldHostIntegration } from './scaffold.js';
 import { requirePreferredProvider, writeSettings, readSettings } from './settings.js';
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch, ensureBranchExists, isBranchContextEmpty } from './store.js';
-import type { GcTreeContextUpdateInput, GcTreeOnboardingInput, GcTreeProvider } from './types.js';
+import type { GcTreeContextUpdateInput, GcTreeOnboardingInput, GcTreeProvider, GcTreeProviderMode } from './types.js';
 import { updateBranchContext } from './update.js';
 
 function readArg(flag: string): string | undefined {
@@ -32,7 +38,7 @@ function hasFlag(flag: string): boolean {
 
 function usage(): never {
   console.error(`Usage:
-  gctree init [--home DIR] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
+  gctree init [--home DIR] [--provider <claude-code|codex|both>] [--language TEXT] [--target DIR] [--no-launch]
   gctree checkout <branch> [--home DIR]
   gctree checkout -b <branch> [--home DIR]
   gctree branches [--home DIR]
@@ -45,7 +51,7 @@ function usage(): never {
   gctree update-global-context [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree update-gc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree ugc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
-  gctree scaffold --host <codex|claude-code> [--target DIR] [--force]
+  gctree scaffold --host <codex|claude-code|both> [--target DIR] [--force]
 
 Internal commands:
   gctree __apply-onboarding --input FILE [--home DIR] [--branch NAME]
@@ -64,43 +70,74 @@ function normalizeProvider(value: string | undefined): GcTreeProvider | undefine
   throw new Error(`unsupported provider: ${value}`);
 }
 
+function normalizeProviderMode(value: string | undefined): GcTreeProviderMode | undefined {
+  if (!value) return undefined;
+  if (value === 'codex' || value === 'claude-code' || value === 'both') return value;
+  throw new Error(`unsupported provider mode: ${value}`);
+}
+
 async function resolvePreferredProvider(home: string, explicitProvider?: string): Promise<GcTreeProvider> {
   return normalizeProvider(explicitProvider) || (await requirePreferredProvider(home));
 }
 
 async function ensureScaffold({
-  provider,
+  providerMode,
   targetDir,
   force = false,
 }: {
-  provider: GcTreeProvider;
+  providerMode: GcTreeProviderMode;
   targetDir: string;
   force?: boolean;
-}): Promise<{ host: GcTreeProvider; target_dir: string; written: string[]; skipped_existing: string[] }> {
-  return scaffoldHostIntegration({ host: provider, targetDir, force });
+}): Promise<{ hosts: GcTreeProviderMode; target_dir: string; written: string[]; skipped_existing: string[] }> {
+  const hosts: GcTreeProvider[] = providerMode === 'both' ? ['claude-code', 'codex'] : [providerMode];
+  const combined = { hosts: providerMode, target_dir: targetDir, written: [] as string[], skipped_existing: [] as string[] };
+  for (const host of hosts) {
+    const result = await scaffoldHostIntegration({ host, targetDir, force });
+    combined.written.push(...result.written);
+    combined.skipped_existing.push(...result.skipped_existing);
+  }
+  return combined;
 }
 
-async function maybePromptProvider(explicitProvider: string | undefined): Promise<GcTreeProvider> {
-  const provider = normalizeProvider(explicitProvider);
+async function maybePromptProviderMode(explicitProvider: string | undefined): Promise<GcTreeProviderMode> {
+  const provider = normalizeProviderMode(explicitProvider);
   if (provider) return provider;
-  if (!stdin.isTTY) return 'codex';
+  if (!stdin.isTTY) return 'claude-code';
   return promptProviderSelection();
+}
+
+async function maybePromptLanguage(explicitLanguage: string | undefined): Promise<string> {
+  if (explicitLanguage?.trim()) return explicitLanguage.trim();
+  if (!stdin.isTTY) return 'English';
+  return promptLanguageSelection();
+}
+
+async function resolveLaunchProvider(providerMode: GcTreeProviderMode): Promise<GcTreeProvider> {
+  if (providerMode === 'both') {
+    if (!stdin.isTTY) return 'claude-code';
+    return promptLaunchProviderSelection();
+  }
+  return providerMode;
 }
 
 async function launchGuidedFlow({
   provider,
+  providerMode,
+  preferredLanguage,
   targetDir,
   gcBranch,
   command,
   noLaunch,
 }: {
   provider: GcTreeProvider;
+  providerMode: GcTreeProviderMode;
+  preferredLanguage: string;
   targetDir: string;
   gcBranch: string;
   command: 'gc-onboard' | 'gc-update-global-context';
   noLaunch: boolean;
 }) {
-  const plan = buildProviderLaunchPlan({ provider, targetDir, gcBranch, command });
+  const plan = buildProviderLaunchPlan({ provider, providerMode, preferredLanguage, targetDir, gcBranch, command });
   if (noLaunch) return plan;
   return maybeLaunchProvider(plan);
 }
@@ -113,21 +150,43 @@ async function main(): Promise<void> {
 
   switch (command) {
     case 'init': {
-      const provider = await maybePromptProvider(readArg('--provider'));
+      const providerMode = await maybePromptProviderMode(readArg('--provider'));
+      const provider = await resolveLaunchProvider(providerMode);
+      const preferredLanguage = await maybePromptLanguage(readArg('--language'));
       const targetDir = readArg('--target') || process.cwd();
       const result = await initHome(home);
-      const settings = await writeSettings(home, provider);
-      const scaffold = await ensureScaffold({ provider, targetDir, force: hasFlag('--force') });
+      const settings = await writeSettings({
+        home,
+        providerMode,
+        preferredProvider: provider,
+        preferredLanguage,
+      });
+      const scaffold = await ensureScaffold({ providerMode, targetDir, force: hasFlag('--force') });
       const launch = (await isBranchContextEmpty(home, result.gc_branch))
         ? await launchGuidedFlow({
             provider,
+            providerMode,
+            preferredLanguage,
             targetDir,
             gcBranch: result.gc_branch,
             command: 'gc-onboard',
             noLaunch: hasFlag('--no-launch'),
           })
         : null;
-      console.log(JSON.stringify({ ...result, preferred_provider: settings.preferred_provider, scaffold, launch }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            ...result,
+            provider_mode: settings.provider_mode,
+            preferred_provider: settings.preferred_provider,
+            preferred_language: settings.preferred_language,
+            scaffold,
+            launch,
+          },
+          null,
+          2,
+        ),
+      );
       return;
     }
     case 'checkout': {
@@ -192,7 +251,9 @@ async function main(): Promise<void> {
         JSON.stringify(
           {
             ...result,
+            provider_mode: settings?.provider_mode || null,
             preferred_provider: settings?.preferred_provider || null,
+            preferred_language: settings?.preferred_language || null,
             current_repo: currentRepo,
             branch_repo_map_path: branchRepoMapPath(home),
             repo_scope_status: branchScopeStatus(mapping, gcBranch, currentRepo),
@@ -212,10 +273,13 @@ async function main(): Promise<void> {
         );
       }
       const provider = await resolvePreferredProvider(home, readArg('--provider'));
+      const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
-      const scaffold = await ensureScaffold({ provider, targetDir, force: hasFlag('--force') });
+      const scaffold = await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, force: hasFlag('--force') });
       const launch = await launchGuidedFlow({
         provider,
+        providerMode: settings?.provider_mode || provider,
+        preferredLanguage: settings?.preferred_language || 'English',
         targetDir,
         gcBranch,
         command: 'gc-onboard',
@@ -260,9 +324,10 @@ async function main(): Promise<void> {
       let gcBranch = resolved.gc_branch;
       const currentRepo = resolved.current_repo;
       let scopeStatus = resolved.scope_status;
+      const settings = await readSettings(home);
 
       if (currentRepo && scopeStatus === 'unmapped') {
-        const decision = await promptResolveScopeDecision(gcBranch, currentRepo);
+        const decision = await promptResolveScopeDecision(gcBranch, currentRepo, settings?.preferred_language || 'English');
         if (decision === 'always-use') {
           await setRepoScopeForBranch({ home, branch: gcBranch, repo: currentRepo, mode: 'include' });
           scopeStatus = 'included';
@@ -328,10 +393,13 @@ async function main(): Promise<void> {
         throw new Error(`gc-branch is empty: ${gcBranch}. Run \`gctree onboard --branch ${gcBranch}\` to create its context first.`);
       }
       const provider = await resolvePreferredProvider(home, readArg('--provider'));
+      const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
-      const scaffold = await ensureScaffold({ provider, targetDir, force: hasFlag('--force') });
+      const scaffold = await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, force: hasFlag('--force') });
       const launch = await launchGuidedFlow({
         provider,
+        providerMode: settings?.provider_mode || provider,
+        preferredLanguage: settings?.preferred_language || 'English',
         targetDir,
         gcBranch,
         command: 'gc-update-global-context',
@@ -350,11 +418,11 @@ async function main(): Promise<void> {
       return;
     }
     case 'scaffold': {
-      const host = normalizeProvider(readArg('--host'));
+      const host = normalizeProviderMode(readArg('--host'));
       if (!host) usage();
       const targetDir = readArg('--target') || process.cwd();
-      const result = await scaffoldHostIntegration({
-        host,
+      const result = await ensureScaffold({
+        providerMode: host,
         targetDir,
         force: hasFlag('--force'),
       });

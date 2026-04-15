@@ -9,19 +9,21 @@
 ## 標準フロー
 
 1. `gctree init` を実行する
-2. 好みの provider（`codex` または `claude-code`）を選ぶ
-3. デフォルトの `main` gc-branch のガイド付きオンボーディングを完了する
-4. `gctree resolve --query "..."` で関連コンテキストを解決する
-5. `gctree checkout` で gc-branch を作成または切り替える
-6. 空の gc-branch に対してのみ `gctree onboard` を実行する
-7. リポジトリ範囲のマッピングで、gc-branch が本当に関係するリポジトリにだけ適用されるようにする
-8. 以後の長期変更は `gctree update-global-context` を使う
+2. 好みの provider モード（`claude-code`、`codex`、`both`）を選ぶ
+3. ワークフローで使う言語（`English`、`Korean`、または自由入力）を選ぶ
+4. `both` を選んだ場合は、今回のオンボーディングをどちらで始めるかを選ぶ
+5. デフォルトの `main` gc-branch のガイド付きオンボーディングを完了する
+6. `gctree resolve --query "..."` で関連コンテキストを解決する
+7. `gctree checkout` で gc-branch を作成または切り替える
+8. 空の gc-branch に対してのみ `gctree onboard` を実行する
+9. リポジトリ範囲のマッピングで、gc-branch が本当に関係するリポジトリにだけ適用されるようにする
+10. 以後の長期変更は `gctree update-global-context` を使う
 
 ## 主要コマンド
 
 | コマンド | 説明 |
 | --- | --- |
-| `gctree init` | `~/.gctree` とデフォルトの `main` gc-branch を作成し、provider を保存し、現在の環境を scaffold したうえで、`main` が空ならガイド付きオンボーディングを開始します。 |
+| `gctree init` | `~/.gctree` とデフォルトの `main` gc-branch を作成し、provider モード、実際のオンボーディング provider、優先言語を保存し、現在の環境を scaffold したうえで、`main` が空ならガイド付きオンボーディングを開始します。 |
 | `gctree checkout <branch>` | アクティブな gc-branch を切り替えます。 |
 | `gctree checkout -b <branch>` | 新しい空の gc-branch を作成して切り替えます。 |
 | `gctree branches` | 利用可能な gc-branches と現在の gc-branch を表示します。 |
@@ -104,7 +106,7 @@ gctree ugc
 ### Codex CLI / Claude Code CLI
 
 `gctree scaffold` は、ガイド付きオンボーディングやガイド付き更新などの provider 向けコマンドをインストールします。
-それらのコマンドは、開始前に必ず現在アクティブな gc-branch を明示するべきです。
+それらのコマンドは、開始前に必ず現在アクティブな gc-branch を明示するべきであり、ユーザーが明示的に変更を求めない限り、保存されたワークフロー言語を最後まで維持するべきです。
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

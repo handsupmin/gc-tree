@@ -49,6 +49,8 @@ npm test
 
 The test suite now covers:
 
+- provider mode persistence (`claude-code`, `codex`, `both`)
+- preferred language persistence and strong language enforcement in launch prompts
 - repo-aware gc-branch selection
 - interactive include/exclude decisions during `resolve`
 - branch repo map updates

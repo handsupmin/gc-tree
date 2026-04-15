@@ -1,4 +1,5 @@
 export type GcTreeProvider = 'codex' | 'claude-code';
+export type GcTreeProviderMode = GcTreeProvider | 'both';
 
 export interface GcTreeDocInput {
   title: string;
@@ -22,12 +23,16 @@ export interface GcTreeContextUpdateInput {
 
 export interface GcTreeSettings {
   version: 1;
+  provider_mode: GcTreeProviderMode;
   preferred_provider: GcTreeProvider;
+  preferred_language: string;
   updated_at: string;
 }
 
 export interface GcTreeProviderLaunchPlan {
   provider: GcTreeProvider;
+  provider_mode: GcTreeProviderMode;
+  preferred_language: string;
   binary: string;
   args: string[];
   target_dir: string;

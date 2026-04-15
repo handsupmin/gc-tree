@@ -61,7 +61,7 @@
 ```
 
 - `HEAD` は fallback のアクティブ gc-branch を指します。
-- `settings.json` は保存された provider を保持します。
+- `settings.json` は provider モード、実際のオンボーディング起動 provider、優先ワークフロー言語を保持します。
 - `branch-repo-map.json` は gc-branch ごとの include/exclude リポジトリ規則を保存します。
 - `branch.json` は軽量な gc-branch メタデータを保存します。
 - `index.md` はツール向けの小さな入口です。

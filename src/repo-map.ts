@@ -169,7 +169,11 @@ export async function resolveBranchForRepo({
   };
 }
 
-export async function promptResolveScopeDecision(branch: string, repo: string): Promise<GcTreeResolveScopeDecision> {
+export async function promptResolveScopeDecision(
+  branch: string,
+  repo: string,
+  preferredLanguage = 'English',
+): Promise<GcTreeResolveScopeDecision> {
   if (!stdin.isTTY && process.env.GCTREE_ALLOW_STDIN_PROMPT !== '1') {
     throw new Error(
       `current repo \"${repo}\" is not mapped to gc-branch \"${branch}\". Run interactively to choose whether to continue, include this repo, or ignore this gc-branch here.`,
@@ -178,9 +182,14 @@ export async function promptResolveScopeDecision(branch: string, repo: string): 
 
   const rl = createInterface({ input: stdin, output: stderr });
   try {
-    const answer = (await rl.question(
-      `Repo \"${repo}\" is not mapped to gc-branch \"${branch}\".\n1. Continue once\n2. Always use this gc-branch for this repo\n3. Ignore this gc-branch for this repo\n> `,
-    )).trim();
+    const isKorean = preferredLanguage.trim().toLowerCase() === 'korean';
+    const answer = (
+      await rl.question(
+        isKorean
+          ? `현재 레포 \"${repo}\"는 gc-branch \"${branch}\"에 아직 매핑되어 있지 않습니다.\n1. 이번만 진행\n2. 앞으로 이 레포에서도 이 gc-branch 사용\n3. 이 레포에서는 이 gc-branch 무시\n> `
+          : `Repo \"${repo}\" is not mapped to gc-branch \"${branch}\".\n1. Continue once\n2. Always use this gc-branch for this repo\n3. Ignore this gc-branch for this repo\n> `,
+      )
+    ).trim();
     if (answer === '2') return 'always-use';
     if (answer === '3') return 'ignore';
     return 'continue-once';

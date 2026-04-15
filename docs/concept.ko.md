@@ -61,7 +61,7 @@
 ```
 
 - `HEAD`는 fallback 활성 gc-branch를 가리킵니다.
-- `settings.json`은 선호 provider를 저장합니다.
+- `settings.json`은 provider 모드, 실제 온보딩에 사용할 provider, 선호 워크플로 언어를 저장합니다.
 - `branch-repo-map.json`은 gc-branch별 include/exclude 레포 규칙을 저장합니다.
 - `branch.json`은 가벼운 gc-branch 메타데이터를 저장합니다.
 - `index.md`는 도구가 읽는 작은 진입점입니다.

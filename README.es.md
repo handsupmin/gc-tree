@@ -20,7 +20,7 @@ Cuando un solo `AGENTS.md`, `CLAUDE.md` o fragmento de prompt ya no alcanza, `gc
 ## Características rápidas
 
 - **Onboarding guiado por provider**  
-  `gctree init` te pregunta si usas Codex o Claude Code, guarda esa elección, prepara la superficie de comandos adecuada en el entorno actual y arranca el onboarding del gc-branch `main` por defecto.
+  `gctree init` primero te pregunta qué modo de provider quieres usar (`claude-code`, `codex` o `both`), luego qué idioma deben usar las respuestas, guarda esas decisiones, prepara la superficie de comandos adecuada y arranca el onboarding del gc-branch `main` por defecto.
 - **gc-branches con alcance por repositorio**  
   Con `~/.gctree/branch-repo-map.json` puedes asociar un gc-branch solo a ciertos repositorios. Por ejemplo, hacer que A aplique a B/C/D y se ignore en F.
 - **Protección interactiva de alcance**  
@@ -56,8 +56,10 @@ Este comando:
 
 - crea `~/.gctree`
 - crea el gc-branch `main` por defecto
-- te pide elegir un provider (`codex` o `claude-code`)
-- guarda ese provider en `~/.gctree/settings.json`
+- te pide elegir un modo de provider (`claude-code`, `codex` o `both`)
+- si eliges `both`, te pregunta qué provider debe iniciar este onboarding
+- te pide elegir el idioma (`English`, `Korean` o escribir tu propio idioma)
+- guarda el modo de provider, el provider real de onboarding y el idioma en `~/.gctree/settings.json`
 - prepara la superficie de comandos adecuada en el entorno actual
 - inicia el onboarding guiado del gc-branch activo cuando `main` sigue vacío
 
@@ -120,7 +122,7 @@ Después del scaffold, los comandos visibles son:
 - **Codex:** `$gc-onboard`, `$gc-update-global-context`
 - **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
 
-Esos comandos deben dejar claro cuál es el gc-branch activo antes de empezar a recoger o actualizar contexto duradero.
+Esos comandos deben dejar claro cuál es el gc-branch activo antes de empezar a recoger o actualizar contexto duradero, y también deben mantener el idioma guardado hasta el final, salvo que el usuario pida cambiarlo explícitamente.
 
 ### Comandos clave de un vistazo
 

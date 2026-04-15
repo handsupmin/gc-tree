@@ -9,19 +9,21 @@ Un flujo estándar de `gctree` consiste en inicializar gc-tree, elegir un provid
 ## Flujo estándar
 
 1. ejecuta `gctree init`
-2. elige tu provider preferido (`codex` o `claude-code`)
-3. completa el onboarding guiado del gc-branch `main`
-4. resuelve el contexto relevante con `gctree resolve --query "..."`
-5. crea o cambia gc-branches con `gctree checkout`
-6. usa `gctree onboard` solo en gc-branches vacíos
-7. usa el mapeo por repositorio para que cada gc-branch solo aplique donde corresponde
-8. usa `gctree update-global-context` para cambios duraderos posteriores
+2. elige tu modo de provider preferido (`claude-code`, `codex` o `both`)
+3. elige el idioma del flujo (`English`, `Korean` o escribe tu propio idioma)
+4. si elegiste `both`, decide qué provider debe iniciar este onboarding
+5. completa el onboarding guiado del gc-branch `main`
+6. resuelve el contexto relevante con `gctree resolve --query "..."`
+7. crea o cambia gc-branches con `gctree checkout`
+8. usa `gctree onboard` solo en gc-branches vacíos
+9. usa el mapeo por repositorio para que cada gc-branch solo aplique donde corresponde
+10. usa `gctree update-global-context` para cambios duraderos posteriores
 
 ## Comandos clave
 
 | Comando | Propósito |
 | --- | --- |
-| `gctree init` | Crea `~/.gctree`, crea el gc-branch `main`, guarda el provider preferido, prepara el entorno actual y arranca el onboarding guiado si `main` está vacío. |
+| `gctree init` | Crea `~/.gctree`, crea el gc-branch `main`, guarda el modo de provider, el provider real de onboarding y el idioma preferido, prepara el entorno actual y arranca el onboarding guiado si `main` está vacío. |
 | `gctree checkout <branch>` | Cambia el gc-branch activo. |
 | `gctree checkout -b <branch>` | Crea un gc-branch vacío nuevo y cambia a él. |
 | `gctree branches` | Lista los gc-branches disponibles y muestra el activo. |
@@ -104,7 +106,7 @@ Si al trabajar descubres que un repo realmente pertenece al gc-branch actual, el
 ### Codex CLI / Claude Code CLI
 
 `gctree scaffold` instala comandos del provider para onboarding y actualizaciones guiadas.
-Esos comandos deben dejar claro cuál es el gc-branch activo antes de empezar.
+Esos comandos deben dejar claro cuál es el gc-branch activo antes de empezar, y también deben mantener el idioma guardado durante todo el flujo salvo que el usuario pida cambiarlo explícitamente.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

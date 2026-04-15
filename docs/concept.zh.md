@@ -61,7 +61,7 @@
 ```
 
 - `HEAD` 记录 fallback 的激活 gc-branch。
-- `settings.json` 保存偏好的 provider。
+- `settings.json` 保存 provider 模式、实际用于启动 onboarding 的 provider，以及首选工作流语言。
 - `branch-repo-map.json` 保存每个 gc-branch 的 include/exclude 仓库规则。
 - `branch.json` 保存轻量级 gc-branch 元数据。
 - `index.md` 是工具读取时的紧凑入口。

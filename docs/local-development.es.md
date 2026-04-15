@@ -49,6 +49,8 @@ npm test
 
 La suite actual verifica:
 
+- persistencia del modo de provider (`claude-code`, `codex`, `both`)
+- persistencia del idioma preferido y refuerzo fuerte del idioma en el launch prompt
 - selección de gc-branch según el repositorio
 - interacciones include/exclude durante `resolve`
 - actualización del branch repo map

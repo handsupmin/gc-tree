@@ -9,19 +9,21 @@
 ## 标准流程
 
 1. 运行 `gctree init`
-2. 选择偏好的 provider（`codex` 或 `claude-code`）
-3. 完成默认 `main` gc-branch 的引导式 onboarding
-4. 用 `gctree resolve --query "..."` 解析相关上下文
-5. 用 `gctree checkout` 创建或切换 gc-branch
-6. 只有在 gc-branch 为空时才运行 `gctree onboard`
-7. 通过仓库范围映射，让 gc-branch 只作用于真正相关的仓库
-8. 后续长期变更使用 `gctree update-global-context`
+2. 选择偏好的 provider 模式（`claude-code`、`codex` 或 `both`）
+3. 选择工作流语言（`English`、`Korean`，或手动输入语言）
+4. 如果选择了 `both`，再选择这次 onboarding 要由哪个 provider 启动
+5. 完成默认 `main` gc-branch 的引导式 onboarding
+6. 用 `gctree resolve --query "..."` 解析相关上下文
+7. 用 `gctree checkout` 创建或切换 gc-branch
+8. 只有在 gc-branch 为空时才运行 `gctree onboard`
+9. 通过仓库范围映射，让 gc-branch 只作用于真正相关的仓库
+10. 后续长期变更使用 `gctree update-global-context`
 
 ## 核心命令
 
 | 命令 | 说明 |
 | --- | --- |
-| `gctree init` | 创建 `~/.gctree` 和默认 `main` gc-branch，保存 provider，给当前环境安装命令表面，并在 `main` 为空时启动引导式 onboarding。 |
+| `gctree init` | 创建 `~/.gctree` 和默认 `main` gc-branch，保存 provider 模式、实际 onboarding provider 和首选语言，给当前环境安装命令表面，并在 `main` 为空时启动引导式 onboarding。 |
 | `gctree checkout <branch>` | 切换当前激活的 gc-branch。 |
 | `gctree checkout -b <branch>` | 创建新的空 gc-branch 并切换过去。 |
 | `gctree branches` | 列出可用 gc-branches 并显示当前 gc-branch。 |
@@ -104,7 +106,7 @@ gctree ugc
 ### Codex CLI / Claude Code CLI
 
 `gctree scaffold` 会安装 provider 侧的 guided onboarding 和 guided update 命令。
-这些命令在开始前都应该明确说明当前激活的是哪个 gc-branch。
+这些命令在开始前都应该明确说明当前激活的是哪个 gc-branch，并且除非用户明确要求切换，否则要始终使用保存下来的工作流语言。
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

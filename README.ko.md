@@ -20,7 +20,7 @@ AI 코딩 도구를 위한 브랜치 기반 글로벌 컨텍스트 레이어.
 ## 간단 특징
 
 - **Provider 기반 온보딩**  
-  `gctree init`은 Codex 또는 Claude Code 중 사용할 CLI를 묻고, 그 선택을 저장한 뒤, 현재 환경에 필요한 명령 표면을 스캐폴딩하고, 기본 `main` gc-branch 온보딩을 시작합니다.
+  `gctree init`은 `claude-code`, `codex`, `both` 중 어떤 provider 모드를 쓸지 묻고, 이어서 응답 언어를 고르게 한 뒤, 그 선택을 저장하고 필요한 명령 표면을 스캐폴딩한 다음 기본 `main` gc-branch 온보딩을 시작합니다.
 - **레포 범위 인식 gc-branch**  
   `~/.gctree/branch-repo-map.json`을 통해 하나의 gc-branch를 특정 레포 집합에만 연결할 수 있습니다. 예를 들어 A는 B/C/D에만 적용하고 F에서는 무시하게 만들 수 있습니다.
 - **인터랙티브 범위 가드**  
@@ -56,8 +56,10 @@ gctree init
 
 - `~/.gctree` 생성
 - 기본 `main` gc-branch 생성
-- 사용할 provider(`codex` 또는 `claude-code`) 선택
-- 선택한 provider를 `~/.gctree/settings.json`에 저장
+- 사용할 provider 모드(`claude-code`, `codex`, `both`) 선택
+- `both`를 고르면 이번 온보딩을 어느 provider로 시작할지 한 번 더 선택
+- 사용할 언어(`English`, `Korean`, 또는 직접 입력한 언어) 선택
+- provider 모드, 실제 온보딩 provider, 언어를 `~/.gctree/settings.json`에 저장
 - 현재 환경에 맞는 명령 표면 스캐폴딩
 - `main`이 비어 있으면 활성 gc-branch에 대한 가이드형 온보딩 시작
 
@@ -120,7 +122,7 @@ gctree reset-gc-branch --branch client-b --yes
 - **Codex:** `$gc-onboard`, `$gc-update-global-context`
 - **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
 
-이 명령들은 항상 현재 활성 gc-branch가 무엇인지 먼저 명시한 다음, 컨텍스트를 수집하거나 업데이트해야 합니다.
+이 명령들은 항상 현재 활성 gc-branch가 무엇인지 먼저 밝히고, 사용자가 명시적으로 바꾸라고 하지 않는 한 저장된 언어를 끝까지 유지하면서 컨텍스트를 수집하거나 업데이트해야 합니다.
 
 ### 핵심 명령 한눈에 보기
 

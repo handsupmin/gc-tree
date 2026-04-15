@@ -20,7 +20,7 @@
 ## 简要特性
 
 - **Provider 驱动的 onboarding**  
-  `gctree init` 会询问你使用 Codex 还是 Claude Code，保存这个选择，给当前环境安装对应的命令表面，并为默认 `main` gc-branch 启动引导式 onboarding。
+  `gctree init` 会先询问你想使用哪种 provider 模式（`claude-code`、`codex` 或 `both`），再询问响应语言，并保存这些选择，然后给当前环境安装对应的命令表面，并为默认 `main` gc-branch 启动引导式 onboarding。
 - **带仓库范围的 gc-branch**  
   你可以通过 `~/.gctree/branch-repo-map.json` 把某个 gc-branch 绑定到指定仓库集合，比如让 A 只作用于 B/C/D，而在 F 中忽略。
 - **交互式范围保护**  
@@ -56,8 +56,10 @@ gctree init
 
 - 创建 `~/.gctree`
 - 创建默认 `main` gc-branch
-- 让你选择 provider（`codex` 或 `claude-code`）
-- 把这个 provider 保存到 `~/.gctree/settings.json`
+- 让你选择 provider 模式（`claude-code`、`codex` 或 `both`）
+- 如果你选择 `both`，再选择这次 onboarding 要由哪个 provider 启动
+- 让你选择语言（`English`、`Korean`，或手动输入语言）
+- 把 provider 模式、实际 onboarding provider 和语言保存到 `~/.gctree/settings.json`
 - 为当前环境安装对应的命令表面
 - 当 `main` 仍为空时，为当前 gc-branch 启动引导式 onboarding
 
@@ -120,7 +122,7 @@ scaffold 之后，在运行时可见的命令是：
 - **Codex:** `$gc-onboard`, `$gc-update-global-context`
 - **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
 
-这些命令在开始收集或更新长期上下文之前，都应该先明确说明当前激活的是哪个 gc-branch。
+这些命令在开始收集或更新长期上下文之前，都应该先明确说明当前激活的是哪个 gc-branch，并且除非用户明确要求切换，否则要始终使用保存下来的语言。
 
 ### 核心命令速览
 

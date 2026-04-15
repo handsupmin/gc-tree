@@ -49,6 +49,8 @@ npm test
 
 目前测试套件会验证：
 
+- provider 模式（`claude-code`、`codex`、`both`）持久化
+- 首选语言持久化以及 launch prompt 中更强的语言约束
 - 根据仓库自动选择 gc-branch
 - `resolve` 过程中的 include/exclude 交互
 - branch repo map 更新

@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import { settingsPath } from './paths.js';
-import type { GcTreeProvider, GcTreeSettings } from './types.js';
+import type { GcTreeProvider, GcTreeProviderMode, GcTreeSettings } from './types.js';
 
 export async function readSettings(home: string): Promise<GcTreeSettings | null> {
   try {
@@ -12,11 +12,23 @@ export async function readSettings(home: string): Promise<GcTreeSettings | null>
   }
 }
 
-export async function writeSettings(home: string, preferredProvider: GcTreeProvider): Promise<GcTreeSettings> {
+export async function writeSettings({
+  home,
+  providerMode,
+  preferredProvider,
+  preferredLanguage,
+}: {
+  home: string;
+  providerMode: GcTreeProviderMode;
+  preferredProvider: GcTreeProvider;
+  preferredLanguage: string;
+}): Promise<GcTreeSettings> {
   await mkdir(home, { recursive: true });
   const settings: GcTreeSettings = {
     version: 1,
+    provider_mode: providerMode,
     preferred_provider: preferredProvider,
+    preferred_language: preferredLanguage.trim() || 'English',
     updated_at: new Date().toISOString(),
   };
   await writeFile(settingsPath(home), `${JSON.stringify(settings, null, 2)}\n`, 'utf8');

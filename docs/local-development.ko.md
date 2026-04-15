@@ -49,6 +49,8 @@ npm test
 
 현재 테스트 스위트는 다음을 검증합니다.
 
+- provider 모드(`claude-code`, `codex`, `both`) 저장
+- 선호 언어 저장과 launch prompt에서의 강한 언어 고정
 - 레포에 따른 gc-branch 선택
 - `resolve` 중 include/exclude 인터랙션
 - branch repo map 갱신

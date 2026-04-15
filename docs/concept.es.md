@@ -61,7 +61,7 @@ Un directorio home típico se ve así:
 ```
 
 - `HEAD` indica el gc-branch activo de fallback.
-- `settings.json` guarda el provider preferido.
+- `settings.json` guarda el modo de provider, el provider real usado para iniciar el onboarding y el idioma preferido del flujo.
 - `branch-repo-map.json` guarda las reglas include/exclude por gc-branch.
 - `branch.json` guarda metadatos ligeros del gc-branch.
 - `index.md` es el punto de entrada compacto para las herramientas.
