@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -7,7 +7,6 @@ import {
   branchDocsDir,
   branchIndexPath,
   branchMetaPath,
-  branchProposalsDir,
   branchesRoot,
   DEFAULT_BRANCH,
   headPath,
@@ -33,12 +32,12 @@ export async function writeHead(home: string, branch: string): Promise<void> {
   await writeFile(headPath(home), `${branch}\n`, 'utf8');
 }
 
-export async function initHome(home: string, branch = DEFAULT_BRANCH): Promise<{ home: string; branch: string; created: boolean }> {
+export async function initHome(home: string, branch = DEFAULT_BRANCH): Promise<{ home: string; gc_branch: string; created: boolean }> {
   const already = existsSync(headPath(home));
   await ensureHome(home);
-  await ensureBranch(home, branch, { copyFrom: null, summary: `Default global context branch for ${branch}.` });
+  await ensureBranch(home, branch, { copyFrom: null, summary: `Default gc-branch for ${branch}.` });
   await writeHead(home, branch);
-  return { home, branch, created: !already };
+  return { home, gc_branch: branch, created: !already };
 }
 
 export async function ensureBranch(
@@ -58,7 +57,6 @@ export async function ensureBranch(
     return;
   }
   await mkdir(branchDocsDir(home, branch), { recursive: true });
-  await mkdir(branchProposalsDir(home, branch), { recursive: true });
   const now = new Date().toISOString();
   const meta: GcTreeBranchMeta = {
     version: 1,
@@ -87,33 +85,31 @@ export async function updateBranchMeta(home: string, branch: string, input: Part
   return next;
 }
 
-export async function listBranches(home: string): Promise<{ branches: string[]; current: string | null }> {
+export async function listBranches(home: string): Promise<{ gc_branches: string[]; current_gc_branch: string | null }> {
   await ensureHome(home);
   const entries = await readdir(branchesRoot(home), { withFileTypes: true }).catch(() => []);
-  const branches = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  const gcBranches = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
   return {
-    branches,
-    current: await readHead(home),
+    gc_branches: gcBranches,
+    current_gc_branch: await readHead(home),
   };
 }
 
-export async function checkoutBranch(home: string, branch: string, create = false): Promise<{ branch: string; created: boolean; copied_from?: string | null }> {
-  const current = await readHead(home);
+export async function checkoutBranch(home: string, branch: string, create = false): Promise<{ gc_branch: string; created: boolean }> {
   const exists = existsSync(branchDir(home, branch));
   if (!exists && !create) {
-    throw new Error(`branch does not exist: ${branch}`);
+    throw new Error(`gc-branch does not exist: ${branch}`);
   }
   if (!exists) {
     await ensureBranch(home, branch, {
-      copyFrom: current,
-      summary: current ? `Copied from ${current}.` : `Created branch ${branch}.`,
+      copyFrom: null,
+      summary: `Created gc-branch ${branch}.`,
     });
   }
   await writeHead(home, branch);
   return {
-    branch,
+    gc_branch: branch,
     created: !exists,
-    ...( !exists ? { copied_from: current } : {}),
   };
 }
 
@@ -124,9 +120,7 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
   const docs = await Promise.all(
     files.map(async (file) => {
       const raw = await readFile(join(docsDir, file), 'utf8');
-      const title =
-        raw.match(/^#\s+(.+)$/m)?.[1]?.trim() ||
-        file.replace(/\.md$/i, '').replace(/-/g, ' ');
+      const title = raw.match(/^#\s+(.+)$/m)?.[1]?.trim() || file.replace(/\.md$/i, '').replace(/-/g, ' ');
       return { title, path: `docs/${file}` };
     }),
   );
@@ -136,18 +130,34 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
   return { index_path: branchIndexPath(home, branch), doc_count: docs.length };
 }
 
+export async function isBranchContextEmpty(home: string, branch: string): Promise<boolean> {
+  const docs = (await readdir(branchDocsDir(home, branch)).catch(() => [])).filter((file) => file.endsWith('.md'));
+  return docs.length === 0;
+}
+
+export async function resetBranchContext(home: string, branch: string): Promise<{ gc_branch: string; reset: true; index_path: string }> {
+  await ensureBranchExists(home, branch);
+  await rm(branchDocsDir(home, branch), { recursive: true, force: true });
+  await mkdir(branchDocsDir(home, branch), { recursive: true });
+  await updateBranchMeta(home, branch, { summary: `Reset gc-branch ${branch}. Awaiting onboarding.` });
+  const index = await writeIndexFromDocs(home, branch);
+  return {
+    gc_branch: branch,
+    reset: true,
+    index_path: index.index_path,
+  };
+}
+
 export async function statusForBranch(home: string, branch: string): Promise<{
   home: string;
-  branch: string;
+  gc_branch: string;
   index_path: string;
   index_chars: number;
   doc_count: number;
-  proposal_count: number;
   warnings: string[];
 }> {
   const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
   const docs = (await readdir(branchDocsDir(home, branch)).catch(() => [])).filter((file) => file.endsWith('.md'));
-  const proposals = (await readdir(branchProposalsDir(home, branch)).catch(() => [])).filter((file) => file.endsWith('.json'));
   const warnings: string[] = [];
   if (indexRaw.length > INDEX_WARNING_CHARS) {
     warnings.push(`index.md is ${indexRaw.length} chars; keep it closer to an index than a knowledge dump.`);
@@ -160,16 +170,16 @@ export async function statusForBranch(home: string, branch: string): Promise<{
   }
   return {
     home,
-    branch,
+    gc_branch: branch,
     index_path: branchIndexPath(home, branch),
     index_chars: indexRaw.length,
     doc_count: docs.length,
-    proposal_count: proposals.length,
     warnings,
   };
 }
+
 export async function ensureBranchExists(home: string, branch: string): Promise<void> {
   if (!existsSync(branchDir(home, branch))) {
-    throw new Error(`branch does not exist: ${branch}`);
+    throw new Error(`gc-branch does not exist: ${branch}`);
   }
 }

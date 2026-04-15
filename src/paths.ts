@@ -12,6 +12,10 @@ export function headPath(home: string): string {
   return join(home, 'HEAD');
 }
 
+export function settingsPath(home: string): string {
+  return join(home, 'settings.json');
+}
+
 export function branchesRoot(home: string): string {
   return join(home, 'branches');
 }
@@ -32,6 +36,3 @@ export function branchDocsDir(home: string, branch: string): string {
   return join(branchDir(home, branch), 'docs');
 }
 
-export function branchProposalsDir(home: string, branch: string): string {
-  return join(branchDir(home, branch), 'proposals');
-}

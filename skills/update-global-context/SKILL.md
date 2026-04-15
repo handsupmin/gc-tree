@@ -1,24 +1,21 @@
 ---
 name: update-global-context
-description: Propose and, after approval, apply a global context update in gctree.
+description: Launch a guided durable update for the active gc-branch.
 ---
 
 # gctree Update Global Context
 
-Use this when work has revealed a durable change that should update the active branch's global context.
+Use this when work has revealed a durable change that should update the active gc-branch's global context.
 
 ## Hard rule
-Do not mutate global context silently.
-Draft a proposal, ask the user, and apply only after explicit approval.
+Do not re-onboard a non-empty gc-branch.
+Use guided updates for durable changes and reserve onboarding for empty gc-branches only.
 
 ## Procedure
 1. Summarize what changed and why it should become durable context.
-2. Draft a proposal JSON with:
-   - `title`
-   - `summary`
-   - `docs[]` containing the updated summary/body for each source doc
-3. Run `gctree propose-update --input <file>`.
-4. Show the proposal summary to the user and ask:
-   - should this be applied as-is?
-   - should anything be revised first?
-5. Apply only after explicit approval with `gctree apply-update --proposal <file>`.
+2. Confirm the active gc-branch with `gctree status`.
+3. Launch the guided update flow with one of:
+   - `gctree update-global-context`
+   - `gctree update-gc`
+   - `gctree ugc`
+4. Keep the current gc-branch explicit throughout the conversation.

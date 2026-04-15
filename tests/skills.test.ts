@@ -7,16 +7,18 @@ const files = [
   'skills/checkout/SKILL.md',
   'skills/resolve-context/SKILL.md',
   'skills/update-global-context/SKILL.md',
-  'skills/feedback/SKILL.md',
+  'skills/reset-gc-branch/SKILL.md',
 ];
 
-test('skills mention summary-first docs, branches, and approval-first updates where relevant', async () => {
+test('skills mention summary-first docs, gc-branches, and guided updates where relevant', async () => {
   const contents = await Promise.all(files.map((file) => readFile(new URL(`../${file}`, import.meta.url), 'utf8')));
   assert.match(contents[0]!, /one question at a time/i);
-  assert.match(contents[0]!, /summary/i);
+  assert.match(contents[0]!, /empty gc-branch/i);
   assert.match(contents[1]!, /checkout -b/i);
+  assert.match(contents[1]!, /gc-branches/i);
   assert.match(contents[2]!, /index\.md/i);
-  assert.match(contents[3]!, /ask the user/i);
-  assert.match(contents[3]!, /apply only after explicit approval/i);
-  assert.match(contents[4]!, /proposal/i);
+  assert.match(contents[2]!, /active gc-branch/i);
+  assert.match(contents[3]!, /update-gc/i);
+  assert.match(contents[3]!, /ugc/i);
+  assert.match(contents[4]!, /reset-gc-branch --branch <name> --yes/i);
 });

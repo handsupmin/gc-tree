@@ -1,3 +1,5 @@
+export type GcTreeProvider = 'codex' | 'claude-code';
+
 export interface GcTreeDocInput {
   title: string;
   slug?: string;
@@ -10,6 +12,28 @@ export interface GcTreeOnboardingInput {
   branch?: string;
   branchSummary?: string;
   docs: GcTreeDocInput[];
+}
+
+export interface GcTreeContextUpdateInput {
+  branch?: string;
+  branchSummary?: string;
+  docs: GcTreeDocInput[];
+}
+
+export interface GcTreeSettings {
+  version: 1;
+  preferred_provider: GcTreeProvider;
+  updated_at: string;
+}
+
+export interface GcTreeProviderLaunchPlan {
+  provider: GcTreeProvider;
+  binary: string;
+  args: string[];
+  target_dir: string;
+  gc_branch: string;
+  provider_command: string;
+  launched: boolean;
 }
 
 export interface GcTreeProposalInput {

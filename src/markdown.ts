@@ -46,7 +46,7 @@ export function renderIndexMarkdown(input: {
   const lines = [
     '# gc-tree Index',
     '',
-    `- branch: ${input.branch}`,
+    `- gc-branch: ${input.branch}`,
     `- summary: ${input.branchSummary.trim()}`,
     '',
   ];
@@ -67,7 +67,7 @@ export function parseIndexEntries(indexContent: string): Array<{ title: string; 
   return String(indexContent || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => /^- .+ -> .+$/.test(line) && !line.startsWith('- branch:') && !line.startsWith('- summary:'))
+    .filter((line) => /^- .+ -> .+$/.test(line) && !line.startsWith('- gc-branch:') && !line.startsWith('- summary:'))
     .map((line) => {
       const body = line.slice(2);
       const [title, path] = body.split('->').map((part) => part.trim());

@@ -7,10 +7,11 @@ function renderCodexAgentsSnippet(): string {
   return [
     '# gctree Codex integration snippet',
     '',
-    '- Before planning or implementation, resolve reusable global context with `gctree resolve --query "<task>"` when branch-level context may matter.',
-    '- Keep the active gctree branch explicit with `gctree status` and `gctree checkout <branch>` when switching products or clients.',
-    '- When durable global context should change, use `gctree update-global-context --input <file>` to draft a proposal first.',
-    '- Apply changes only after explicit user approval with `gctree update-global-context --input <file> --yes` or `gctree apply-update --proposal <file>`.',
+    '- Treat the active gctree branch as a **gc-branch** when you describe it to users.',
+    '- Before planning or implementation, run `gctree status` to confirm the active gc-branch if it is unclear.',
+    '- Use `gctree resolve --query "<task>"` when reusable global context may matter.',
+    '- Use `$gc-onboard` only for an empty gc-branch.',
+    '- Use `$gc-update-global-context` when durable context in the active gc-branch should change.',
     '',
   ].join('\n');
 }
@@ -19,11 +20,10 @@ function renderCodexBootstrapPrompt(): string {
   return [
     '# gctree Bootstrap',
     '',
-    '- Use `gctree status` to confirm the active global context branch before relying on branch-level docs.',
-    '- Use `gctree resolve --query "<task or repo question>"` before planning or implementation when reusable global context may help.',
-    '- Read summaries first. Only open full docs if the summaries are not enough.',
+    '- Keep the active gc-branch explicit whenever global context matters.',
+    '- Resolve reusable global context before planning or implementation when it may change the answer.',
+    '- Read summaries first and only open full docs when needed.',
     '- Treat gctree docs as explicit source-of-truth markdown, not hidden memory.',
-    '- Never mutate global context silently. Draft with `gctree update-global-context --input <file>` and apply only after explicit approval.',
     '',
   ].join('\n');
 }
@@ -31,15 +31,35 @@ function renderCodexBootstrapPrompt(): string {
 function renderCodexResolveSkill(): string {
   return [
     '---',
-    'description: Resolve reusable global context from the active gctree branch.',
+    'description: Resolve reusable global context from the active gc-branch.',
     'argument_hint: "<query>"',
     '---',
     '',
     'Treat everything after this command as the query.',
     '',
-    '1. Run `gctree status` if the active branch is unclear.',
-    '2. Run `gctree resolve --query "<query>"`.',
-    '3. Read summaries first and only read full docs if needed.',
+    '1. Run `gctree status` if the active gc-branch is unclear.',
+    '2. Explicitly mention which gc-branch is active before using the result.',
+    '3. Run `gctree resolve --query "<query>"`.',
+    '4. If the current repo is outside the mapped scope, choose whether to continue once, always use this gc-branch for this repo, or ignore this gc-branch here.',
+    '5. Read summaries first and only open full docs if needed.',
+    '',
+  ].join('\n');
+}
+
+function renderCodexOnboardSkill(): string {
+  return [
+    '---',
+    'description: Guided onboarding for the active gc-branch in gctree.',
+    '---',
+    '',
+    'Use this only when the active gc-branch is empty.',
+    '',
+    '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
+    '2. Ask onboarding questions one at a time until you have enough durable context.',
+    '3. Create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).',
+    '4. Run `gctree __apply-onboarding --input <temp-file>`.',
+    '5. Show the written docs and remind the user that future changes belong in `gctree update-global-context`.',
+    '6. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.',
     '',
   ].join('\n');
 }
@@ -47,15 +67,15 @@ function renderCodexResolveSkill(): string {
 function renderCodexUpdateSkill(): string {
   return [
     '---',
-    'description: Draft or apply a reusable global context update through gctree.',
-    'argument_hint: "--input <file> [--yes]"',
+    'description: Guided durable update for the active gc-branch in gctree.',
     '---',
     '',
-    'Default behavior is proposal-first.',
-    '',
-    '- `gctree update-global-context --input <file>` drafts a proposal and prints the summary plus apply command.',
-    '- `gctree update-global-context --input <file> --yes` applies immediately, but only when explicit approval is already available.',
-    '- If approval is not explicit, stop after the proposal and ask the user.',
+    '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
+    '2. Ask what durable context should change, one question at a time.',
+    '3. If this repo clearly belongs to the current gc-branch but is not mapped yet, ask the user whether it should be added to the branch-repo map and run `gctree set-repo-scope --branch <current-gc-branch> --include` when they approve.',
+    '4. Create a temporary JSON file containing the updated `docs[]` and optional `branchSummary`.',
+    '5. Run `gctree __apply-update --input <temp-file>`.',
+    '6. Show the updated docs back to the user.',
     '',
   ].join('\n');
 }
@@ -64,9 +84,22 @@ function renderClaudeSnippet(): string {
   return [
     '# gctree Claude Code integration snippet',
     '',
-    '- Before planning or implementation, resolve reusable global context with `gctree resolve --query "<task>"` when branch-level context may matter.',
-    '- Use `gctree status` and `gctree checkout <branch>` to keep product/client context trees separate.',
-    '- Use `gctree update-global-context --input <file>` to draft durable context updates and apply only after explicit approval.',
+    '- Treat the active gctree branch as a **gc-branch** in user-facing language.',
+    '- Run `gctree status` before relying on global context if the active gc-branch is unclear.',
+    '- Use `gctree resolve --query "<task>"` when reusable global context may matter.',
+    '- Use `/gc-onboard` only for an empty gc-branch.',
+    '- Use `/gc-update-global-context` when durable context in the active gc-branch should change.',
+    '',
+  ].join('\n');
+}
+
+function renderClaudeSessionStartHook(): string {
+  return [
+    '# gctree Claude Code SessionStart note',
+    '',
+    '- At session start, confirm the active gc-branch with `gctree status` when reusable global context may matter.',
+    '- Refer to gctree branches as **gc-branches** in user-facing language.',
+    '- Resolve summaries before planning or implementation when branch-level context may change the answer.',
     '',
   ].join('\n');
 }
@@ -74,13 +107,33 @@ function renderClaudeSnippet(): string {
 function renderClaudeResolveCommand(): string {
   return [
     '---',
-    'description: Resolve reusable global context from the active gctree branch.',
+    'description: Resolve reusable global context from the active gc-branch.',
     'argument-hint: "<query>"',
     '---',
     '',
-    '1. Run `gctree status` if the active branch is unclear.',
-    '2. Run `gctree resolve --query "$ARGUMENTS"`.',
-    '3. Read summaries first and only read full docs if needed.',
+    '1. Run `gctree status` if the active gc-branch is unclear.',
+    '2. Explicitly mention the active gc-branch before using the result.',
+    '3. Run `gctree resolve --query "$ARGUMENTS"`.',
+    '4. If the current repo is outside the mapped scope, choose whether to continue once, always use this gc-branch for this repo, or ignore this gc-branch here.',
+    '5. Read summaries first and only open full docs if needed.',
+    '',
+  ].join('\n');
+}
+
+function renderClaudeOnboardCommand(): string {
+  return [
+    '---',
+    'description: Guided onboarding for the active gc-branch in gctree.',
+    '---',
+    '',
+    'Use this only when the active gc-branch is empty.',
+    '',
+    '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
+    '2. Ask onboarding questions one at a time until you have enough durable context.',
+    '3. Create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).',
+    '4. Run `gctree __apply-onboarding --input <temp-file>`.',
+    '5. Show the written docs and remind the user that future changes belong in `gctree update-global-context`.',
+    '6. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.',
     '',
   ].join('\n');
 }
@@ -88,15 +141,15 @@ function renderClaudeResolveCommand(): string {
 function renderClaudeUpdateCommand(): string {
   return [
     '---',
-    'description: Draft or apply a reusable global context update through gctree.',
-    'argument-hint: "--input <file> [--yes]"',
+    'description: Guided durable update for the active gc-branch in gctree.',
     '---',
     '',
-    'Default behavior is proposal-first.',
-    '',
-    '- `gctree update-global-context --input <file>` drafts a proposal and prints the summary plus apply command.',
-    '- `gctree update-global-context --input <file> --yes` applies immediately, but only when explicit approval is already available.',
-    '- If approval is not explicit, stop after the proposal and ask the user.',
+    '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
+    '2. Ask what durable context should change, one question at a time.',
+    '3. If this repo clearly belongs to the current gc-branch but is not mapped yet, ask the user whether it should be added to the branch-repo map and run `gctree set-repo-scope --branch <current-gc-branch> --include` when they approve.',
+    '4. Create a temporary JSON file containing the updated `docs[]` and optional `branchSummary`.',
+    '5. Run `gctree __apply-update --input <temp-file>`.',
+    '6. Show the updated docs back to the user.',
     '',
   ].join('\n');
 }
@@ -104,17 +157,20 @@ function renderClaudeUpdateCommand(): string {
 function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string }> {
   if (host === 'codex') {
     return [
-      { path: 'AGENTS.gctree.md', content: renderCodexAgentsSnippet() },
+      { path: 'AGENTS.md', content: renderCodexAgentsSnippet() },
       { path: '.codex/prompts/gctree-bootstrap.md', content: renderCodexBootstrapPrompt() },
-      { path: '.codex/skills/gctree-resolve-context/SKILL.md', content: renderCodexResolveSkill() },
-      { path: '.codex/skills/gctree-update-global-context/SKILL.md', content: renderCodexUpdateSkill() },
+      { path: '.codex/skills/gc-resolve-context/SKILL.md', content: renderCodexResolveSkill() },
+      { path: '.codex/skills/gc-onboard/SKILL.md', content: renderCodexOnboardSkill() },
+      { path: '.codex/skills/gc-update-global-context/SKILL.md', content: renderCodexUpdateSkill() },
     ];
   }
 
   return [
-    { path: 'CLAUDE.gctree.md', content: renderClaudeSnippet() },
-    { path: '.claude/commands/gctree-resolve-context.md', content: renderClaudeResolveCommand() },
-    { path: '.claude/commands/gctree-update-global-context.md', content: renderClaudeUpdateCommand() },
+    { path: 'CLAUDE.md', content: renderClaudeSnippet() },
+    { path: '.claude/hooks/gctree-session-start.md', content: renderClaudeSessionStartHook() },
+    { path: '.claude/commands/gc-resolve-context.md', content: renderClaudeResolveCommand() },
+    { path: '.claude/commands/gc-onboard.md', content: renderClaudeOnboardCommand() },
+    { path: '.claude/commands/gc-update-global-context.md', content: renderClaudeUpdateCommand() },
   ];
 }
 
@@ -126,35 +182,33 @@ export async function scaffoldHostIntegration({
   host: GcTreeHost;
   targetDir: string;
   force?: boolean;
-}): Promise<{ host: GcTreeHost; target_dir: string; written: string[] }> {
+}): Promise<{ host: GcTreeHost; target_dir: string; written: string[]; skipped_existing: string[] }> {
   const files = scaffoldFiles(host);
   const written: string[] = [];
+  const skippedExisting: string[] = [];
 
   const targets = files.map((file) => ({
     ...file,
     fullPath: join(targetDir, file.path),
   }));
 
-  if (!force) {
-    const collisions: string[] = [];
-    for (const target of targets) {
-      try {
-        await access(target.fullPath);
-        collisions.push(target.fullPath);
-      } catch {
-        // file does not exist
-      }
-    }
-    if (collisions.length > 0) {
-      throw new Error(
-        `refusing to overwrite existing scaffold files without --force: ${collisions.join(', ')}`,
-      );
-    }
-  }
-
   for (const target of targets) {
+    let exists = false;
+    try {
+      await access(target.fullPath);
+      exists = true;
+    } catch {
+      exists = false;
+    }
+
+    if (exists && !force) {
+      skippedExisting.push(target.fullPath);
+      continue;
+    }
+
     await mkdir(dirname(target.fullPath), { recursive: true });
-    await writeFile(target.fullPath, `${target.content.trimEnd()}\n`, 'utf8');
+    await writeFile(target.fullPath, `${target.content.trimEnd()}
+`, 'utf8');
     written.push(target.fullPath);
   }
 
@@ -162,5 +216,6 @@ export async function scaffoldHostIntegration({
     host,
     target_dir: targetDir,
     written,
+    skipped_existing: skippedExisting,
   };
 }
