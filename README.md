@@ -1,367 +1,159 @@
 # gc-tree
 
+Branch-aware global context for AI coding tools.
+
+[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md)
+
+## Introduction
+
 `gctree` is a lightweight **Global Context Tree** for AI coding tools.
+It gives long-lived context a reusable, file-backed home that stays explicit, branch-aware, and easy to plug into existing workflows.
 
-It extracts the reusable **global context** layer from heavier delivery systems and keeps it:
+When a single `AGENTS.md`, `CLAUDE.md`, or prompt snippet is no longer enough, `gctree` helps you:
 
-- branch-aware
-- summary-first
-- file-backed
-- tool-agnostic
-- approval-first for updates
+- separate context by product, client, or workstream
+- keep source-of-truth knowledge in markdown instead of hidden memory
+- resolve the active context quickly with a slim index and summary-first docs
+- onboard and update durable context through your preferred LLM CLI provider
+- limit a gc-branch to the repositories where it actually applies
 
-The goal is simple:
+## Key Features
 
-> keep long-lived context reusable across tools without dragging in a full workflow platform.
+- **Provider-driven onboarding**  
+  `gctree init` asks whether you use Codex or Claude Code, saves that choice, scaffolds the right command surface, and starts guided onboarding for the default `main` gc-branch.
+- **Repo-aware gc-branch scope**  
+  `gctree` can map a gc-branch to specific repositories through `~/.gctree/branch-repo-map.json`, so one branch can apply to B/C/D while being ignored in F.
+- **Interactive scope guard**  
+  If `gctree resolve` runs in a repo that is not yet mapped to the current gc-branch, it can ask whether to continue once, always use this gc-branch here, or ignore it here.
+- **Summary-first documentation**  
+  Let tools read the short version first and expand only when they need more detail.
+- **Guided durable updates**  
+  Reuse the same provider-driven flow to update context without hand-authoring JSON files.
 
----
+## Install & Quick Start
 
-## What gc-tree is for
-
-Many AI coding setups need more than a single `CLAUDE.md`, `AGENTS.md`, or prompt snippet.
-They need:
-
-- a reusable global context home
-- separation between different products/clients/companies
-- slim indexing so tokens are not wasted
-- durable source docs that tools can read explicitly
-- a safe update path that does not mutate context silently
-
-`gctree` provides exactly that.
-
-It is meant to attach cleanly to tools like:
-
-- Codex CLI
-- Claude Code CLI
-- OmO
-- OmX
-- OmC
-
-without forcing them to adopt a larger request-to-commit system.
-
----
-
-## Core ideas
-
-### 1. Branch-aware global context
-
-One machine can hold multiple global context trees without mixing them.
-
-Think:
-
-- `main` for your default product
-- `client-b` for a consulting client
-- `infra` for platform work
-- `research` for a temporary branch of context
-
-This is why the command surface intentionally follows git-like language:
-
-- `gctree checkout <branch>`
-- `gctree checkout -b <branch>`
-
-### 2. `index.md` must stay small
-
-The top-level `index.md` is an **index**, not a dump.
-
-It should:
-
-- list titles
-- point to doc paths
-- help tools find the right source doc quickly
-
-It should **not** become the place where all knowledge is copied inline.
-
-### 3. Summary-first source docs
-
-Every source-of-truth markdown doc must contain a `## Summary` section near the top.
-
-Why:
-
-- tools can read the summary first
-- many requests stop there
-- full-document reads happen only when needed
-- token waste goes down
-
-### 4. Proposal-first updates
-
-Global context should not change silently.
-
-The intended flow is:
-
-1. draft a change proposal
-2. show the summary to the user
-3. get explicit approval
-4. apply the change
-
-That is why gc-tree ships both low-level and high-level commands:
-
-- low-level:
-  - `propose-update`
-  - `apply-update`
-- high-level:
-  - `update-global-context`
-
----
-
-## Command surface
-
-### Base commands
-
-- `gctree init [--home DIR] [--branch NAME]`
-- `gctree checkout <branch> [--home DIR]`
-- `gctree checkout -b <branch> [--home DIR]`
-- `gctree branches [--home DIR]`
-- `gctree status [--home DIR]`
-- `gctree onboard --input FILE [--home DIR] [--branch NAME]`
-- `gctree resolve --query TEXT [--home DIR]`
-- `gctree propose-update --input FILE [--home DIR] [--branch NAME]`
-- `gctree apply-update --proposal FILE [--home DIR]`
-- `gctree update-global-context --input FILE [--home DIR] [--branch NAME] [--yes]`
-- `gctree scaffold --host <codex|claude-code> [--target DIR] [--force]`
-- `gctree proposals [--home DIR]`
-
-### High-level update flow
-
-`gctree update-global-context` is the convenience wrapper.
-
-By default:
+### Install from source
 
 ```bash
-gctree update-global-context --input proposal.json
+git clone https://github.com/handsupmin/gc-tree.git
+cd gc-tree
+npm install
+npm run build
+npm link
 ```
 
-This:
+**Requirements:** Node.js 20+
 
-- creates a proposal
-- does **not** mutate source docs
-- returns a summary and the follow-up apply command
+### Quick Start
 
-If explicit approval already exists:
-
-```bash
-gctree update-global-context --input proposal.json --yes
-```
-
-This:
-
-- creates the proposal
-- applies it immediately
-
-Use `--yes` only when approval is already explicit.
-
----
-
-## Home layout
-
-Default home:
-
-```text
-~/.gctree/
-  HEAD
-  branches/
-    main/
-      branch.json
-      index.md
-      docs/
-      proposals/
-```
-
-### `HEAD`
-
-Tracks the currently checked-out global context branch.
-
-### `branch.json`
-
-Stores lightweight branch metadata:
-
-- branch name
-- created/updated timestamps
-- branch summary
-
-### `index.md`
-
-Compact entry point for tools.
-
-### `docs/`
-
-Authoritative source-of-truth markdown documents.
-
-### `proposals/`
-
-Pending or applied proposal artifacts for durable updates.
-
----
-
-## Quick start
-
-### 1. Initialize the home
+#### 1) Initialize gc-tree
 
 ```bash
 gctree init
 ```
 
-### 2. Onboard your first branch
+This command:
 
-Create a JSON file:
+- creates `~/.gctree`
+- creates the default `main` gc-branch
+- asks which provider you want to use (`codex` or `claude-code`)
+- saves that provider in `~/.gctree/settings.json`
+- scaffolds the current environment for that provider
+- launches guided onboarding for the active gc-branch when `main` is still empty
 
-```json
-{
-  "branchSummary": "Main branch for product A global context.",
-  "docs": [
-    {
-      "title": "Project Identity",
-      "summary": "Product A is a CLI-first auth-heavy tool.",
-      "body": "Auth policy and API ergonomics matter most in this branch."
-    }
-  ]
-}
-```
-
-Then:
+#### 2) Resolve the active context
 
 ```bash
-gctree onboard --input onboarding.json
+gctree resolve --query "auth token rotation"
 ```
 
-### 3. Create another branch
+If the current repo is outside the mapped scope for the chosen gc-branch, `gctree` can ask whether to:
+
+1. continue once
+2. always use this gc-branch for this repo
+3. ignore this gc-branch for this repo
+
+Choosing 2 or 3 updates `~/.gctree/branch-repo-map.json`.
+
+#### 3) Create another gc-branch when you need a separate context tree
 
 ```bash
 gctree checkout -b client-b
 ```
 
-### 4. Resolve context
+`checkout -b` creates a **new empty gc-branch**. It does not copy existing branch docs.
+
+#### 4) Onboard that empty gc-branch through the configured provider
 
 ```bash
-gctree resolve --query "token rotation"
+gctree onboard
 ```
 
-### 5. Draft a durable update
+#### 5) Make a durable update later
 
 ```bash
-gctree update-global-context --input update.json
+gctree update-global-context
 ```
 
-Review the summary, then apply only after approval.
-
----
-
-## Integration scaffolds
-
-gc-tree ships install scaffolds for:
-
-- Codex CLI
-- Claude Code CLI
-
-Generate them with:
+Short aliases:
 
 ```bash
-gctree scaffold --host codex --target /path/to/repo
-gctree scaffold --host claude-code --target /path/to/repo
+gctree update-gc
+gctree ugc
 ```
 
-These scaffolds write small host-specific bootstrap files and command/skill snippets without trying to own the whole host workflow.
-They refuse to overwrite existing files unless you pass `--force`.
+If a repo turns out to belong to the current gc-branch after real work, the natural flow is:
 
-### Codex scaffold output
+1. allow that repo in the branch repo map
+2. then run `gctree update-global-context` to add durable context about what that repo is and why it matters
 
-- `AGENTS.gctree.md`
-- `.codex/prompts/gctree-bootstrap.md`
-- `.codex/skills/gctree-resolve-context/SKILL.md`
-- `.codex/skills/gctree-update-global-context/SKILL.md`
-
-### Claude Code scaffold output
-
-- `CLAUDE.gctree.md`
-- `.claude/commands/gctree-resolve-context.md`
-- `.claude/commands/gctree-update-global-context.md`
-
-See `docs/integration.md` for the philosophy boundary.
-
----
-
-## Example usage patterns
-
-### Separate two products on one machine
+#### 6) Re-onboard only after resetting a gc-branch
 
 ```bash
-gctree init
-gctree onboard --input product-a.json
-gctree checkout -b product-b
-gctree onboard --branch product-b --input product-b.json
+gctree reset-gc-branch --branch client-b --yes
 ```
 
-### Switch contexts before working
+### Provider-facing commands inside the runtime
 
-```bash
-gctree checkout product-a
-gctree resolve --query "auth token rotation"
+After scaffolding, the visible commands are:
 
-gctree checkout product-b
-gctree resolve --query "billing retry policy"
-```
+- **Codex:** `$gc-onboard`, `$gc-update-global-context`
+- **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
 
-### Update durable context safely
+Those commands should always mention the current active gc-branch before gathering or updating durable context.
 
-```bash
-gctree update-global-context --input proposal.json
-```
+### Core commands at a glance
 
-Then:
+| Goal | Command |
+| --- | --- |
+| Initialize gc-tree and choose a provider | `gctree init` |
+| Confirm the active gc-branch | `gctree status` |
+| Search the active context | `gctree resolve --query "..."` |
+| Show repo-scope rules | `gctree repo-map` |
+| Explicitly include/exclude a repo for a gc-branch | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| Create or switch gc-branches | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
+| Guided onboarding for an empty gc-branch | `gctree onboard` |
+| Guided durable update for the active gc-branch | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
+| Reset a gc-branch before re-onboarding | `gctree reset-gc-branch --branch <name> --yes` |
+| Scaffold another environment manually | `gctree scaffold --host codex --target /path/to/repo` |
 
-- show the proposal summary to the user
-- ask whether to apply it
-- apply only after explicit approval
+## Documentation
 
----
+Detailed docs live in the [`docs/`](docs) directory.
 
-## Design boundaries
+- **Concept** — [`docs/concept.md`](docs/concept.md)  
+  Learn what `gctree` is, which problem it solves, and what belongs in the global-context layer.
+- **Principles** — [`docs/principles.md`](docs/principles.md)  
+  Read the rules behind gc-branches, repo scope, slim indexes, summary-first docs, and guided updates.
+- **Usage** — [`docs/usage.md`](docs/usage.md)  
+  See the standard CLI flow, provider-facing commands, repo-scope behavior, and integration patterns.
+- **Local development** — [`docs/local-development.md`](docs/local-development.md)  
+  Learn how to run the CLI locally and verify changes before contributing.
 
-gc-tree is intentionally **not**:
+## Contribution
 
-- a request-to-commit delivery orchestrator
-- a browser collaboration runtime
-- a dashboard product
-- a hidden memory system
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and pull request checklist.
 
-It is the **global context layer only**.
+## License
 
-That constraint is deliberate.
-
----
-
-## Architecture docs
-
-- `docs/architecture.md`
-- `docs/integration.md`
-
----
-
-## Skills
-
-Tool-agnostic skills ship in:
-
-- `skills/onboard`
-- `skills/checkout`
-- `skills/resolve-context`
-- `skills/update-global-context`
-- `skills/feedback`
-
-These can be copied, referenced, or adapted into existing toolchains.
-
----
-
-## Verification
-
-Current local verification:
-
-- `npm run build`
-- `npm test`
-- `npx tsc --noEmit`
-- manual dogfood:
-  - init
-  - onboard main
-  - checkout -b
-  - branch-specific resolve
-  - propose-update
-  - apply-update
-  - status
+MIT. See [`LICENSE`](LICENSE).
