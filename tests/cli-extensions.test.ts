@@ -57,6 +57,19 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     assert.equal(parsed.launch.provider_command, '$gc-onboard');
     assert.equal(parsed.launch.preferred_language, 'English');
     assert.match(parsed.launch.args[0]!, /Use English for every message/i);
+    assert.match(parsed.launch.args[0]!, /organized docs/i);
+    assert.match(parsed.launch.args[0]!, /reference material/i);
+    assert.match(parsed.launch.args[0]!, /summary is correct before continuing/i);
+    assert.match(parsed.launch.args[0]!, /summarize what you now understand from the saved docs/i);
+    assert.match(parsed.launch.args[0]!, /ask whether that final summary matches the user's reality/i);
+    assert.match(parsed.launch.args[0]!, /remaining risks, blind spots, or details that still need confirmation/i);
+    assert.match(parsed.launch.args[0]!, /full information dump/i);
+    assert.match(parsed.launch.args[0]!, /inspect any relevant docs, repos, directories, or files that are already available/i);
+    assert.match(parsed.launch.args[0]!, /present your hypothesis before asking the user to type more/i);
+    assert.match(parsed.launch.args[0]!, /offer structured numbered confirmations such as/i);
+    assert.match(parsed.launch.args[0]!, /1\. This is basically correct\./i);
+    assert.match(parsed.launch.args[0]!, /2\. Part of it is wrong/i);
+    assert.match(parsed.launch.args[0]!, /3\. This is the wrong frame/i);
     assert.equal(parsed.launch.launched, false);
     assert.equal(parsed.scaffold.hosts, 'codex');
     assert.equal(parsed.scaffold.written.length, 5);
@@ -282,11 +295,17 @@ test('update-global-context and its aliases share the same guided update behavio
       const parsed = JSON.parse(result.stdout) as {
         mode: string;
         gc_branch: string;
-        launch: { provider_command: string };
+        launch: { provider_command: string; args: string[] };
       };
       assert.equal(parsed.mode, 'guided_update');
       assert.equal(parsed.gc_branch, 'main');
       assert.equal(parsed.launch.provider_command, '$gc-update-global-context');
+      assert.doesNotMatch(parsed.launch.args[0]!, /IMPORTANT ONBOARDING RULES/i);
+      assert.doesNotMatch(parsed.launch.args[0]!, /organized docs or reference material/i);
+      assert.doesNotMatch(parsed.launch.args[0]!, /summarize what you now understand from the saved docs/i);
+      assert.doesNotMatch(parsed.launch.args[0]!, /remaining risks, blind spots, or details that still need confirmation/i);
+      assert.doesNotMatch(parsed.launch.args[0]!, /do not ask for a full information dump/i);
+      assert.doesNotMatch(parsed.launch.args[0]!, /1\. This is basically correct\./i);
     }
   } finally {
     await rm(home, { recursive: true, force: true });
@@ -322,7 +341,27 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.equal(result.code, 0, result.stderr);
     let parsed = JSON.parse(result.stdout) as { written: string[] };
     assert.equal(parsed.written.length, 5);
-    assert.match(await readFile(join(codexTarget, '.codex', 'skills', 'gc-onboard', 'SKILL.md'), 'utf8'), /gc-branch/i);
+    const codexOnboardSkill = await readFile(join(codexTarget, '.codex', 'skills', 'gc-onboard', 'SKILL.md'), 'utf8');
+    assert.match(codexOnboardSkill, /gc-branch/i);
+    assert.match(codexOnboardSkill, /Do \*\*not\*\* start by asking what one repository does/i);
+    assert.match(codexOnboardSkill, /organized docs/i);
+    assert.match(codexOnboardSkill, /reference material/i);
+    assert.match(codexOnboardSkill, /read those first.*summarize your understanding back/i);
+    assert.match(codexOnboardSkill, /ask whether that summary is correct before continuing/i);
+    assert.match(codexOnboardSkill, /anything important is still missing/i);
+    assert.match(codexOnboardSkill, /summarize what you now understand from the saved docs/i);
+    assert.match(codexOnboardSkill, /ask whether that final summary matches the user's reality/i);
+    assert.match(codexOnboardSkill, /remaining risks, blind spots, or details that still need confirmation/i);
+    assert.match(codexOnboardSkill, /do .*not.* ask for a full information dump/i);
+    assert.match(codexOnboardSkill, /inspect any relevant docs, repos, directories, or files that are already available/i);
+    assert.match(codexOnboardSkill, /present your hypothesis before asking the user to type more/i);
+    assert.match(codexOnboardSkill, /offer structured numbered confirmations such as/i);
+    assert.match(codexOnboardSkill, /1\. This is basically correct\./i);
+    assert.match(codexOnboardSkill, /2\. Part of it is wrong/i);
+    assert.match(codexOnboardSkill, /3\. This is the wrong frame/i);
+    assert.match(codexOnboardSkill, /what kind of person/i);
+    assert.match(codexOnboardSkill, /glossary terms/i);
+    assert.match(codexOnboardSkill, /verification commands/i);
     assert.match(await readFile(join(codexTarget, '.codex', 'skills', 'gc-update-global-context', 'SKILL.md'), 'utf8'), /__apply-update/i);
 
     result = await runCli(['scaffold', '--host', 'claude-code', '--target', claudeTarget]);
@@ -330,7 +369,27 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     parsed = JSON.parse(result.stdout) as { written: string[] };
     assert.equal(parsed.written.length, 5);
     assert.match(await readFile(join(claudeTarget, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
-    assert.match(await readFile(join(claudeTarget, '.claude', 'commands', 'gc-onboard.md'), 'utf8'), /gc-branch/i);
+    const claudeOnboardCommand = await readFile(join(claudeTarget, '.claude', 'commands', 'gc-onboard.md'), 'utf8');
+    assert.match(claudeOnboardCommand, /gc-branch/i);
+    assert.match(claudeOnboardCommand, /Do \*\*not\*\* start by asking what one repository does/i);
+    assert.match(claudeOnboardCommand, /organized docs/i);
+    assert.match(claudeOnboardCommand, /reference material/i);
+    assert.match(claudeOnboardCommand, /read those first.*summarize your understanding back/i);
+    assert.match(claudeOnboardCommand, /ask whether that summary is correct before continuing/i);
+    assert.match(claudeOnboardCommand, /anything important is still missing/i);
+    assert.match(claudeOnboardCommand, /summarize what you now understand from the saved docs/i);
+    assert.match(claudeOnboardCommand, /ask whether that final summary matches the user's reality/i);
+    assert.match(claudeOnboardCommand, /remaining risks, blind spots, or details that still need confirmation/i);
+    assert.match(claudeOnboardCommand, /do .*not.* ask for a full information dump/i);
+    assert.match(claudeOnboardCommand, /inspect any relevant docs, repos, directories, or files that are already available/i);
+    assert.match(claudeOnboardCommand, /present your hypothesis before asking the user to type more/i);
+    assert.match(claudeOnboardCommand, /offer structured numbered confirmations such as/i);
+    assert.match(claudeOnboardCommand, /1\. This is basically correct\./i);
+    assert.match(claudeOnboardCommand, /2\. Part of it is wrong/i);
+    assert.match(claudeOnboardCommand, /3\. This is the wrong frame/i);
+    assert.match(claudeOnboardCommand, /what kind of person/i);
+    assert.match(claudeOnboardCommand, /glossary terms/i);
+    assert.match(claudeOnboardCommand, /verification commands/i);
     assert.match(await readFile(join(claudeTarget, '.claude', 'hooks', 'gctree-session-start.md'), 'utf8'), /gc-branch/i);
   } finally {
     await rm(codexTarget, { recursive: true, force: true });

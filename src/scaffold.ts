@@ -1,6 +1,8 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
+import { onboardingCompletionLines, onboardingProtocolLines } from './onboarding-protocol.js';
+
 type GcTreeHost = 'codex' | 'claude-code';
 
 function renderCodexAgentsSnippet(): string {
@@ -47,6 +49,8 @@ function renderCodexResolveSkill(): string {
 }
 
 function renderCodexOnboardSkill(): string {
+  const protocol = onboardingProtocolLines();
+  const completion = onboardingCompletionLines();
   return [
     '---',
     'description: Guided onboarding for the active gc-branch in gctree.',
@@ -55,11 +59,11 @@ function renderCodexOnboardSkill(): string {
     'Use this only when the active gc-branch is empty.',
     '',
     '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
-    '2. Ask onboarding questions one at a time until you have enough durable context.',
-    '3. Create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).',
-    '4. Run `gctree __apply-onboarding --input <temp-file>`.',
-    '5. Show the written docs and remind the user that future changes belong in `gctree update-global-context`.',
-    '6. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.',
+    ...protocol.map((line, index) => `${index + 2}. ${line}`),
+    `${protocol.length + 2}. Then create a temporary JSON file with \`branchSummary\` and \`docs[]\` (\`title\`, \`summary\`, \`body\`).`,
+    `${protocol.length + 3}. Run \`gctree __apply-onboarding --input <temp-file>\`.`,
+    ...completion.map((line, index) => `${protocol.length + index + 4}. ${line}`),
+    `${protocol.length + completion.length + 4}. If the gc-branch is not empty, stop and tell the user to run \`gctree reset-gc-branch --branch <current-gc-branch> --yes\` or \`gctree update-global-context\` instead.`,
     '',
   ].join('\n');
 }
@@ -121,6 +125,8 @@ function renderClaudeResolveCommand(): string {
 }
 
 function renderClaudeOnboardCommand(): string {
+  const protocol = onboardingProtocolLines();
+  const completion = onboardingCompletionLines();
   return [
     '---',
     'description: Guided onboarding for the active gc-branch in gctree.',
@@ -129,11 +135,11 @@ function renderClaudeOnboardCommand(): string {
     'Use this only when the active gc-branch is empty.',
     '',
     '1. Run `gctree status` and explicitly state the active gc-branch to the user.',
-    '2. Ask onboarding questions one at a time until you have enough durable context.',
-    '3. Create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).',
-    '4. Run `gctree __apply-onboarding --input <temp-file>`.',
-    '5. Show the written docs and remind the user that future changes belong in `gctree update-global-context`.',
-    '6. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.',
+    ...protocol.map((line, index) => `${index + 2}. ${line}`),
+    `${protocol.length + 2}. Then create a temporary JSON file with \`branchSummary\` and \`docs[]\` (\`title\`, \`summary\`, \`body\`).`,
+    `${protocol.length + 3}. Run \`gctree __apply-onboarding --input <temp-file>\`.`,
+    ...completion.map((line, index) => `${protocol.length + index + 4}. ${line}`),
+    `${protocol.length + completion.length + 4}. If the gc-branch is not empty, stop and tell the user to run \`gctree reset-gc-branch --branch <current-gc-branch> --yes\` or \`gctree update-global-context\` instead.`,
     '',
   ].join('\n');
 }
