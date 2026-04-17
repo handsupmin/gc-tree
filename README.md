@@ -32,7 +32,11 @@ When a single `AGENTS.md`, `CLAUDE.md`, or prompt snippet is no longer enough, `
 
 ## Install & Quick Start
 
-### Install from source
+`gc-tree` is already structured like an npm CLI, but the public unscoped release is not available yet.
+`npm install gc-tree` returns `404` because there is no exact published package, while `npm publish` for `gc-tree` is currently rejected by npm because the name is too similar to `rc-tree`.
+Until that registry issue is resolved, install from source.
+
+### Install from source for now
 
 ```bash
 git clone https://github.com/handsupmin/gc-tree.git

@@ -6,6 +6,11 @@
 
 本地开发采用标准的 Node.js 20+ 工作流：安装依赖、构建 CLI、本地运行，并在提交前用现有测试套件进行验证。
 
+## 包状态
+
+`gc-tree` 已经按 npm 包的形式准备好了，但公开的 unscoped 发布目前仍被 npm 的相似名称策略拦住，因为这个名字与 `rc-tree` 太相近。
+日常开发请继续使用下面的源码工作流，并在任何发布尝试前先运行 `npm publish --dry-run`。
+
 ## 前置条件
 
 - Node.js 20+
@@ -43,6 +48,7 @@ gctree status
 ```bash
 npm run build
 npm test
+npm publish --dry-run
 ```
 
 ## 仓库范围相关测试

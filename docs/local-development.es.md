@@ -6,6 +6,11 @@
 
 El desarrollo local sigue un flujo estándar de Node.js 20+: instala dependencias, construye la CLI, ejecútala localmente y verifica con la suite de tests existente antes de enviar cambios.
 
+## Estado del paquete
+
+`gc-tree` ya está preparado como paquete de npm, pero la publicación pública sin scope sigue bloqueada por la política de nombres similares de npm porque se parece demasiado a `rc-tree`.
+Para el desarrollo diario usa el flujo desde código fuente que aparece abajo y, antes de cualquier intento de release, ejecuta `npm publish --dry-run`.
+
 ## Requisitos previos
 
 - Node.js 20+
@@ -43,6 +48,7 @@ Antes de enviar cambios, ejecuta:
 ```bash
 npm run build
 npm test
+npm publish --dry-run
 ```
 
 ## Tests de alcance por repositorio
