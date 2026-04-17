@@ -2,7 +2,7 @@
 
 Branch-aware global context for AI coding tools.
 
-[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md)
+[English](https://github.com/handsupmin/gc-tree/blob/main/README.md) | [한국어](https://github.com/handsupmin/gc-tree/blob/main/README.ko.md) | [简体中文](https://github.com/handsupmin/gc-tree/blob/main/README.zh.md) | [日本語](https://github.com/handsupmin/gc-tree/blob/main/README.ja.md) | [Español](https://github.com/handsupmin/gc-tree/blob/main/README.es.md)
 
 ## Introduction
 
@@ -19,15 +19,15 @@ When a single `AGENTS.md`, `CLAUDE.md`, or prompt snippet is no longer enough, `
 
 ## Key Features
 
-- **Provider-driven onboarding**  
+- **Provider-driven onboarding**
   `gctree init` asks which provider mode you want (`claude-code`, `codex`, or `both`), then asks which language to use for responses, saves both choices, scaffolds the right command surface, and starts guided onboarding for the default `main` gc-branch.
-- **Repo-aware gc-branch scope**  
+- **Repo-aware gc-branch scope**
   `gctree` can map a gc-branch to specific repositories through `~/.gctree/branch-repo-map.json`, so one branch can apply to B/C/D while being ignored in F.
-- **Interactive scope guard**  
+- **Interactive scope guard**
   If `gctree resolve` runs in a repo that is not yet mapped to the current gc-branch, it can ask whether to continue once, always use this gc-branch here, or ignore it here.
-- **Summary-first documentation**  
+- **Summary-first documentation**
   Let tools read the short version first and expand only when they need more detail.
-- **Guided durable updates**  
+- **Guided durable updates**
   Reuse the same provider-driven flow to update context without hand-authoring JSON files.
 
 ## Install & Quick Start
@@ -47,7 +47,7 @@ npx @handsupmin/gc-tree init
 - **Package name:** `@handsupmin/gc-tree`
 - **CLI command:** `gctree`
 - **Requirements:** Node.js 20+
-For source-based development details, see [docs/local-development.md](docs/local-development.md).
+For source-based development details, see [docs/local-development.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md).
 
 ### Quick Start
 
@@ -146,21 +146,21 @@ Those commands should always mention the current active gc-branch before gatheri
 
 ## Documentation
 
-Detailed docs live in the [`docs/`](docs) directory.
+Detailed docs live in the [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) directory.
 
-- **Concept** — [`docs/concept.md`](docs/concept.md)  
+- **Concept** — [`docs/concept.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.md)
   Learn what `gctree` is, which problem it solves, and what belongs in the global-context layer.
-- **Principles** — [`docs/principles.md`](docs/principles.md)  
+- **Principles** — [`docs/principles.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.md)
   Read the rules behind gc-branches, repo scope, slim indexes, summary-first docs, and guided updates.
-- **Usage** — [`docs/usage.md`](docs/usage.md)  
+- **Usage** — [`docs/usage.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.md)
   See the standard CLI flow, provider-facing commands, repo-scope behavior, and integration patterns.
-- **Local development** — [`docs/local-development.md`](docs/local-development.md)  
+- **Local development** — [`docs/local-development.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md)
   Learn how to run the CLI locally and verify changes before contributing.
 
 ## Contribution
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and pull request checklist.
+Contributions are welcome. See [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md) for the development workflow and pull request checklist.
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](https://github.com/handsupmin/gc-tree/blob/main/LICENSE).

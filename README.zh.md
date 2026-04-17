@@ -2,7 +2,7 @@
 
 面向 AI 编码工具的分支化全局上下文层。
 
-[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md)
+[English](https://github.com/handsupmin/gc-tree/blob/main/README.md) | [한국어](https://github.com/handsupmin/gc-tree/blob/main/README.ko.md) | [简体中文](https://github.com/handsupmin/gc-tree/blob/main/README.zh.md) | [日本語](https://github.com/handsupmin/gc-tree/blob/main/README.ja.md) | [Español](https://github.com/handsupmin/gc-tree/blob/main/README.es.md)
 
 ## 介绍
 
@@ -19,15 +19,15 @@
 
 ## 简要特性
 
-- **Provider 驱动的 onboarding**  
+- **Provider 驱动的 onboarding**
   `gctree init` 会先询问你想使用哪种 provider 模式（`claude-code`、`codex` 或 `both`），再询问响应语言，并保存这些选择，然后给当前环境安装对应的命令表面，并为默认 `main` gc-branch 启动引导式 onboarding。
-- **带仓库范围的 gc-branch**  
+- **带仓库范围的 gc-branch**
   你可以通过 `~/.gctree/branch-repo-map.json` 把某个 gc-branch 绑定到指定仓库集合，比如让 A 只作用于 B/C/D，而在 F 中忽略。
-- **交互式范围保护**  
+- **交互式范围保护**
   如果 `gctree resolve` 发现当前仓库还没有映射到这个 gc-branch，它可以询问是仅本次继续、以后总是使用，还是在这个仓库里忽略它。
-- **Summary-first 文档结构**  
+- **Summary-first 文档结构**
   工具可以先读取简短摘要，只有在需要时才展开完整文档。
-- **引导式长期更新**  
+- **引导式长期更新**
   不需要手写 JSON 文件，也可以通过同样的 provider 流程更新全局上下文。
 
 ## 安装与快速开始
@@ -47,7 +47,7 @@ npx @handsupmin/gc-tree init
 - **包名：** `@handsupmin/gc-tree`
 - **CLI 命令：** `gctree`
 - **要求：** Node.js 20+
-如果要从源码开发，请查看 [docs/local-development.md](docs/local-development.md)。
+如果要从源码开发，请查看 [docs/local-development.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md)。
 
 ### 快速开始
 
@@ -146,21 +146,21 @@ scaffold 之后，在运行时可见的命令是：
 
 ## 文档
 
-详细文档位于 [`docs/`](docs) 目录下。
+详细文档位于 [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) 目录下。
 
-- **概念** — [`docs/concept.zh.md`](docs/concept.zh.md)  
+- **概念** — [`docs/concept.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.zh.md)
   说明 `gctree` 是什么、解决什么问题，以及全局上下文层的边界。
-- **原理** — [`docs/principles.zh.md`](docs/principles.zh.md)  
+- **原理** — [`docs/principles.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.zh.md)
   介绍 gc-branch、仓库范围、summary-first 文档和引导式更新等原则。
-- **使用方法** — [`docs/usage.zh.md`](docs/usage.zh.md)  
+- **使用方法** — [`docs/usage.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.zh.md)
   介绍标准 CLI 流程、provider 命令、仓库范围行为和集成方式。
-- **本地运行方法** — [`docs/local-development.zh.md`](docs/local-development.zh.md)  
+- **本地运行方法** — [`docs/local-development.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.zh.md)
   说明依赖安装、本地运行 CLI 与提交前验证方式。
 
 ## 贡献
 
-欢迎贡献。开发流程与 PR 检查清单位于英文文档 [CONTRIBUTING.md](CONTRIBUTING.md)。
+欢迎贡献。开发流程与 PR 检查清单位于英文文档 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)。
 
 ## 许可证
 
-MIT。详见 [`LICENSE`](LICENSE)。
+MIT。详见 [`LICENSE`](https://github.com/handsupmin/gc-tree/blob/main/LICENSE)。

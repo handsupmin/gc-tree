@@ -2,7 +2,7 @@
 
 AI 코딩 도구를 위한 브랜치 기반 글로벌 컨텍스트 레이어.
 
-[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md)
+[English](https://github.com/handsupmin/gc-tree/blob/main/README.md) | [한국어](https://github.com/handsupmin/gc-tree/blob/main/README.ko.md) | [简体中文](https://github.com/handsupmin/gc-tree/blob/main/README.zh.md) | [日本語](https://github.com/handsupmin/gc-tree/blob/main/README.ja.md) | [Español](https://github.com/handsupmin/gc-tree/blob/main/README.es.md)
 
 ## 소개
 
@@ -19,15 +19,15 @@ AI 코딩 도구를 위한 브랜치 기반 글로벌 컨텍스트 레이어.
 
 ## 간단 특징
 
-- **Provider 기반 온보딩**  
+- **Provider 기반 온보딩**
   `gctree init`은 `claude-code`, `codex`, `both` 중 어떤 provider 모드를 쓸지 묻고, 이어서 응답 언어를 고르게 한 뒤, 그 선택을 저장하고 필요한 명령 표면을 스캐폴딩한 다음 기본 `main` gc-branch 온보딩을 시작합니다.
-- **레포 범위 인식 gc-branch**  
+- **레포 범위 인식 gc-branch**
   `~/.gctree/branch-repo-map.json`을 통해 하나의 gc-branch를 특정 레포 집합에만 연결할 수 있습니다. 예를 들어 A는 B/C/D에만 적용하고 F에서는 무시하게 만들 수 있습니다.
-- **인터랙티브 범위 가드**  
+- **인터랙티브 범위 가드**
   `gctree resolve`가 현재 레포가 아직 이 gc-branch에 매핑되지 않았다고 판단하면, 이번만 진행할지 / 항상 사용할지 / 여기서는 무시할지를 물어볼 수 있습니다.
-- **Summary-first 문서 구조**  
+- **Summary-first 문서 구조**
   도구가 먼저 짧은 요약을 읽고, 필요할 때만 본문을 확장해서 읽을 수 있습니다.
-- **가이드형 장기 업데이트**  
+- **가이드형 장기 업데이트**
   JSON 파일을 직접 만들지 않아도 같은 provider 흐름으로 글로벌 컨텍스트를 갱신할 수 있습니다.
 
 ## 설치 및 빠른 시작
@@ -47,7 +47,7 @@ npx @handsupmin/gc-tree init
 - **패키지 이름:** `@handsupmin/gc-tree`
 - **CLI 명령어:** `gctree`
 - **요구 사항:** Node.js 20+
-소스 기반 개발은 [docs/local-development.md](docs/local-development.md)를 참고하세요.
+소스 기반 개발은 [docs/local-development.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md)를 참고하세요.
 
 ### 빠른 시작
 
@@ -146,21 +146,21 @@ gctree reset-gc-branch --branch client-b --yes
 
 ## 문서
 
-자세한 문서는 [`docs/`](docs) 아래에 정리되어 있습니다.
+자세한 문서는 [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) 아래에 정리되어 있습니다.
 
-- **컨셉** — [`docs/concept.ko.md`](docs/concept.ko.md)  
+- **컨셉** — [`docs/concept.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.ko.md)
   `gctree`가 무엇인지, 어떤 문제를 해결하는지, 글로벌 컨텍스트 레이어의 범위를 설명합니다.
-- **원리** — [`docs/principles.ko.md`](docs/principles.ko.md)  
+- **원리** — [`docs/principles.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.ko.md)
   gc-branch, 레포 범위, slim index, summary-first 문서, 가이드형 업데이트 원칙을 정리합니다.
-- **사용방법** — [`docs/usage.ko.md`](docs/usage.ko.md)  
+- **사용방법** — [`docs/usage.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.ko.md)
   표준 CLI 흐름, provider 명령, 레포 범위 동작, 통합 패턴을 안내합니다.
-- **로컬 실행방법** — [`docs/local-development.ko.md`](docs/local-development.ko.md)  
+- **로컬 실행방법** — [`docs/local-development.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ko.md)
   의존성 설치, 로컬 CLI 실행, 변경 검증 방법을 설명합니다.
 
 ## 기여하기
 
-기여는 언제든 환영합니다. 개발 흐름과 PR 체크리스트는 영어 문서인 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고해주세요.
+기여는 언제든 환영합니다. 개발 흐름과 PR 체크리스트는 영어 문서인 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)를 참고해주세요.
 
 ## 라이선스
 
-MIT. 자세한 내용은 [`LICENSE`](LICENSE)를 참고하세요.
+MIT. 자세한 내용은 [`LICENSE`](https://github.com/handsupmin/gc-tree/blob/main/LICENSE)를 참고하세요.

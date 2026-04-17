@@ -1,6 +1,6 @@
 {
   "name": "@handsupmin/gc-tree",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
   "type": "module",
   "private": false,
@@ -28,5 +28,13 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/handsupmin/gc-tree.git"
+  },
+  "homepage": "https://github.com/handsupmin/gc-tree",
+  "bugs": {
+    "url": "https://github.com/handsupmin/gc-tree/issues"
+  }
 }
