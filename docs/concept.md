@@ -4,34 +4,34 @@
 
 ## Summary
 
-`gctree` is a lightweight global-context layer for AI coding tools. It keeps durable context in explicit markdown documents outside any single repository, lets users switch between gc-branches, and can restrict each gc-branch to the repositories where it actually applies.
+`gctree` is a lightweight global-context layer for AI coding tools. It keeps long-lived context in explicit markdown documents outside any single repository, lets you switch between gc-branches, and can limit each gc-branch to the repositories where it actually belongs.
 
 ## What `gctree` is
 
 `gctree` is a CLI for managing reusable global context.
-It is designed for teams and individuals who want long-lived context to survive across repositories, sessions, and tools without turning that context into hidden memory.
+It is built for people and teams who want important context to survive across repositories, sessions, and tools without turning into hidden memory.
 
-Instead of scattering important knowledge across prompt files, repo-local notes, and ad hoc instructions, `gctree` gives that knowledge a stable, file-backed home.
+Instead of scattering key knowledge across prompt files, repo-local notes, and one-off instructions, `gctree` gives that knowledge a stable, file-backed place to live.
 
 ## What problem it solves
 
-Many AI coding setups start small:
+A lot of AI coding setups start small:
 
 - one `AGENTS.md`
 - one `CLAUDE.md`
 - one repo-local prompt file
-- a handful of notes copied into prompts as needed
+- a few notes copied into prompts when needed
 
-That works for a while. Then the same setup starts to break under real-world needs:
+That works for a while. Then real work shows up and the cracks start to show:
 
 - different products need different context
-- client work must stay isolated
+- client work needs clean isolation
 - reusable guidance should live outside any single repository
 - multiple tools should be able to read the same source of truth
-- long-lived context should evolve through a safe, reviewable flow
-- one user may run many sessions across many repositories at the same time
+- long-lived context should change through an explicit, reviewable flow
+- one person may have many sessions open across many repositories at once
 
-`gctree` exists to solve that layer cleanly.
+`gctree` exists to handle that layer cleanly.
 
 ## Scope boundary
 
@@ -42,7 +42,7 @@ That works for a while. Then the same setup starts to break under real-world nee
 - a browser collaboration runtime
 - a general-purpose knowledge base product
 
-It focuses on one job: managing reusable global-context branches and explicit updates.
+It focuses on one job: managing reusable global-context branches and explicit durable updates.
 
 ## File model
 
@@ -65,12 +65,12 @@ A typical home directory looks like this:
 - `branch-repo-map.json` stores which repositories are included or excluded for each gc-branch.
 - `branch.json` stores lightweight gc-branch metadata.
 - `index.md` is the compact entry point for tools.
-- `docs/` holds source-of-truth markdown documents.
+- `docs/` holds the source-of-truth markdown documents.
 
 ## Repo-aware behavior
 
-A gc-branch does not have to apply everywhere.
-If branch `A` is only relevant to repositories `B`, `C`, and `D`, `gctree` can record that in `branch-repo-map.json`.
+A gc-branch does not need to apply everywhere.
+If branch `A` only matters to repositories `B`, `C`, and `D`, `gctree` can record that in `branch-repo-map.json`.
 
 When `gctree resolve` runs in another repository such as `F`, it can:
 
@@ -78,4 +78,4 @@ When `gctree resolve` runs in another repository such as `F`, it can:
 - always use that gc-branch in `F`
 - ignore that gc-branch in `F`
 
-This makes gc-tree much safer for heavy users who keep many parallel sessions open across unrelated repositories.
+That makes gc-tree much safer for heavy users who keep many parallel sessions open across unrelated repositories.

@@ -8,12 +8,12 @@
 
 ## 1. Keep context branch-aware
 
-A single machine should be able to hold multiple global-context trees without mixing them.
-That is why `gctree` uses git-like language such as `checkout` and `checkout -b`, while referring to the active branch as a **gc-branch** in user-facing language.
+One machine should be able to hold multiple global-context trees without mixing them together.
+That is why `gctree` uses git-like language such as `checkout` and `checkout -b`, while still referring to the active branch as a **gc-branch** in user-facing copy.
 
 ## 2. Keep repo scope explicit
 
-A gc-branch should not silently affect every repository on the machine.
+A gc-branch should not quietly affect every repository on the machine.
 `gctree` uses `branch-repo-map.json` to record whether a repository is:
 
 - included for a gc-branch
@@ -31,7 +31,7 @@ It should stay compact and link-oriented instead of duplicating full knowledge i
 ## 4. Make source docs summary-first
 
 Every source-of-truth markdown document should include a `## Summary` section near the top.
-That gives downstream tools a fast path: read the short version first, then expand only when more detail is necessary.
+That gives downstream tools a fast path: read the short version first, then expand only when more detail is actually needed.
 
 ## 5. Make onboarding explicit and guided
 

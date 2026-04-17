@@ -1,106 +1,100 @@
 # gc-tree
 
-AI コーディングツール向けのブランチ対応グローバルコンテキストレイヤー。
+<div align="center">
+
+<img src="./logo.png" alt="gc-tree logo" width="260" />
+
+### プロジェクトの外まで届くグローバルコンテキスト。
+
+今使っている AI ツールに、長く使える再利用可能なコンテキストレイヤーを重ねましょう。
+Git のブランチ感覚で、複数のコンテキストを分けて持てます。
+
+[![npm version](https://img.shields.io/npm/v/%40handsupmin%2Fgc-tree)](https://www.npmjs.com/package/@handsupmin/gc-tree)
+[![npm downloads](https://img.shields.io/npm/dm/%40handsupmin%2Fgc-tree)](https://www.npmjs.com/package/@handsupmin/gc-tree)
+[![GitHub stars](https://img.shields.io/github/stars/handsupmin/gc-tree)](https://github.com/handsupmin/gc-tree/stargazers)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://github.com/handsupmin/gc-tree/blob/main/LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
 [English](https://github.com/handsupmin/gc-tree/blob/main/README.md) | [한국어](https://github.com/handsupmin/gc-tree/blob/main/README.ko.md) | [简体中文](https://github.com/handsupmin/gc-tree/blob/main/README.zh.md) | [日本語](https://github.com/handsupmin/gc-tree/blob/main/README.ja.md) | [Español](https://github.com/handsupmin/gc-tree/blob/main/README.es.md)
 
-## 紹介
+</div>
 
-`gctree` は AI コーディングツール向けの軽量な **Global Context Tree** です。
-長期的なコンテキストに、ファイルベースで再利用しやすく、ブランチ単位で切り替えられる明確な置き場所を与え、既存のワークフローにも自然に組み込めます。
+日々の仕事が複数のリポジトリ、プロダクト、クライアント、ワークフローにまたがっている開発者のために作りました。
 
-1 つの `AGENTS.md`、`CLAUDE.md`、あるいは短いプロンプト断片だけでは足りなくなったとき、`gctree` は次のことを助けます。
+`gc-tree` は、AI コーディングツールに **リポジトリの外側で再利用できるコンテキストレイヤー** を足してくれます。長く使う前提の文脈は残しつつ、関係あるリポジトリにだけ効かせ、無関係な場所では静かに引っ込みます。
 
-- プロダクト、クライアント、作業トラックごとにコンテキストを分ける
-- 隠れたメモリではなく、markdown 文書を source of truth として管理する
-- 小さなインデックスと summary-first ドキュメントで必要なコンテキストを素早く見つける
-- 好みの LLM CLI を使ってオンボーディングと永続更新を進める
-- ある gc-branch が本当に関係するリポジトリでだけ使われるようにする
+---
 
-## 簡単な特徴
+## なぜ gc-tree なのか
 
-- **Provider 駆動のオンボーディング**
-  `gctree init` はまず `claude-code`、`codex`、`both` のどの provider モードを使うかを聞き、その後に応答言語を選ばせ、選択内容を保存して必要なコマンド面を用意したうえで、デフォルトの `main` gc-branch のオンボーディングを開始します。
-- **リポジトリ範囲付き gc-branch**
-  `~/.gctree/branch-repo-map.json` により、1 つの gc-branch を特定のリポジトリ群にだけ結びつけられます。たとえば A を B/C/D にだけ適用し、F では無視できます。
-- **対話的な範囲ガード**
-  `gctree resolve` が現在のリポジトリをまだこの gc-branch に結び付けていないと判断した場合、今回だけ使うか、今後も使うか、ここでは無視するかを選べます。
-- **Summary-first ドキュメント構造**
-  ツールはまず短い要約を読み、必要なときだけ全文を読み込めます。
-- **ガイド付きの永続更新**
-  JSON ファイルを手で作らなくても、同じ provider フローでグローバルコンテキストを更新できます。
+AI エージェントを本気で実務に入れると、リポジトリローカルのコンテキストだけではすぐ足りなくなります。
 
-## インストールとクイックスタート
+作業が複数のリポジトリやワークストリームに広がると、たとえばこんなことが起きがちです。
 
-### npm からインストール
+- 長期コンテキストがプロンプトの中に押し込まれていく
+- 無関係な文脈が別のリポジトリまで漏れてしまう
+- 新しいセッションを開くたびに同じ説明をやり直すことになる
+- クライアントやプロダクトの知識がチャット履歴の中に埋もれる
+- 作業を切り替えるたびに頭の中で手動で文脈を切り替える必要がある
+
+`gc-tree` は、Codex や Claude Code のような AI コーディングツールをすでにしっかり使っていて、コンテキスト管理まで手作業で回したくない人のための道具です。
+
+---
+
+## これでできること
+
+- **長期コンテキストを複数持てる**
+  プロダクト、クライアント、ワークストリームごとに別々のコンテキストレーンを維持できます。
+
+- **リポジトリ単位で関連性を絞れる**
+  どのコンテキストをどのリポジトリにだけ適用するかをはっきり決められます。
+
+- **スコープを賢くガードできる**
+  まだ紐付いていないリポジトリに入ったとき、今回だけ続けるか、ここでは常に使うか、ここでは無視するかを選べます。
+
+- **ガイド付きでオンボードと更新ができる**
+  Codex、Claude Code、あるいは両方を使いながら、コンテキストを育てていけます。
+
+- **summary-first の markdown ナレッジとして残せる**
+  隠れたメモリではなくファイルに残し、ツールにはまず短い要約から読ませられます。
+
+---
+
+## インストール & クイックスタート
 
 ```bash
 npm install -g @handsupmin/gc-tree
-```
-
-グローバルインストールなしで一度だけ実行する場合:
-
-```bash
-npx @handsupmin/gc-tree init
-```
-
-- **パッケージ名:** `@handsupmin/gc-tree`
-- **CLI コマンド:** `gctree`
-- **要件:** Node.js 20+
-ソースベースの開発は [docs/local-development.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md) を参照してください。
-
-### クイックスタート
-
-#### 1) gc-tree を初期化する
-
-```bash
 gctree init
 ```
 
-このコマンドは次のことを行います。
+これでスタート準備は完了です。
+あとはいつもどおり開発を進めれば大丈夫。`gc-tree` が普段の流れにグローバルコンテキストのレーンを足してくれます。
 
-- `~/.gctree` を作成する
-- デフォルトの `main` gc-branch を作成する
-- provider モード（`claude-code`、`codex`、`both`）を選ばせる
-- `both` を選んだ場合は、今回のオンボーディングをどちらで始めるかをさらに選ばせる
-- 言語（`English`、`Korean`、または自由入力）を選ばせる
-- provider モード、実際のオンボーディング provider、言語を `~/.gctree/settings.json` に保存する
-- 現在の環境に必要なコマンド面を用意する
-- `main` が空であれば、アクティブな gc-branch のガイド付きオンボーディングを開始する
+- **CLI コマンド:** `gctree`
+- **要件:** Node.js 20+
 
-#### 2) 現在のコンテキストを解決する
+ソースから試す場合は [docs/local-development.ja.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ja.md) を参照してください。
 
-```bash
-gctree resolve --query "auth token rotation"
-```
+---
 
-現在のリポジトリがその gc-branch にまだ紐付いていない場合、`gctree` は次を選ばせます。
+## よく使う流れ
 
-1. 今回だけ続行する
-2. 今後もこのリポジトリでこの gc-branch を使う
-3. このリポジトリではこの gc-branch を無視する
-
-2 または 3 を選ぶと `~/.gctree/branch-repo-map.json` が更新されます。
-
-#### 3) 別のコンテキストが必要なら新しい gc-branch を作る
+### 作業に専用レーンが欲しくなったら新しいコンテキストを切る
 
 ```bash
 gctree checkout -b client-b
-```
-
-`checkout -b` は**新しい空の gc-branch**を作ります。既存のブランチ文書はコピーしません。
-
-#### 4) 空の gc-branch をオンボードする
-
-```bash
 gctree onboard
 ```
 
-#### 5) 後から永続コンテキストを更新する
+クライアント、プロダクト、移行案件、期間限定の施策など、文脈を分けておきたい仕事は gc-branch を切っておくと楽です。
+
+### 後から長期コンテキストを育てる
 
 ```bash
 gctree update-global-context
 ```
+
+作業が進んだら、アクティブな gc-branch に長く効く文脈を足していきます。
 
 短い別名:
 
@@ -109,18 +103,85 @@ gctree update-gc
 gctree ugc
 ```
 
-実際に作業してみて、そのリポジトリが現在の gc-branch に属するべきだと分かった場合は、自然な流れはこうです。
-
-1. まずそのリポジトリを branch repo map に追加する
-2. その後 `gctree update-global-context` を実行して、そのリポジトリが何を担うのか、なぜ重要なのかといった長期コンテキストを追加する
-
-#### 6) 再オンボーディングの前に gc-branch をリセットする
+### 必要になったタイミングでコンテキストを引く
 
 ```bash
-gctree reset-gc-branch --branch client-b --yes
+gctree resolve --query "auth token rotation"
 ```
 
-### ランタイムで見える provider コマンド
+必要な瞬間だけ、関係ある文脈を呼び戻せば十分です。
+
+---
+
+## しっくりくる理由
+
+**Git のブランチみたいに複数のコンテキストを持てるのに、Git のブランチみたいに逐一面倒を見る必要はありません。**
+
+たとえば次のようにコンテキストを分けられます。
+
+- クライアントごと
+- プロダクトラインごと
+- プラットフォームチームごと
+- バックエンドとフロントエンドをまとめた共有スタック
+- 一時的な施策や移行プロジェクト
+
+そして、ブランチ感覚のコマンドで行き来できます。
+
+```bash
+gctree checkout -b client-b
+gctree checkout main
+```
+
+ただし Git と違って、その切り替えを常に人が意識して管理する必要はありません。
+
+今いるリポジトリが現在のコンテキストのスコープ外なら、`gc-tree` はその文脈を「今は関係ないもの」として扱えます。だから、無関係なコンテキストが別のセッションに混ざり込みません。
+
+その結果、長く使うコンテキストを複数抱えたままでも、毎回すべてを全部のセッションに持ち込まずに済みます。
+
+---
+
+## 現実的なワークフロー
+
+たとえば、こんな構成で仕事をしているとします。
+
+- 共通のプラットフォームリポジトリが 1 つ
+- クライアント向けリポジトリが 2 つ
+- 社内ツール用リポジトリが 1 つ
+
+`gc-tree` がないと、新しい AI セッションを開くたびに説明し直すことになります。
+
+- 今どのクライアントの話なのか
+- どのリポジトリ同士がひとまとまりなのか
+- ここで重要なワークフローは何か
+- 今はどの文脈がむしろノイズになるのか
+
+`gc-tree` があれば、レーンごとにコンテキストを持ち分けて、セッションをまたいで再利用し、repo scope のルールで不要な文脈の流入も防げます。
+
+要するに、本当にやりたいのはこういうことです。
+
+> プロンプトをもっと溜め込むことではなく、
+> **仕事の単位に合ったコンテキストを、正しいレイヤーで管理すること。**
+
+---
+
+## コア概念
+
+- **gc-branch**
+  1 つのプロダクト、クライアント、ワークストリーム、ドメインのための長期コンテキストレーンです。
+
+- **repo scope**
+  そのコンテキストをどのリポジトリで効かせるかを決めるルールです。
+
+- **provider-guided flow**
+  JSON を手で書く代わりに、好みの AI コーディングツールでオンボードと更新を進める流れです。
+
+- **context tree**
+  `gc-tree` は内部的には、ブランチを意識したファイルベースの知識ツリーとしてコンテキストを整理します。
+  ユーザーが得る価値は、プロジェクトの外までつながる再利用可能なコンテキストです。
+
+---
+
+## ランタイムで見える provider コマンド
 
 scaffold 後に見えるコマンドは次の通りです。
 
@@ -129,20 +190,24 @@ scaffold 後に見えるコマンドは次の通りです。
 
 これらのコマンドは、長期コンテキストを集めたり更新したりする前に、現在の gc-branch を必ず明示し、ユーザーが明示的に切り替えを求めない限り、保存された言語を最後まで維持するべきです。
 
-### 主要コマンド一覧
+---
+
+## 主要コマンド一覧
 
 | 目的 | コマンド |
 | --- | --- |
 | gc-tree を初期化して provider を選ぶ | `gctree init` |
 | 現在の gc-branch を確認する | `gctree status` |
-| 現在のコンテキストを検索する | `gctree resolve --query "..."` |
+| アクティブなコンテキストを検索する | `gctree resolve --query "..."` |
 | リポジトリ範囲ルールを確認する | `gctree repo-map` |
-| gc-branch に対してリポジトリを明示的に含める/除外する | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
-| gc-branch を作成/切り替えする | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
+| gc-branch に対してリポジトリを明示的に含める / 除外する | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| gc-branch を作成 / 切り替えする | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
 | 空の gc-branch をオンボードする | `gctree onboard` |
-| 現在の gc-branch を永続更新する | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
+| 現在の gc-branch を長期更新する | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
 | 再オンボーディング前に gc-branch をリセットする | `gctree reset-gc-branch --branch <name> --yes` |
 | 別環境に手動で scaffold を入れる | `gctree scaffold --host codex --target /path/to/repo` |
+
+---
 
 ## ドキュメント
 
@@ -157,9 +222,13 @@ scaffold 後に見えるコマンドは次の通りです。
 - **ローカル実行方法** — [`docs/local-development.ja.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ja.md)
   依存関係のインストール、CLI のローカル実行、変更確認手順を説明します。
 
+---
+
 ## コントリビュート
 
 コントリビューション歓迎です。開発フローと PR チェックリストは英語ドキュメントの [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md) を参照してください。
+
+---
 
 ## ライセンス
 

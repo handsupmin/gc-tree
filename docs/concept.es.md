@@ -2,51 +2,51 @@
 
 [English](concept.md) | [한국어](concept.ko.md) | [简体中文](concept.zh.md) | [日本語](concept.ja.md) | [Español](concept.es.md)
 
-## Summary
+## Resumen
 
-`gctree` es una capa de contexto global pequeña y clara para herramientas de programación con IA. Mantiene el contexto duradero en documentos markdown fuera de un único repositorio, permite cambiarlo y consultarlo por gc-branch, y además puede limitar cada gc-branch a los repositorios donde realmente aplica.
+`gctree` es una capa ligera de contexto global para herramientas de programación con IA. Mantiene el contexto duradero en documentos markdown explícitos fuera de cualquier repositorio individual, permite cambiar entre gc-branches y puede limitar cada gc-branch a los repositorios donde realmente tiene sentido.
 
 ## Qué es `gctree`
 
-`gctree` es una CLI ligera para gestionar contexto global reutilizable.
-Está pensada para personas y equipos que necesitan conservar el mismo contexto duradero entre varios repositorios, sesiones y herramientas.
+`gctree` es una CLI para gestionar contexto global reutilizable.
+Está pensada para equipos y personas que quieren que el contexto de largo recorrido sobreviva entre repositorios, sesiones y herramientas, sin convertirlo en una memoria oculta imposible de inspeccionar.
 
-En lugar de dejar ese conocimiento repartido entre archivos de prompts o depender de memoria oculta, `gctree` le da un lugar claro, estable y basado en archivos.
+En lugar de repartir el conocimiento importante entre archivos de prompt, notas locales al repo e instrucciones improvisadas, `gctree` le da a ese conocimiento un hogar estable, visible y respaldado por archivos.
 
 ## Qué problema resuelve
 
-Muchos entornos de programación con IA empiezan con una de estas opciones:
+Muchos entornos de programación con IA empiezan de forma bastante simple:
 
-- un solo `AGENTS.md`
-- un solo `CLAUDE.md`
-- un archivo de prompts dentro del repositorio
-- un conjunto de notas copiadas manualmente en los prompts
+- un `AGENTS.md`
+- un `CLAUDE.md`
+- un archivo de prompt dentro del repo
+- unas pocas notas que se copian al prompt cuando hacen falta
 
-Eso funciona al principio, pero con el tiempo aparecen necesidades como estas:
+Eso funciona durante un tiempo. Pero cuando empiezan a aparecer necesidades reales, la misma configuración empieza a romperse:
 
-- separar el contexto por producto o cliente
-- mantener contexto fuera de un único repositorio
-- reutilizar la misma documentación duradera desde varias herramientas
-- encontrar el contexto correcto de forma rápida y consistente
-- actualizar el contexto duradero de una forma más segura
-- trabajar en paralelo en muchos repositorios y sesiones a la vez
+- cada producto necesita un contexto distinto
+- el trabajo para clientes debe mantenerse aislado
+- la guía reutilizable debería vivir fuera de un único repositorio
+- varias herramientas deberían poder leer la misma source of truth
+- el contexto duradero debería evolucionar con un flujo seguro y revisable
+- una misma persona puede tener muchas sesiones abiertas en muchos repos a la vez
 
-`gctree` se ocupa precisamente de esa capa.
+`gctree` existe para resolver precisamente esa capa del problema, y hacerlo de forma limpia.
 
 ## Límite de alcance
 
-`gctree` intencionalmente no es:
+`gctree` no pretende ser:
 
-- un orquestador de entrega request-to-commit
+- un orquestador integral que lleve una petición hasta el commit
 - un sistema de memoria oculta
 - un runtime de colaboración en navegador
-- un producto generalista de base de conocimiento
+- un producto de base de conocimiento de propósito general
 
-Se centra en ramas reutilizables de contexto global y en flujos de actualización explícitos.
+Se concentra en una sola tarea: gestionar ramas de contexto global reutilizable y sus actualizaciones explícitas.
 
-## Estructura de archivos
+## Modelo de archivos
 
-Un directorio home típico se ve así:
+Un directorio personal típico queda así:
 
 ```text
 ~/.gctree/
@@ -60,22 +60,22 @@ Un directorio home típico se ve así:
       docs/
 ```
 
-- `HEAD` indica el gc-branch activo de fallback.
-- `settings.json` guarda el modo de provider, el provider real usado para iniciar el onboarding y el idioma preferido del flujo.
-- `branch-repo-map.json` guarda las reglas include/exclude por gc-branch.
+- `HEAD` sigue el gc-branch activo por defecto.
+- `settings.json` guarda el modo de provider, el provider elegido para lanzar el onboarding en runtime y el idioma preferido del flujo.
+- `branch-repo-map.json` guarda qué repositorios están incluidos o excluidos para cada gc-branch.
 - `branch.json` guarda metadatos ligeros del gc-branch.
-- `index.md` es el punto de entrada compacto para las herramientas.
-- `docs/` guarda los documentos markdown source-of-truth.
+- `index.md` es el punto de entrada compacto para herramientas y personas.
+- `docs/` contiene los documentos markdown que actúan como source of truth.
 
-## Comportamiento con alcance por repositorio
+## Comportamiento con conciencia de repositorio
 
-Un gc-branch no tiene por qué aplicarse a todos los repositorios.
-Si la rama `A` solo es relevante para `B`, `C` y `D`, eso puede registrarse en `branch-repo-map.json`.
+Un gc-branch no tiene por qué aplicarse en todas partes.
+Si la rama `A` solo es relevante para los repositorios `B`, `C` y `D`, `gctree` puede dejarlo registrado en `branch-repo-map.json`.
 
-Entonces, si ejecutas `gctree resolve` desde `F`, puedes elegir entre:
+Cuando `gctree resolve` se ejecuta desde otro repositorio, por ejemplo `F`, puede:
 
-- continuar solo esta vez
-- usar siempre esa rama en ese repo
-- ignorarla en ese repo
+- continuar solo una vez
+- usar siempre ese gc-branch en `F`
+- ignorar ese gc-branch en `F`
 
-Eso vuelve a `gctree` mucho más seguro para usuarios intensivos que mantienen muchas sesiones paralelas abiertas sobre repositorios no relacionados.
+Eso hace que gc-tree sea mucho más seguro para quienes mantienen muchas sesiones paralelas abiertas en repositorios que no tienen relación entre sí.

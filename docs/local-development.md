@@ -4,7 +4,7 @@
 
 ## Summary
 
-Local development follows a standard Node.js 20+ workflow: install dependencies, build the CLI, run it locally, and verify with the existing test suite before you send changes.
+Local development follows a standard Node.js 20+ workflow: install dependencies, build the CLI, run it locally, and verify your changes with the existing test suite before you send them out.
 
 ## Prerequisites
 
@@ -47,7 +47,7 @@ npm test
 
 ## Repo-scope tests
 
-The test suite now covers:
+The test suite currently covers:
 
 - provider mode persistence (`claude-code`, `codex`, `both`)
 - preferred language persistence and strong language enforcement in launch prompts
@@ -58,7 +58,7 @@ The test suite now covers:
 
 ## Manual provider E2E checks
 
-Automated tests disable provider launch so they can verify launch plans without opening Codex or Claude Code sessions.
+Automated tests disable provider launch so they can verify launch plans without opening real Codex or Claude Code sessions.
 If you want to dogfood the real launch path, run one of these in a throwaway directory:
 
 ```bash

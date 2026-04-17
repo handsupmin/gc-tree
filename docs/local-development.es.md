@@ -2,76 +2,76 @@
 
 [English](local-development.md) | [한국어](local-development.ko.md) | [简体中文](local-development.zh.md) | [日本語](local-development.ja.md) | [Español](local-development.es.md)
 
-## Summary
+## Resumen
 
-El desarrollo local sigue un flujo estándar de Node.js 20+: instala dependencias, construye la CLI, ejecútala localmente y verifica con la suite de tests existente antes de enviar cambios.
+El desarrollo local sigue un flujo estándar de Node.js 20+: instalar dependencias, compilar la CLI, ejecutarla localmente y verificar los cambios con la suite de tests existente antes de enviarlos.
 
 ## Requisitos previos
 
 - Node.js 20+
 - npm
-- binarios locales de `codex` o `claude` si quieres validar manualmente el arranque del provider
+- binarios locales de `codex` y / o `claude` si quieres probar manualmente el arranque de providers
 
-## Configuración
+## Preparación
 
 ```bash
 npm install
 npm run build
 ```
 
-## Ejecutar la CLI localmente
+## Ejecuta la CLI en local
 
-### Opción 1: ejecutar directamente la entrada construida
+### Opción 1: ejecutar directamente la entrada ya compilada
 
 ```bash
 node dist/src/cli.js status
 ```
 
-### Opción 2: enlazar la CLI a tu shell
+### Opción 2: enlazar la CLI en tu shell
 
 ```bash
 npm link
 gctree status
 ```
 
-Si cambias el código TypeScript, vuelve a construir antes de probar de nuevo la CLI.
+Si cambias archivos TypeScript, vuelve a compilar antes de probar otra vez la CLI.
 
 ## Verificación
 
-Antes de enviar cambios, ejecuta:
+Ejecuta esto antes de abrir un pull request:
 
 ```bash
 npm run build
 npm test
 ```
 
-## Tests de alcance por repositorio
+## Tests de repo scope
 
-La suite actual verifica:
+La suite de tests cubre ahora:
 
 - persistencia del modo de provider (`claude-code`, `codex`, `both`)
-- persistencia del idioma preferido y refuerzo fuerte del idioma en el launch prompt
-- selección de gc-branch según el repositorio
-- interacciones include/exclude durante `resolve`
-- actualización del branch repo map
-- límites del flujo guiado de onboarding/update
+- persistencia del idioma preferido y aplicación estricta del idioma en los launch prompts
+- selección de gc-branch con conciencia de repositorio
+- decisiones interactivas de include / exclude durante `resolve`
+- actualizaciones del branch repo map
+- límites del flujo guiado de onboarding / update
 
-## Verificación manual E2E del provider
+## Comprobaciones manuales E2E de providers
 
-Los tests automáticos desactivan el provider launch para validar el launch plan sin abrir sesiones reales de Codex o Claude Code.
-Si quieres comprobar el camino real de arranque, usa un directorio temporal y ejecuta:
+Los tests automatizados desactivan el lanzamiento de providers para poder verificar los launch plans sin abrir sesiones reales de Codex o Claude Code.
+Si quieres probar la ruta real de lanzamiento, ejecuta uno de estos comandos dentro de un directorio desechable:
 
 ```bash
 gctree init --provider codex
 gctree init --provider claude-code
 ```
 
-Si todo está bien, el provider se abrirá de verdad y recibirá inmediatamente `$gc-onboard` o `/gc-onboard`.
+Deberías ver que el provider se abre y recibe inmediatamente `$gc-onboard` o `/gc-onboard`.
 
 ## Estructura del proyecto
 
-- `src/` — CLI, almacenamiento de contexto, selección de provider, mapeo de alcance por repositorio, flujos guiados de onboarding/update y lógica de scaffolding
-- `tests/` — tests de CLI y comportamiento
-- `skills/` — skills de flujo de trabajo agnósticos a la herramienta
-- `scaffolds/` — plantillas bootstrap específicas del host
-- `docs/` — documentación de concept, principles, usage y development
+- `src/` — CLI, almacenamiento de contexto, selección de provider, mapeo de repo scope, flujos guiados de onboarding / update y lógica de scaffolding
+- `tests/` — tests de CLI y de comportamiento
+- `skills/` — habilidades de flujo de trabajo independientes de la herramienta
+- `scaffolds/` — plantillas de arranque específicas por host
+- `docs/` — documentación de concepto, principios, uso y desarrollo

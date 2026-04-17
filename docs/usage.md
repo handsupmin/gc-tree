@@ -4,7 +4,7 @@
 
 ## Summary
 
-A standard `gctree` workflow is: initialize gc-tree, choose a provider, onboard the default `main` gc-branch, resolve active context, create new gc-branches when needed, map repositories to the right gc-branches, and use guided updates for durable changes.
+A standard `gctree` workflow looks like this: initialize gc-tree, choose a provider, onboard the default `main` gc-branch, resolve the context you need, create new gc-branches when work deserves its own lane, map repositories to the right gc-branches, and use guided updates for durable changes later.
 
 ## Standard workflow
 
@@ -118,4 +118,4 @@ gctree scaffold --host claude-code --target /path/to/repo
 ### Runtime behavior
 
 The active gc-branch is the one pointed to by `HEAD` inside `~/.gctree`, but repo mapping can override that fallback when a repository is explicitly bound to another gc-branch.
-This makes gc-tree practical for heavy users who keep many unrelated sessions open at the same time.
+That makes gc-tree practical for heavy users who keep many unrelated sessions open at the same time.
