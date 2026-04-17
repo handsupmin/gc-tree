@@ -32,21 +32,22 @@ Cuando un solo `AGENTS.md`, `CLAUDE.md` o fragmento de prompt ya no alcanza, `gc
 
 ## Instalación y guía rápida
 
-`gc-tree` ya está preparado como CLI de npm, pero la publicación pública sin scope todavía no está disponible.
-`npm install gc-tree` devuelve `404` porque no existe un paquete publicado exactamente con ese nombre, mientras que `npm publish` para `gc-tree` está siendo rechazado por npm porque el nombre se parece demasiado a `rc-tree`.
-Hasta que se resuelva ese problema del registry, instala desde el código fuente.
-
-### Por ahora, instalar desde el código fuente
+### Instalar desde npm
 
 ```bash
-git clone https://github.com/handsupmin/gc-tree.git
-cd gc-tree
-npm install
-npm run build
-npm link
+npm install -g @handsupmin/gc-tree
 ```
 
-**Requisito:** Node.js 20+
+Si solo quieres ejecutarlo una vez sin instalación global:
+
+```bash
+npx @handsupmin/gc-tree init
+```
+
+- **Nombre del paquete:** `@handsupmin/gc-tree`
+- **Comando CLI:** `gctree`
+- **Requisito:** Node.js 20+
+Para desarrollo desde el código fuente, consulta [docs/local-development.md](docs/local-development.md).
 
 ### Inicio rápido
 

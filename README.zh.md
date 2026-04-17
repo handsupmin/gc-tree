@@ -32,21 +32,22 @@
 
 ## 安装与快速开始
 
-`gc-tree` 已经按 npm CLI 的形式打包好了，但公开的 unscoped 发布目前还不能使用。
-`npm install gc-tree` 返回 `404`，是因为 registry 里还没有这个精确名字的已发布包；而 `npm publish` 又会因为 `gc-tree` 这个名字与 `rc-tree` 过于相似而被 npm 拒绝。
-在这个 registry 问题解决之前，请先使用下面的源码安装方式。
-
-### 目前先从源码安装
+### 通过 npm 安装
 
 ```bash
-git clone https://github.com/handsupmin/gc-tree.git
-cd gc-tree
-npm install
-npm run build
-npm link
+npm install -g @handsupmin/gc-tree
 ```
 
-**要求：** Node.js 20+
+如果你只想临时运行一次，也可以：
+
+```bash
+npx @handsupmin/gc-tree init
+```
+
+- **包名：** `@handsupmin/gc-tree`
+- **CLI 命令：** `gctree`
+- **要求：** Node.js 20+
+如果要从源码开发，请查看 [docs/local-development.md](docs/local-development.md)。
 
 ### 快速开始
 

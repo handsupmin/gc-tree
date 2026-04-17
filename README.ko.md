@@ -32,21 +32,22 @@ AI 코딩 도구를 위한 브랜치 기반 글로벌 컨텍스트 레이어.
 
 ## 설치 및 빠른 시작
 
-`gc-tree`는 이미 npm CLI 형태로 패키징되어 있지만, 공개 unscoped 배포는 아직 사용할 수 없습니다.
-`npm install gc-tree`가 `404`를 내는 이유는 정확히 그 이름으로 발행된 패키지가 없기 때문이고, 반대로 `npm publish`는 `gc-tree` 이름이 `rc-tree`와 너무 비슷하다는 이유로 npm에서 막고 있습니다.
-이 레지스트리 이슈가 해결되기 전까지는 아래처럼 소스에서 설치해야 합니다.
-
-### 당분간은 소스에서 설치
+### npm으로 설치
 
 ```bash
-git clone https://github.com/handsupmin/gc-tree.git
-cd gc-tree
-npm install
-npm run build
-npm link
+npm install -g @handsupmin/gc-tree
 ```
 
-**요구 사항:** Node.js 20+
+글로벌 설치 없이 한 번만 실행하려면:
+
+```bash
+npx @handsupmin/gc-tree init
+```
+
+- **패키지 이름:** `@handsupmin/gc-tree`
+- **CLI 명령어:** `gctree`
+- **요구 사항:** Node.js 20+
+소스 기반 개발은 [docs/local-development.md](docs/local-development.md)를 참고하세요.
 
 ### 빠른 시작
 

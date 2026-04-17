@@ -6,11 +6,6 @@
 
 Local development follows a standard Node.js 20+ workflow: install dependencies, build the CLI, run it locally, and verify with the existing test suite before you send changes.
 
-## Package status
-
-`gc-tree` is packaged for npm, but the public unscoped release is still blocked by npm's similarity policy because the name is too similar to `rc-tree`.
-Use the source workflow below for day-to-day development, and run `npm publish --dry-run` before any release attempt.
-
 ## Prerequisites
 
 - Node.js 20+
@@ -48,7 +43,6 @@ Run these before opening a pull request:
 ```bash
 npm run build
 npm test
-npm publish --dry-run
 ```
 
 ## Repo-scope tests

@@ -32,21 +32,22 @@ When a single `AGENTS.md`, `CLAUDE.md`, or prompt snippet is no longer enough, `
 
 ## Install & Quick Start
 
-`gc-tree` is already structured like an npm CLI, but the public unscoped release is not available yet.
-`npm install gc-tree` returns `404` because there is no exact published package, while `npm publish` for `gc-tree` is currently rejected by npm because the name is too similar to `rc-tree`.
-Until that registry issue is resolved, install from source.
-
-### Install from source for now
+### Install from npm
 
 ```bash
-git clone https://github.com/handsupmin/gc-tree.git
-cd gc-tree
-npm install
-npm run build
-npm link
+npm install -g @handsupmin/gc-tree
 ```
 
-**Requirements:** Node.js 20+
+Or run it once without a global install:
+
+```bash
+npx @handsupmin/gc-tree init
+```
+
+- **Package name:** `@handsupmin/gc-tree`
+- **CLI command:** `gctree`
+- **Requirements:** Node.js 20+
+For source-based development details, see [docs/local-development.md](docs/local-development.md).
 
 ### Quick Start
 
