@@ -1,0 +1,40 @@
+{
+  "name": "@handsupmin/gc-tree",
+  "version": "0.1.3",
+  "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
+  "type": "module",
+  "private": false,
+  "files": [
+    "dist",
+    "skills",
+    "scaffolds",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "gctree": "dist/src/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/handsupmin/gc-tree.git"
+  },
+  "homepage": "https://github.com/handsupmin/gc-tree",
+  "bugs": {
+    "url": "https://github.com/handsupmin/gc-tree/issues"
+  }
+}
