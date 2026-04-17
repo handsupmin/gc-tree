@@ -14,6 +14,13 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   const contents = await Promise.all(files.map((file) => readFile(new URL(`../${file}`, import.meta.url), 'utf8')));
   assert.match(contents[0]!, /one question at a time/i);
   assert.match(contents[0]!, /empty gc-branch/i);
+  assert.match(contents[0]!, /wait for the user's first answer/i);
+  assert.match(contents[0]!, /paste or share organized docs/i);
+  assert.match(contents[0]!, /what kind of work they mainly do/i);
+  assert.match(contents[0]!, /do .*not.* start with a repo scan/i);
+  assert.match(contents[0]!, /~\/sources/i);
+  assert.match(contents[0]!, /only inspect .* after the user has pointed you at them/i);
+  assert.match(contents[0]!, /do .*not.* inspect every source file/i);
   assert.match(contents[0]!, /do not start by asking what one repo does/i);
   assert.match(contents[0]!, /organized docs/i);
   assert.match(contents[0]!, /reference material/i);
@@ -24,8 +31,7 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /whether that final summary matches the user's reality/i);
   assert.match(contents[0]!, /remaining risks, blind spots, or details that still need confirmation/i);
   assert.match(contents[0]!, /do not ask for a full information dump/i);
-  assert.match(contents[0]!, /inspect any relevant docs, repos, directories, or files that are already available/i);
-  assert.match(contents[0]!, /present your hypothesis before asking the user to type more/i);
+  assert.match(contents[0]!, /when you do present a hypothesis/i);
   assert.match(contents[0]!, /1\. This is basically correct\./i);
   assert.match(contents[0]!, /2\. Part of it is wrong/i);
   assert.match(contents[0]!, /3\. This is the wrong frame/i);

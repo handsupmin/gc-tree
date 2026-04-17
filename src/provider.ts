@@ -12,6 +12,9 @@ import type {
   GcTreeProviderMode,
 } from "./types.js";
 
+export const LANGUAGE_SELECTION_PROMPT =
+  "Choose language:\n1. English (default)\n2. Korean\n3. Other language\n> ";
+
 export function visibleProviderCommand(
   provider: GcTreeProvider,
   command: "gc-onboard" | "gc-update-global-context"
@@ -54,11 +57,7 @@ export async function promptLanguageSelection(): Promise<string> {
   const rl = createInterface({ input: stdin, output: stderr });
   try {
     const parsed = parseLanguageSelectionInput(
-      (
-        await rl.question(
-          "Choose language:\n1. English (default)\n2. Korean\n3. Other language\n> "
-        )
-      ).trim()
+      (await rl.question(LANGUAGE_SELECTION_PROMPT)).trim()
     );
     if (parsed.language) return parsed.language;
     if (parsed.needsFollowUp) {
