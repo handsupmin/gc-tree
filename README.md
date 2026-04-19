@@ -19,44 +19,117 @@ Manage multiple contexts like Git branches.
 
 </div>
 
-Built for developers whose real work spans **multiple repos, products, clients, and workflows**.
+---
 
-`gc-tree` gives AI coding tools a reusable context layer **above the repo level**. Keep long-lived context across sessions, scope it to the right repos, and let `gc-tree` stay out of the way when the current repo is unrelated.
+## The problem
+
+You use Claude Code or Codex every day. But your real work spans multiple repos, products, and clients — and your AI tools only know about the current file.
+
+So you end up doing this every session:
+
+- Re-explain which repos belong together
+- Paste the same architecture doc into the prompt again
+- Remind the agent about conventions it already "knew" last week
+- Manually strip context that's irrelevant to the current repo
+
+That's not an AI problem. It's a **context management problem**.
 
 ---
 
-## Why gc-tree?
+## What gc-tree does
 
-If you use AI agents seriously, repo-local context stops being enough.
+`gc-tree` sits **above the repo level**. It stores durable context in structured markdown files and lets your AI tools pull only what's relevant — before each session, automatically.
 
-Once your work spans multiple repos and workstreams, the usual setup starts to break:
+```bash
+gctree resolve --query "auth token rotation policy"
+```
 
-- durable context gets stuffed into prompts
-- unrelated context leaks into the wrong repo
-- every new session needs the same onboarding again
-- client or product knowledge lives in hidden chat history
-- switching workstreams means manually switching mental context too
+```json
+{
+  "gc_branch": "main",
+  "matches": [
+    {
+      "title": "Auth & Session Conventions",
+      "score": 4,
+      "summary": "JWT rotation on every request, refresh tokens stored in httpOnly cookies, 15-min access token TTL",
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+    }
+  ]
+}
+```
 
-`gc-tree` is for the people who already use Codex, Claude Code, and other AI coding tools heavily — and want context management to stop being another manual workflow.
+Your AI tool gets the right context. Not the whole knowledge base — just the relevant slice.
+
+**In practice: only ~4% of your total context is injected per query.** The other 96% stays on disk, out of the token window, until it's actually needed.
 
 ---
 
-## What you get
+## Who this is for
 
-- **Multiple durable contexts**
-  Keep separate context lanes for different products, clients, or workstreams.
+You'll get the most out of `gc-tree` if you:
 
-- **Repo-scoped relevance**
-  Map each context to the repos where it actually belongs.
+- Work across **multiple repos** (monorepo teams, platform + client repos, backend + frontend stacks)
+- Switch between **multiple products or clients** in the same week
+- Find yourself **re-explaining the same context** at the start of every AI session
+- Want AI tools to understand your **conventions, architecture, and domain knowledge** — not just the current file
 
-- **Smart scope guard**
-  If you enter a repo that is not mapped yet, `gc-tree` can ask whether to continue once, always use this context here, or ignore it here.
+If you only ever work in one repo and one product, you probably don't need this. `CLAUDE.md` or `.cursorrules` is enough.
 
-- **Guided onboarding and updates**
-  Use Codex, Claude Code, or both to onboard and maintain context over time.
+---
 
-- **Summary-first markdown knowledge**
-  Store reusable context in files, not hidden memory, and let tools read the short version first.
+## Why not just use CLAUDE.md or cursor rules?
+
+`CLAUDE.md` is great — for one repo.
+
+The moment you have multiple repos, clients, or workstreams:
+
+| | `CLAUDE.md` / cursor rules | `gc-tree` |
+|---|---|---|
+| Scope | One repo | Multiple repos, one context |
+| Persistence | Per-repo file | Stored outside repos, reused across sessions |
+| Switching contexts | Manual file edits | `gctree checkout client-b` |
+| Relevance filtering | Everything or nothing | Only injects matching docs (~4% of total) |
+| Onboarding | Hand-written | Guided by your AI tool |
+| Works with Codex | ✅ | ✅ |
+| Works with Claude Code | ✅ | ✅ |
+
+---
+
+## Validated performance
+
+Tested against real internal documentation (4 Notion exports, Korean + English mixed queries):
+
+| Metric | Result |
+|---|---|
+| Recall — relevant queries find the right doc | **100%** (16/16) |
+| Precision — irrelevant queries return empty | **80%** (4/5) |
+| F1 score | **88.9%** |
+| Tokens injected per query vs. total context | **~4%** |
+| Works with mixed Korean + English queries | ✅ |
+
+---
+
+## Works with Claude Code and Codex — both verified
+
+```bash
+gctree scaffold --host claude-code   # installs CLAUDE.md snippet + /gc-onboard, /gc-update-global-context
+gctree scaffold --host codex         # installs AGENTS.md snippet + $gc-onboard, $gc-update-global-context
+gctree scaffold --host both          # both at once
+```
+
+Both providers use the same underlying context store. Onboard once, use from either tool.
+
+**Claude Code** — uses `/gc-resolve-context`, `/gc-onboard`, `/gc-update-global-context` slash commands.
+
+**Codex** — uses `$gc-resolve-context`, `$gc-onboard`, `$gc-update-global-context` skills. Verified with `codex exec`:
+
+```
+gctree status → gc_branch: main, doc_count: 2
+gctree resolve --query 'NestJS DTO plainToInstance'
+→ matched "Backend Coding Conventions" (score: 3)
+→ DTO: class-transformer plainToInstance, class-validator required
+→ Error handling: HttpException-based custom exceptions, no raw Error throws
+```
 
 ---
 
@@ -67,160 +140,102 @@ npm install -g @handsupmin/gc-tree
 gctree init
 ```
 
-That is enough to get started.
-After that, keep working the way you already do — `gc-tree` adds a reusable global context lane around your normal workflow.
+`gctree init` walks you through:
+1. Choose provider: `claude-code`, `codex`, or `both`
+2. Scaffold the integration files into your current repo
+3. Run guided onboarding for the `main` gc-branch
 
-- **CLI command:** `gctree`
-- **Requirements:** Node.js 20+
+After that, your AI tool will know to call `gctree resolve` before planning or implementing.
 
-For source-based development, see [docs/local-development.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md).
+- **CLI:** `gctree`
+- **Requires:** Node.js 20+
 
 ---
 
 ## Common moves
 
-### Create a new context when a workstream deserves its own lane
+### Separate contexts for separate workstreams
 
 ```bash
 gctree checkout -b client-b
 gctree onboard
 ```
 
-When a client, product, migration, or initiative deserves its own durable lane, give it its own gc-branch.
+Each gc-branch is a fully independent context lane. Switch between them like Git branches.
 
-### Update durable context later
-
-```bash
-gctree update-global-context
-```
-
-Refresh the active gc-branch as the work evolves.
-
-Short aliases:
+### Pull relevant context on demand
 
 ```bash
-gctree update-gc
-gctree ugc
+gctree resolve --query "billing retry policy"
 ```
 
-### Resolve context when you need it
+Returns only the matching docs — title, summary, and excerpt. Your tool reads the full doc only if the summary isn't enough.
+
+### Keep context current
 
 ```bash
-gctree resolve --query "auth token rotation"
+gctree update-global-context   # or: gctree update-gc / gctree ugc
 ```
 
-Pull relevant context back into the current moment when you want it.
+Guided update flow — your AI tool asks what changed and writes the new context back to the gc-branch.
 
----
-
-## Why it feels natural
-
-**Keep multiple contexts like Git branches — without babysitting them like Git branches.**
-
-You can create separate contexts for:
-
-- a client
-- a product line
-- a platform team
-- a shared backend + frontend stack
-- a temporary initiative or migration
-
-Then switch between them with familiar branch-like commands:
+### Scope a context to specific repos
 
 ```bash
-gctree checkout -b client-b
-gctree checkout main
+gctree set-repo-scope --branch client-b --include   # include current repo
+gctree set-repo-scope --branch client-b --exclude   # exclude current repo
 ```
 
-But unlike Git, you do **not** have to manually manage that switch all the time.
-
-If the repo you are in is outside the scope of the current context, `gc-tree` can detect that and treat the context as irrelevant instead of leaking it into the wrong session.
-
-That means you can keep multiple long-lived contexts around without dragging unrelated context into every tool session.
+`gc-tree` won't inject a context into repos where it doesn't belong.
 
 ---
 
-## A realistic workflow
+## How context is stored
 
-You work across:
+```
+~/.gctree/
+  branches/
+    main/
+      index.md          ← compact index, ≤2000 chars, loaded first
+      docs/
+        auth.md         ← full doc, read only when needed
+        architecture.md
+    client-b/
+      index.md
+      docs/
+        ...
+  branch-repo-map.json  ← which repos belong to which gc-branch
+  settings.json         ← preferred provider, language
+```
 
-- one shared platform repo
-- two client repos
-- one internal tooling repo
-
-Without `gc-tree`, every AI session has to be re-taught:
-
-- which client this is
-- which repos belong together
-- which workflows matter here
-- which context is irrelevant right now
-
-With `gc-tree`, you can keep separate contexts for each lane, reuse them across sessions, and let repo-scope rules prevent irrelevant context from showing up where it should not.
-
-This is the real job to be done:
-
-> not “store more prompt text,”
-> but **manage the right context at the right level of work**.
+Context lives outside your repos — no `.gitignore` rules needed, no accidental commits, reusable across every project that uses the same gc-branch.
 
 ---
 
-## Core concepts
+## Core commands
 
-- **gc-branch**
-  A durable context lane for one product, client, workstream, or domain.
-
-- **repo scope**
-  Rules that decide which repos a context should apply to.
-
-- **provider-guided flow**
-  Use your preferred AI coding tool to onboard and update context instead of hand-authoring JSON.
-
-- **context tree**
-  Under the hood, `gc-tree` organizes context as branch-aware, file-backed knowledge.
-  The “tree” is the implementation model; the user-facing benefit is reusable context beyond the project.
-
----
-
-## Provider-facing commands inside the runtime
-
-After scaffolding, the visible commands are:
-
-- **Codex:** `$gc-onboard`, `$gc-update-global-context`
-- **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
-
-Those commands should always mention the current active gc-branch before gathering or updating durable context, and they should keep using the saved workflow language unless the user explicitly asks to switch.
-
----
-
-## Core commands at a glance
-
-| Goal                                              | Command                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------------ |
-| Initialize gc-tree and choose a provider          | `gctree init`                                                      |
-| Confirm the active gc-branch                      | `gctree status`                                                    |
-| Search the active context                         | `gctree resolve --query "..."`                                     |
-| Show repo-scope rules                             | `gctree repo-map`                                                  |
-| Explicitly include/exclude a repo for a gc-branch | `gctree set-repo-scope --branch <name> --include` / `--exclude`    |
-| Create or switch gc-branches                      | `gctree checkout <branch>` / `gctree checkout -b <branch>`         |
-| Guided onboarding for an empty gc-branch          | `gctree onboard`                                                   |
-| Guided durable update for the active gc-branch    | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
-| Reset a gc-branch before re-onboarding            | `gctree reset-gc-branch --branch <name> --yes`                     |
-| Scaffold another environment manually             | `gctree scaffold --host codex --target /path/to/repo`              |
+| Goal | Command |
+|---|---|
+| Initialize gc-tree and choose a provider | `gctree init` |
+| Confirm the active gc-branch | `gctree status` |
+| Search the active context | `gctree resolve --query "..."` |
+| Create or switch gc-branches | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
+| List all gc-branches | `gctree branches` |
+| Guided onboarding for an empty gc-branch | `gctree onboard` |
+| Guided durable update for the active gc-branch | `gctree update-global-context` / `gctree ugc` |
+| Show repo-scope rules | `gctree repo-map` |
+| Include/exclude current repo for a gc-branch | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| Reset a gc-branch before re-onboarding | `gctree reset-gc-branch --branch <name> --yes` |
+| Scaffold a new environment | `gctree scaffold --host codex --target /path/to/repo` |
 
 ---
 
 ## Documentation
 
-Detailed docs live in the [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) directory.
-
 - **Concept** — [`docs/concept.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.md)
-  Learn what `gctree` is, which problem it solves, and what belongs in the global-context layer.
 - **Principles** — [`docs/principles.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.md)
-  Read the rules behind gc-branches, repo scope, slim indexes, summary-first docs, and guided updates.
 - **Usage** — [`docs/usage.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.md)
-  See the standard CLI flow, provider-facing commands, repo-scope behavior, and integration patterns.
 - **Local development** — [`docs/local-development.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.md)
-  Learn how to run the CLI locally and verify changes before contributing.
 
 ---
 

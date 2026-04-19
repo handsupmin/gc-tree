@@ -19,44 +19,117 @@
 
 </div>
 
-这是为那些日常工作横跨多个仓库、产品、客户和工作流的开发者准备的。
+---
 
-`gc-tree` 给 AI 编码工具补上了一层 **仓库之上的可复用上下文层**。该长期保留的上下文可以留下来，只在相关仓库里生效，不相关的时候就安静退场。
+## 问题所在
+
+你每天都在用 Claude Code 或 Codex。但你的实际工作横跨多个仓库、产品和客户——而 AI 工具只认识当前文件。
+
+于是你不得不一遍遍地做这些事：
+
+- 重新解释哪些仓库属于同一套系统
+- 把同一份架构文档反复粘贴进提示词
+- 提醒 AI 它上周"已经知道"的编码规范
+- 手动剔除与当前仓库无关的上下文
+
+这不是 AI 的问题，而是**上下文管理的问题**。
 
 ---
 
-## 为什么是 gc-tree？
+## gc-tree 做什么
 
-只要你开始认真把 AI 代理用进日常开发，repo-local context 很快就不够用了。
+`gc-tree` 工作在**仓库之上**。它把上下文存储为结构化的 Markdown 文件，让 AI 工具在每次会话前自动拉取相关内容。
 
-一旦工作同时分布在多个仓库和多个工作流上，常见问题就会一起出现：
+```bash
+gctree resolve --query "auth token rotation policy"
+```
 
-- 长期上下文被不断塞进提示词里
-- 不相关的上下文泄漏到别的仓库
-- 每开一个新会话都要重新讲一遍背景
-- 客户或产品知识只藏在聊天记录里
-- 每次切换工作流，都得靠人脑手动切换上下文
+```json
+{
+  "gc_branch": "main",
+  "matches": [
+    {
+      "title": "认证与 Session 规范",
+      "score": 4,
+      "summary": "每次请求都做 JWT rotation，refresh token 存在 httpOnly cookie 里，access token TTL 15 分钟",
+      "excerpt": "## 认证流程\nAccess token：15 分钟 TTL，每次认证请求都做 rotation..."
+    }
+  ]
+}
+```
 
-`gc-tree` 是给那些已经深度使用 Codex、Claude Code 等 AI 编码工具、但不想再手动维护上下文的人准备的。
+AI 工具拿到的是正确的上下文——不是整个知识库，而是恰好相关的那一片。
+
+**实测：每次查询只注入约 4% 的总上下文。** 其余 96% 留在磁盘上，真正需要时才进入 token 窗口。
 
 ---
 
-## 它能直接带来什么
+## 适合哪些人
 
-- **多条可长期维护的上下文**
-  你可以按产品、客户或工作流，分别维护自己的上下文线。
+如果以下几条符合你的情况，gc-tree 会很适合你：
 
-- **按仓库控制相关性**
-  可以明确指定某条上下文只该作用于哪些仓库。
+- 工作横跨**多个仓库**（单体仓库团队、平台 + 客户仓库、后端 + 前端技术栈）
+- 同一周内要在**多个产品或客户**之间来回切换
+- 每次开 AI 会话都要**重复解释相同的上下文**
+- 希望 AI 工具不只了解当前文件，还能理解**编码规范、架构和领域知识**
 
-- **更聪明的范围保护**
-  当你进入一个尚未映射的仓库时，可以选择只继续这一次、以后都在这里启用，或者在这里忽略它。
+如果你只在一个仓库、一个产品里工作，不需要这个工具。`CLAUDE.md` 或 `.cursorrules` 就够了。
 
-- **带引导的 onboarding 与更新**
-  可以用 Codex、Claude Code，或者两者一起，把上下文建立起来并持续维护。
+---
 
-- **summary-first 的 markdown 知识结构**
-  知识留在文件里，而不是藏在隐式记忆里；工具可以先读摘要，再决定要不要展开全文。
+## 和 CLAUDE.md 或 cursor rules 有什么区别？
+
+`CLAUDE.md` 很好用——在单个仓库里。
+
+一旦你有了多个仓库、客户或工作线：
+
+| | `CLAUDE.md` / cursor rules | `gc-tree` |
+|---|---|---|
+| 作用范围 | 单个仓库 | 多个仓库，一套上下文 |
+| 持久化方式 | 仓库内的文件 | 存储在仓库外，跨会话复用 |
+| 切换上下文 | 手动编辑文件 | `gctree checkout client-b` |
+| 相关性过滤 | 全部或全无 | 只注入匹配的文档（约 4%） |
+| 初始化方式 | 手写 | 由 AI 工具引导完成 |
+| 支持 Codex | ✅ | ✅ |
+| 支持 Claude Code | ✅ | ✅ |
+
+---
+
+## 经过验证的性能
+
+基于真实内部文档测试（4 份 Notion 导出，中英文混合查询）：
+
+| 指标 | 结果 |
+|---|---|
+| Recall——相关查询找到正确文档的比例 | **100%**（16/16） |
+| Precision——无关查询返回空结果的比例 | **80%**（4/5） |
+| F1 分数 | **88.9%** |
+| 每次查询注入的 token 占总上下文的比例 | **约 4%** |
+| 支持中英文混合查询 | ✅ |
+
+---
+
+## Claude Code 和 Codex 均已验证可用
+
+```bash
+gctree scaffold --host claude-code   # 安装 CLAUDE.md 片段 + /gc-onboard、/gc-update-global-context
+gctree scaffold --host codex         # 安装 AGENTS.md 片段 + $gc-onboard、$gc-update-global-context
+gctree scaffold --host both          # 两者同时安装
+```
+
+两个 provider 使用同一个底层上下文存储。onboard 一次，两个工具都能用。
+
+**Claude Code** — 使用 `/gc-resolve-context`、`/gc-onboard`、`/gc-update-global-context` 斜杠命令。
+
+**Codex** — 使用 `$gc-resolve-context`、`$gc-onboard`、`$gc-update-global-context` skill。已通过 `codex exec` 实际验证：
+
+```
+gctree status → gc_branch: main，doc_count: 2
+gctree resolve --query 'NestJS DTO plainToInstance'
+→ 匹配到"后端编码规范"（score: 3）
+→ DTO：class-transformer plainToInstance，class-validator 必填
+→ 错误处理：基于 HttpException 的自定义异常，禁止直接抛出 raw Error
+```
 
 ---
 
@@ -67,165 +140,108 @@ npm install -g @handsupmin/gc-tree
 gctree init
 ```
 
-这样就可以开工了。
-之后照你原来的开发方式继续就行，`gc-tree` 只是把一层可复用的全局上下文加在你现有流程外面。
+`gctree init` 会引导你：
+1. 选择 provider：`claude-code`、`codex` 或 `both`
+2. 在当前仓库安装集成文件
+3. 为 `main` gc-branch 完成引导式 onboarding
 
-- **CLI 命令：** `gctree`
+之后，AI 工具会自动学会在规划或实现前调用 `gctree resolve`。
+
+- **CLI：** `gctree`
 - **要求：** Node.js 20+
-
-如果你想从源码开发，请看 [docs/local-development.zh.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.zh.md)。
 
 ---
 
 ## 常用操作
 
-### 当一个工作流值得拥有自己的上下文时，先开一条新分支
+### 为不同工作线创建独立上下文
 
 ```bash
 gctree checkout -b client-b
 gctree onboard
 ```
 
-不管是客户项目、产品线、迁移工作，还是某个阶段性的专项，只要值得单独维护背景，就给它单开一个 gc-branch。
+每个 gc-branch 都是完全独立的上下文通道，像 Git 分支一样自由切换。
 
-### 之后再把长期上下文补进去
-
-```bash
-gctree update-global-context
-```
-
-随着工作推进，把真正值得长期保留的信息补到当前激活的 gc-branch 里。
-
-简短别名：
+### 按需拉取相关上下文
 
 ```bash
-gctree update-gc
-gctree ugc
+gctree resolve --query "billing retry policy"
 ```
 
-### 需要的时候再把上下文取出来
+只返回匹配的文档——标题、摘要和摘录。摘要不够用时，工具才会读完整文档。
+
+### 保持上下文与时俱进
 
 ```bash
-gctree resolve --query "auth token rotation"
+gctree update-global-context   # 或：gctree update-gc / gctree ugc
 ```
 
-等你真的需要某段背景时，再把它拉回当前时刻。
+引导式更新流程——AI 工具询问发生了哪些变化，并将新上下文写回 gc-branch。
 
----
-
-## 为什么它用起来很顺手
-
-**你可以像管理 Git 分支一样保留多条上下文，但不用像管理 Git 分支那样时时盯着。**
-
-你可以把上下文拆成这些维度：
-
-- 客户
-- 产品线
-- 平台团队
-- 一起演进的后端 + 前端技术栈
-- 临时专项或迁移项目
-
-切换方式也很熟悉：
+### 限定上下文作用的仓库范围
 
 ```bash
-gctree checkout -b client-b
-gctree checkout main
+gctree set-repo-scope --branch client-b --include   # 包含当前仓库
+gctree set-repo-scope --branch client-b --exclude   # 排除当前仓库
 ```
 
-但和 Git 不一样的是，这种切换不需要你一直手动维护。
-
-如果你当前所在的仓库根本不在这条上下文的作用范围内，`gc-tree` 可以把它判断为“此处无关”，而不是硬塞进当前会话里。
-
-这样一来，你可以长期保留多条上下文，却不用把所有背景都拖进每一次工具会话里。
+`gc-tree` 不会向不相关的仓库注入上下文。
 
 ---
 
-## 一个更贴近现实的工作流
+## 上下文的存储结构
 
-假设你平时同时在这些地方工作：
+```
+~/.gctree/
+  branches/
+    main/
+      index.md          ← 压缩索引，≤2000 字符，优先加载
+      docs/
+        auth.md         ← 完整文档，按需读取
+        architecture.md
+    client-b/
+      index.md
+      docs/
+        ...
+  branch-repo-map.json  ← 哪些仓库属于哪个 gc-branch
+  settings.json         ← 首选 provider、语言
+```
 
-- 一个共享平台仓库
-- 两个客户项目仓库
-- 一个内部工具仓库
-
-没有 `gc-tree` 的话，每次开新的 AI 会话都得重新交代：
-
-- 现在讨论的是哪个客户
-- 哪些仓库其实是一组
-- 当前最重要的工作流是什么
-- 哪些上下文放进来反而会干扰
-
-有了 `gc-tree`，你就可以按工作线维护不同上下文，在会话之间复用，并用 repo scope 规则挡住那些不该混进来的背景。
-
-它真正解决的不是“多存一点提示词”，而是：
-
-> **在对的工作层级上，管理对的上下文。**
-
----
-
-## 核心概念
-
-- **gc-branch**
-  面向某个产品、客户、工作流或领域的一条长期上下文线。
-
-- **repo scope**
-  决定这条上下文应该在哪些仓库里生效的规则。
-
-- **provider-guided flow**
-  不手写 JSON，而是借助你熟悉的 AI 编码工具完成 onboarding 和更新。
-
-- **context tree**
-  在实现上，`gc-tree` 把上下文组织成一棵按分支感知、由文件承载的知识树。
-  对用户来说，核心价值就是：项目之外也能复用的上下文。
+上下文存储在仓库之外——无需 `.gitignore` 规则，不会误提交，使用同一 gc-branch 的所有项目都可复用。
 
 ---
 
-## 运行时里可见的 provider 命令
-
-scaffold 完成后，运行时可见的命令是：
-
-- **Codex:** `$gc-onboard`, `$gc-update-global-context`
-- **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
-
-这些命令在开始收集或更新长期上下文之前，都应该先说明当前激活的是哪个 gc-branch，并且除非用户明确要求切换，否则应持续使用已经保存的语言。
-
----
-
-## 核心命令速览
+## 核心命令
 
 | 目标 | 命令 |
-| --- | --- |
+|---|---|
 | 初始化 gc-tree 并选择 provider | `gctree init` |
-| 确认当前 gc-branch | `gctree status` |
-| 搜索当前激活的上下文 | `gctree resolve --query "..."` |
-| 查看仓库范围规则 | `gctree repo-map` |
-| 为 gc-branch 显式设置仓库包含 / 排除 | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| 确认当前激活的 gc-branch | `gctree status` |
+| 搜索当前上下文 | `gctree resolve --query "..."` |
 | 创建或切换 gc-branch | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
-| 为一个空的 gc-branch 执行 onboarding | `gctree onboard` |
-| 为当前 gc-branch 执行长期更新 | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
+| 列出所有 gc-branch | `gctree branches` |
+| 对空 gc-branch 进行引导式 onboarding | `gctree onboard` |
+| 对当前 gc-branch 进行引导式更新 | `gctree update-global-context` / `gctree ugc` |
+| 查看仓库范围规则 | `gctree repo-map` |
+| 为 gc-branch 包含或排除当前仓库 | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
 | 重新 onboarding 前重置 gc-branch | `gctree reset-gc-branch --branch <name> --yes` |
-| 手动为其他环境安装 scaffold | `gctree scaffold --host codex --target /path/to/repo` |
+| 在新环境中安装 scaffold | `gctree scaffold --host codex --target /path/to/repo` |
 
 ---
 
 ## 文档
 
-详细文档位于 [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) 目录下。
-
 - **概念** — [`docs/concept.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.zh.md)
-  说明 `gctree` 是什么、解决什么问题，以及全局上下文层的边界。
 - **原理** — [`docs/principles.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.zh.md)
-  介绍 gc-branch、仓库范围、summary-first 文档和引导式更新等原则。
 - **使用方法** — [`docs/usage.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.zh.md)
-  介绍标准 CLI 流程、provider 命令、仓库范围行为和集成方式。
-- **本地运行方法** — [`docs/local-development.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.zh.md)
-  说明依赖安装、本地运行 CLI 与提交前验证方式。
+- **本地开发** — [`docs/local-development.zh.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.zh.md)
 
 ---
 
 ## 贡献
 
-欢迎贡献。开发流程与 PR 检查清单位于英文文档 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)。
+欢迎贡献。开发流程与 PR 检查清单见 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)。
 
 ---
 

@@ -18,7 +18,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "node --import tsx --test tests/*.test.ts",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "eval": "node --import tsx tests/eval/index.ts",
+    "eval:verbose": "node --import tsx tests/eval/index.ts --verbose",
+    "eval:multi-repo": "node --import tsx tests/eval/multi-repo.ts",
+    "eval:multi-repo:verbose": "node --import tsx tests/eval/multi-repo.ts --verbose",
+    "eval:autoresearch": "node --import tsx tests/eval/autoresearch.ts",
+    "eval:real-docs": "node --import tsx tests/eval/real-docs.ts",
+    "eval:real-docs:verbose": "node --import tsx tests/eval/real-docs.ts --verbose"
   },
   "engines": {
     "node": ">=20"

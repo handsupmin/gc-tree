@@ -19,44 +19,117 @@ Git 브랜치 다루듯 여러 컨텍스트를 나눠 관리할 수 있습니다
 
 </div>
 
-실제 업무가 여러 레포, 제품, 고객사, 워크플로에 걸쳐 있는 개발자를 위해 만들었습니다.
+---
 
-`gc-tree`는 AI 코딩 도구에 **레포 바깥 레벨의 재사용 가능한 컨텍스트 레이어**를 붙여줍니다. 오래 가는 맥락은 유지하고, 관련 있는 레포에서만 적용하고, 지금 레포와 무관할 때는 조용히 빠집니다.
+## 문제
+
+Claude Code나 Codex를 매일 씁니다. 그런데 실제 업무는 여러 레포, 제품, 고객사에 걸쳐 있고 — AI 도구는 현재 파일밖에 모릅니다.
+
+그래서 매번 이렇게 됩니다:
+
+- 어떤 레포들이 한 묶음인지 다시 설명
+- 같은 아키텍처 문서를 또 프롬프트에 붙여넣기
+- 지난주에 "이미 알던" 컨벤션을 다시 알려주기
+- 현재 레포와 무관한 컨텍스트를 손으로 걷어내기
+
+이건 AI 문제가 아닙니다. **컨텍스트 관리 문제**입니다.
 
 ---
 
-## 왜 gc-tree인가요?
+## gc-tree가 하는 일
 
-AI 에이전트를 진짜 실무에 쓰기 시작하면 repo-local context만으로는 금방 한계가 옵니다.
+`gc-tree`는 **레포 위 레벨**에 위치합니다. 컨텍스트를 구조화된 마크다운 파일에 저장하고, AI 도구가 매 세션마다 관련된 것만 자동으로 가져오게 합니다.
 
-작업이 여러 레포와 여러 워크스트림으로 퍼지기 시작하면 보통 이런 문제가 생깁니다.
+```bash
+gctree resolve --query "auth token rotation policy"
+```
 
-- 장기 컨텍스트가 프롬프트 안으로 계속 밀려 들어감
-- 상관없는 컨텍스트가 다른 레포까지 새어 나감
-- 새 세션을 열 때마다 같은 설명을 또 해야 함
-- 고객사나 제품 지식이 채팅 기록 속에만 숨어 있음
-- 작업 전환 때마다 사람 머리로 컨텍스트 스위칭을 직접 해야 함
+```json
+{
+  "gc_branch": "main",
+  "matches": [
+    {
+      "title": "인증 & 세션 컨벤션",
+      "score": 4,
+      "summary": "모든 요청에서 JWT rotation, refresh token은 httpOnly 쿠키에 저장, access token TTL 15분",
+      "excerpt": "## 인증 플로우\nAccess token: 15분 TTL, 매 인증 요청마다 rotation..."
+    }
+  ]
+}
+```
 
-`gc-tree`는 Codex, Claude Code 같은 AI 코딩 도구를 이미 깊게 쓰고 있고, 이제는 컨텍스트 관리까지 수작업으로 하고 싶지 않은 사람을 위한 도구입니다.
+AI 도구가 올바른 컨텍스트를 가져옵니다. 지식 베이스 전체가 아니라 — 관련된 조각만.
+
+**실제로: 쿼리당 전체 컨텍스트의 ~4%만 주입됩니다.** 나머지 96%는 실제로 필요할 때까지 디스크에 남아 토큰 윈도우 밖에 있습니다.
 
 ---
 
-## 바로 얻는 것들
+## 이 도구가 맞는 사람
 
-- **여러 개의 장기 컨텍스트**
-  제품, 고객사, 워크스트림마다 컨텍스트 레인을 따로 유지할 수 있습니다.
+다음에 해당하면 gc-tree를 제일 잘 쓸 수 있습니다:
 
-- **레포 기준의 관련성 관리**
-  어떤 컨텍스트가 어떤 레포에만 적용되어야 하는지 명확하게 묶을 수 있습니다.
+- **여러 레포**에 걸쳐 일하는 경우 (모노레포 팀, 플랫폼 + 클라이언트 레포, 백엔드 + 프론트엔드 스택)
+- 같은 주에 **여러 제품이나 고객사** 사이를 오가는 경우
+- AI 세션 시작마다 **같은 컨텍스트를 반복 설명**하는 경우
+- AI 도구가 현재 파일뿐 아니라 **컨벤션, 아키텍처, 도메인 지식**도 알길 원하는 경우
 
-- **스마트한 범위 가드**
-  아직 매핑되지 않은 레포에 들어가면, 이번만 계속할지 / 여기서는 항상 쓸지 / 여기서는 무시할지를 고를 수 있습니다.
+레포 하나, 제품 하나에서만 일한다면 굳이 이 도구가 필요 없습니다. `CLAUDE.md`나 `.cursorrules`로 충분합니다.
 
-- **가이드형 온보딩과 업데이트**
-  Codex, Claude Code, 혹은 둘 다를 써서 컨텍스트를 처음 만들고 계속 다듬을 수 있습니다.
+---
 
-- **summary-first markdown 지식 구조**
-  숨겨진 메모리가 아니라 파일에 남기고, 도구는 먼저 짧은 요약부터 읽게 할 수 있습니다.
+## CLAUDE.md나 cursor rules와 뭐가 다른가요?
+
+`CLAUDE.md`는 훌륭합니다 — 레포 하나에서는요.
+
+여러 레포, 고객사, 워크스트림이 생기는 순간:
+
+| | `CLAUDE.md` / cursor rules | `gc-tree` |
+|---|---|---|
+| 범위 | 레포 하나 | 여러 레포, 컨텍스트 하나 |
+| 지속성 | 레포 내 파일 | 레포 밖 저장, 세션 간 재사용 |
+| 컨텍스트 전환 | 파일 직접 수정 | `gctree checkout client-b` |
+| 관련성 필터링 | 전부 아니면 없음 | 매칭 문서만 주입 (~4%) |
+| 온보딩 | 손으로 작성 | AI 도구가 가이드 |
+| Codex 지원 | ✅ | ✅ |
+| Claude Code 지원 | ✅ | ✅ |
+
+---
+
+## 검증된 성능
+
+실제 내부 문서 기준 테스트 (Notion 내보내기 4종, 한국어 + 영어 혼합 쿼리):
+
+| 지표 | 결과 |
+|---|---|
+| Recall — 관련 쿼리가 올바른 문서를 찾는 비율 | **100%** (16/16) |
+| Precision — 무관 쿼리가 빈 결과를 반환하는 비율 | **80%** (4/5) |
+| F1 점수 | **88.9%** |
+| 쿼리당 주입 토큰 비율 (전체 컨텍스트 대비) | **~4%** |
+| 한국어 + 영어 혼합 쿼리 지원 | ✅ |
+
+---
+
+## Claude Code와 Codex 양쪽 모두 검증 완료
+
+```bash
+gctree scaffold --host claude-code   # CLAUDE.md 스니펫 + /gc-onboard, /gc-update-global-context 설치
+gctree scaffold --host codex         # AGENTS.md 스니펫 + $gc-onboard, $gc-update-global-context 설치
+gctree scaffold --host both          # 둘 다 한번에
+```
+
+두 프로바이더 모두 동일한 컨텍스트 저장소를 씁니다. 한 번 온보딩하면 어느 도구에서든 사용 가능.
+
+**Claude Code** — `/gc-resolve-context`, `/gc-onboard`, `/gc-update-global-context` 슬래시 커맨드 사용.
+
+**Codex** — `$gc-resolve-context`, `$gc-onboard`, `$gc-update-global-context` 스킬 사용. `codex exec`으로 직접 검증됨:
+
+```
+gctree status → gc_branch: main, doc_count: 2
+gctree resolve --query 'NestJS DTO plainToInstance'
+→ "백엔드 코딩 컨벤션" 매칭 (score: 3)
+→ DTO: class-transformer plainToInstance, class-validator 필수
+→ 에러 처리: HttpException 기반 커스텀 예외, raw Error throw 금지
+```
 
 ---
 
@@ -67,169 +140,111 @@ npm install -g @handsupmin/gc-tree
 gctree init
 ```
 
-이 정도면 시작 준비는 끝입니다.
-그다음부터는 원래 하던 방식대로 개발하면 됩니다. `gc-tree`가 평소 워크플로 바깥에서 글로벌 컨텍스트만 붙여줍니다.
+`gctree init`이 안내합니다:
+1. 프로바이더 선택: `claude-code`, `codex`, 또는 `both`
+2. 현재 레포에 통합 파일 스캐폴딩
+3. `main` gc-branch 가이드형 온보딩 실행
 
-- **CLI 명령어:** `gctree`
+이후 AI 도구가 계획·구현 전에 `gctree resolve`를 호출하는 법을 자동으로 알게 됩니다.
+
+- **CLI:** `gctree`
 - **요구 사항:** Node.js 20+
-
-소스 기반 개발은 [docs/local-development.ko.md](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ko.md)를 참고하세요.
 
 ---
 
 ## 자주 쓰는 흐름
 
-### 작업 흐름이 갈라지면 새 컨텍스트 만들기
+### 워크스트림마다 별도 컨텍스트
 
 ```bash
 gctree checkout -b client-b
 gctree onboard
 ```
 
-고객사, 제품, 마이그레이션, 특정 이니셔티브처럼 별도 맥락이 필요한 일은 gc-branch를 따로 파두면 됩니다.
+각 gc-branch는 완전히 독립된 컨텍스트 레인입니다. Git 브랜치처럼 오갈 수 있습니다.
 
-### 나중에 장기 컨텍스트 업데이트하기
-
-```bash
-gctree update-global-context
-```
-
-작업이 쌓이면 활성 gc-branch에 장기 컨텍스트를 덧붙이세요.
-
-짧은 별칭:
+### 필요할 때 관련 컨텍스트 가져오기
 
 ```bash
-gctree update-gc
-gctree ugc
+gctree resolve --query "billing retry policy"
 ```
 
-### 필요할 때만 컨텍스트 불러오기
+매칭된 문서만 반환합니다 — 제목, 요약, 발췌문. 요약만으로 부족할 때만 전체 문서를 읽습니다.
+
+### 컨텍스트 최신 상태 유지
 
 ```bash
-gctree resolve --query "auth token rotation"
+gctree update-global-context   # 또는: gctree update-gc / gctree ugc
 ```
 
-지금 필요한 순간에만 관련 맥락을 다시 꺼내 쓰면 됩니다.
+가이드형 업데이트 플로우 — AI 도구가 무엇이 바뀌었는지 물어보고 새 컨텍스트를 gc-branch에 씁니다.
 
----
-
-## 왜 자연스럽게 느껴질까요?
-
-**Git 브랜치처럼 여러 컨텍스트를 유지하되, Git 브랜치처럼 매번 신경 쓸 필요는 없습니다.**
-
-다음처럼 컨텍스트를 따로 나눌 수 있습니다.
-
-- 고객사
-- 제품 라인
-- 플랫폼 팀
-- 함께 움직이는 백엔드 + 프론트엔드 스택
-- 일시적인 이니셔티브나 마이그레이션
-
-그리고 익숙한 브랜치 느낌의 명령으로 오갈 수 있습니다.
+### 특정 레포에 컨텍스트 범위 지정
 
 ```bash
-gctree checkout -b client-b
-gctree checkout main
+gctree set-repo-scope --branch client-b --include   # 현재 레포 포함
+gctree set-repo-scope --branch client-b --exclude   # 현재 레포 제외
 ```
 
-하지만 Git과 달리, 이 전환을 사용자가 계속 수동으로 챙길 필요는 없습니다.
-
-현재 들어와 있는 레포가 활성 컨텍스트의 범위 밖이라면, `gc-tree`는 그 컨텍스트를 관련 없는 것으로 판단하고 조용히 비켜날 수 있습니다. 덕분에 상관없는 컨텍스트가 엉뚱한 세션으로 새지 않습니다.
-
-즉, 여러 개의 장기 컨텍스트를 오래 들고 가면서도 매번 모든 세션에 다 끌고 들어갈 필요가 없습니다.
+관계없는 레포에는 컨텍스트가 주입되지 않습니다.
 
 ---
 
-## 현실적인 워크플로
+## 컨텍스트 저장 구조
 
-예를 들어 이런 식으로 일한다고 해봅시다.
+```
+~/.gctree/
+  branches/
+    main/
+      index.md          ← 압축 인덱스, ≤2000자, 먼저 로드됨
+      docs/
+        auth.md         ← 전체 문서, 필요할 때만 읽음
+        architecture.md
+    client-b/
+      index.md
+      docs/
+        ...
+  branch-repo-map.json  ← 어떤 레포가 어떤 gc-branch에 속하는지
+  settings.json         ← 선호 프로바이더, 언어
+```
 
-- 공용 플랫폼 레포 하나
-- 고객사 레포 두 개
-- 사내 툴링 레포 하나
-
-`gc-tree`가 없으면 새 AI 세션을 열 때마다 다시 설명해야 합니다.
-
-- 지금 어느 고객사 얘기인지
-- 어떤 레포들이 한 묶음인지
-- 여기서 중요한 워크플로가 뭔지
-- 지금은 어떤 컨텍스트가 오히려 방해가 되는지
-
-`gc-tree`가 있으면 레인별로 컨텍스트를 따로 유지하고, 세션을 바꿔도 재사용하고, repo scope 규칙으로 불필요한 컨텍스트 유입도 막을 수 있습니다.
-
-결국 핵심은 이겁니다.
-
-> 프롬프트를 더 많이 저장하는 게 아니라,
-> **일의 단위에 맞는 컨텍스트를 올바른 레벨에서 관리하는 것.**
+컨텍스트는 레포 밖에 저장됩니다 — `.gitignore` 규칙 불필요, 실수로 커밋될 일 없음, 같은 gc-branch를 쓰는 모든 프로젝트에서 재사용 가능.
 
 ---
 
-## 핵심 개념
-
-- **gc-branch**
-  제품, 고객사, 워크스트림, 도메인 하나를 위한 장기 컨텍스트 레인입니다.
-
-- **repo scope**
-  어떤 레포에서 이 컨텍스트를 적용할지 결정하는 규칙입니다.
-
-- **provider-guided flow**
-  JSON을 손으로 쓰는 대신, 선호하는 AI 코딩 도구를 통해 온보딩과 업데이트를 진행하는 방식입니다.
-
-- **context tree**
-  내부적으로 `gc-tree`는 브랜치 단위의 파일 기반 지식 트리로 컨텍스트를 관리합니다.
-  사용자가 체감하는 가치는 결국 프로젝트 밖까지 이어지는 재사용 가능한 컨텍스트입니다.
-
----
-
-## 런타임에서 보이는 provider 명령
-
-스캐폴딩 이후 런타임에서 보이는 명령은 다음과 같습니다.
-
-- **Codex:** `$gc-onboard`, `$gc-update-global-context`
-- **Claude Code:** `/gc-onboard`, `/gc-update-global-context`
-
-이 명령들은 항상 현재 활성 gc-branch가 무엇인지 먼저 밝히고, 사용자가 명시적으로 바꾸라고 하지 않는 한 저장된 언어를 유지한 채 장기 컨텍스트를 수집하거나 업데이트해야 합니다.
-
----
-
-## 핵심 명령 한눈에 보기
+## 핵심 명령
 
 | 목적 | 명령 |
-| --- | --- |
-| gc-tree 초기화 및 provider 선택 | `gctree init` |
-| 현재 gc-branch 확인 | `gctree status` |
+|---|---|
+| gc-tree 초기화 및 프로바이더 선택 | `gctree init` |
+| 활성 gc-branch 확인 | `gctree status` |
 | 활성 컨텍스트 검색 | `gctree resolve --query "..."` |
+| gc-branch 생성 또는 전환 | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
+| 모든 gc-branch 목록 | `gctree branches` |
+| 빈 gc-branch 가이드형 온보딩 | `gctree onboard` |
+| 활성 gc-branch 가이드형 업데이트 | `gctree update-global-context` / `gctree ugc` |
 | 레포 범위 규칙 확인 | `gctree repo-map` |
-| gc-branch에 레포 포함/제외 설정 | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
-| gc-branch 생성/전환 | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
-| 비어 있는 gc-branch 온보딩 | `gctree onboard` |
-| 활성 gc-branch 장기 업데이트 | `gctree update-global-context` / `gctree update-gc` / `gctree ugc` |
-| 다시 온보딩하기 전 gc-branch 초기화 | `gctree reset-gc-branch --branch <name> --yes` |
-| 다른 환경에 수동 스캐폴딩 | `gctree scaffold --host codex --target /path/to/repo` |
+| 현재 레포 포함/제외 설정 | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| 재온보딩 전 gc-branch 초기화 | `gctree reset-gc-branch --branch <name> --yes` |
+| 새 환경 스캐폴딩 | `gctree scaffold --host codex --target /path/to/repo` |
 
 ---
 
 ## 문서
 
-자세한 문서는 [`docs/`](https://github.com/handsupmin/gc-tree/tree/main/docs) 아래에 정리되어 있습니다.
-
 - **컨셉** — [`docs/concept.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/concept.ko.md)
-  `gctree`가 무엇인지, 어떤 문제를 해결하는지, 글로벌 컨텍스트 레이어의 범위를 설명합니다.
 - **원리** — [`docs/principles.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/principles.ko.md)
-  gc-branch, 레포 범위, slim index, summary-first 문서, 가이드형 업데이트 원칙을 정리합니다.
 - **사용방법** — [`docs/usage.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/usage.ko.md)
-  표준 CLI 흐름, provider 명령, 레포 범위 동작, 통합 패턴을 안내합니다.
-- **로컬 실행방법** — [`docs/local-development.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ko.md)
-  의존성 설치, 로컬 CLI 실행, 변경 검증 방법을 설명합니다.
+- **로컬 개발** — [`docs/local-development.ko.md`](https://github.com/handsupmin/gc-tree/blob/main/docs/local-development.ko.md)
 
 ---
 
 ## 기여하기
 
-기여는 언제든 환영합니다. 개발 흐름과 PR 체크리스트는 영어 문서인 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)를 참고해주세요.
+기여는 언제든 환영합니다. 개발 흐름과 PR 체크리스트는 [CONTRIBUTING.md](https://github.com/handsupmin/gc-tree/blob/main/CONTRIBUTING.md)를 참고하세요.
 
 ---
 
 ## 라이선스
 
-MIT. 자세한 내용은 [`LICENSE`](https://github.com/handsupmin/gc-tree/blob/main/LICENSE)를 참고하세요.
+MIT. [`LICENSE`](https://github.com/handsupmin/gc-tree/blob/main/LICENSE) 참고.
