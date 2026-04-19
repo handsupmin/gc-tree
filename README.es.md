@@ -36,6 +36,39 @@ Esto no es un problema de IA. Es un **problema de gestión del contexto**.
 
 ---
 
+## Para quién es esto
+
+Sacarás más partido a `gc-tree` si:
+
+- Trabajas en **múltiples repositorios** (equipos con monorepo, repos de plataforma + cliente, stacks de backend + frontend)
+- Cambias entre **múltiples productos o clientes** en la misma semana
+- Te encuentras **explicando el mismo contexto** al inicio de cada sesión de IA
+- Quieres que tus herramientas de IA entiendan tus **convenciones, arquitectura y conocimiento de dominio** — no solo el archivo actual
+
+Si solo trabajas en un repositorio y un producto, no necesitas esto. `CLAUDE.md` o `.cursorrules` es suficiente.
+
+---
+
+## Instalación y arranque rápido
+
+```bash
+npm install -g @handsupmin/gc-tree
+gctree init
+```
+
+`gctree init` te guía a través de:
+
+1. Elegir provider: `claude-code`, `codex` o `both`
+2. Instalar los archivos de integración en el repositorio actual
+3. Completar el onboarding guiado para el gc-branch `main`
+
+Después, tu herramienta de IA aprenderá a llamar a `gctree resolve` antes de planificar o implementar.
+
+- **CLI:** `gctree`
+- **Requisito:** Node.js 20+
+
+---
+
 ## Qué hace gc-tree
 
 `gc-tree` opera **por encima del nivel del repositorio**. Almacena contexto en archivos Markdown estructurados y permite que tus herramientas de IA traigan solo lo relevante antes de cada sesión, de forma automática.
@@ -64,34 +97,21 @@ Tu herramienta de IA recibe el contexto correcto — no toda la base de conocimi
 
 ---
 
-## Para quién es esto
-
-Sacarás más partido a `gc-tree` si:
-
-- Trabajas en **múltiples repositorios** (equipos con monorepo, repos de plataforma + cliente, stacks de backend + frontend)
-- Cambias entre **múltiples productos o clientes** en la misma semana
-- Te encuentras **explicando el mismo contexto** al inicio de cada sesión de IA
-- Quieres que tus herramientas de IA entiendan tus **convenciones, arquitectura y conocimiento de dominio** — no solo el archivo actual
-
-Si solo trabajas en un repositorio y un producto, no necesitas esto. `CLAUDE.md` o `.cursorrules` es suficiente.
-
----
-
 ## ¿En qué se diferencia de CLAUDE.md o cursor rules?
 
 `CLAUDE.md` es genial — para un solo repositorio.
 
 En el momento en que tienes múltiples repos, clientes o workstreams:
 
-| | `CLAUDE.md` / cursor rules | `gc-tree` |
-|---|---|---|
-| Alcance | Un repositorio | Múltiples repos, un contexto |
-| Persistencia | Archivo dentro del repo | Almacenado fuera, reutilizable entre sesiones |
-| Cambio de contexto | Edición manual de archivos | `gctree checkout client-b` |
-| Filtrado por relevancia | Todo o nada | Solo inyecta docs coincidentes (~4%) |
-| Onboarding | Escrito a mano | Guiado por tu herramienta de IA |
-| Compatible con Codex | ✅ | ✅ |
-| Compatible con Claude Code | ✅ | ✅ |
+|                            | `CLAUDE.md` / cursor rules | `gc-tree`                                     |
+| -------------------------- | -------------------------- | --------------------------------------------- |
+| Alcance                    | Un repositorio             | Múltiples repos, un contexto                  |
+| Persistencia               | Archivo dentro del repo    | Almacenado fuera, reutilizable entre sesiones |
+| Cambio de contexto         | Edición manual de archivos | `gctree checkout client-b`                    |
+| Filtrado por relevancia    | Todo o nada                | Solo inyecta docs coincidentes (~4%)          |
+| Onboarding                 | Escrito a mano             | Guiado por tu herramienta de IA               |
+| Compatible con Codex       | ✅                         | ✅                                            |
+| Compatible con Claude Code | ✅                         | ✅                                            |
 
 ---
 
@@ -99,13 +119,13 @@ En el momento en que tienes múltiples repos, clientes o workstreams:
 
 Probado con documentación interna real (4 exportaciones de Notion, consultas mixtas en español e inglés):
 
-| Métrica | Resultado |
-|---|---|
+| Métrica                                                      | Resultado        |
+| ------------------------------------------------------------ | ---------------- |
 | Recall — consultas relevantes que encuentran el doc correcto | **100%** (16/16) |
-| Precision — consultas irrelevantes que devuelven vacío | **80%** (4/5) |
-| F1 score | **88.9%** |
-| Tokens inyectados por consulta vs. contexto total | **~4%** |
-| Compatible con consultas mixtas en varios idiomas | ✅ |
+| Precision — consultas irrelevantes que devuelven vacío       | **80%** (4/5)    |
+| F1 score                                                     | **88.9%**        |
+| Tokens inyectados por consulta vs. contexto total            | **~4%**          |
+| Compatible con consultas mixtas en varios idiomas            | ✅               |
 
 ---
 
@@ -130,25 +150,6 @@ gctree resolve --query 'NestJS DTO plainToInstance'
 → DTO: class-transformer plainToInstance, class-validator obligatorio
 → Manejo de errores: excepciones personalizadas basadas en HttpException, prohibido lanzar raw Error
 ```
-
----
-
-## Instalación y arranque rápido
-
-```bash
-npm install -g @handsupmin/gc-tree
-gctree init
-```
-
-`gctree init` te guía a través de:
-1. Elegir provider: `claude-code`, `codex` o `both`
-2. Instalar los archivos de integración en el repositorio actual
-3. Completar el onboarding guiado para el gc-branch `main`
-
-Después, tu herramienta de IA aprenderá a llamar a `gctree resolve` antes de planificar o implementar.
-
-- **CLI:** `gctree`
-- **Requisito:** Node.js 20+
 
 ---
 
@@ -214,19 +215,19 @@ El contexto vive fuera de tus repositorios — sin reglas de `.gitignore`, sin c
 
 ## Comandos principales
 
-| Objetivo | Comando |
-|---|---|
-| Inicializar gc-tree y elegir provider | `gctree init` |
-| Confirmar el gc-branch activo | `gctree status` |
-| Buscar en el contexto activo | `gctree resolve --query "..."` |
-| Crear o cambiar gc-branches | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
-| Listar todos los gc-branches | `gctree branches` |
-| Onboarding guiado de un gc-branch vacío | `gctree onboard` |
-| Actualización guiada del gc-branch activo | `gctree update-global-context` / `gctree ugc` |
-| Ver reglas de alcance por repo | `gctree repo-map` |
+| Objetivo                                           | Comando                                                         |
+| -------------------------------------------------- | --------------------------------------------------------------- |
+| Inicializar gc-tree y elegir provider              | `gctree init`                                                   |
+| Confirmar el gc-branch activo                      | `gctree status`                                                 |
+| Buscar en el contexto activo                       | `gctree resolve --query "..."`                                  |
+| Crear o cambiar gc-branches                        | `gctree checkout <branch>` / `gctree checkout -b <branch>`      |
+| Listar todos los gc-branches                       | `gctree branches`                                               |
+| Onboarding guiado de un gc-branch vacío            | `gctree onboard`                                                |
+| Actualización guiada del gc-branch activo          | `gctree update-global-context` / `gctree ugc`                   |
+| Ver reglas de alcance por repo                     | `gctree repo-map`                                               |
 | Incluir o excluir el repo actual para un gc-branch | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
-| Resetear un gc-branch antes de re-onboard | `gctree reset-gc-branch --branch <name> --yes` |
-| Instalar scaffold en un nuevo entorno | `gctree scaffold --host codex --target /path/to/repo` |
+| Resetear un gc-branch antes de re-onboard          | `gctree reset-gc-branch --branch <name> --yes`                  |
+| Instalar scaffold en un nuevo entorno              | `gctree scaffold --host codex --target /path/to/repo`           |
 
 ---
 

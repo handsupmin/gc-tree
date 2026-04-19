@@ -1,6 +1,6 @@
 {
   "name": "@handsupmin/gc-tree",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
   "type": "module",
   "private": false,
@@ -24,6 +24,8 @@
     "eval:multi-repo": "node --import tsx tests/eval/multi-repo.ts",
     "eval:multi-repo:verbose": "node --import tsx tests/eval/multi-repo.ts --verbose",
     "eval:autoresearch": "node --import tsx tests/eval/autoresearch.ts",
+    "eval:multilingual": "node --import tsx tests/eval/multilingual.ts",
+    "eval:multilingual:verbose": "node --import tsx tests/eval/multilingual.ts --verbose",
     "eval:real-docs": "node --import tsx tests/eval/real-docs.ts",
     "eval:real-docs:verbose": "node --import tsx tests/eval/real-docs.ts --verbose"
   },

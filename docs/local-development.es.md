@@ -4,24 +4,24 @@
 
 ## Resumen
 
-El desarrollo local sigue un flujo estándar de Node.js 20+: instalar dependencias, compilar la CLI, ejecutarla localmente y verificar los cambios con la suite de tests existente antes de enviarlos.
+El desarrollo local sigue un flujo de trabajo estándar de Node.js 20+: instalar dependencias, compilar la CLI, ejecutarla localmente y verificar los cambios con el conjunto de pruebas existente antes de enviarlos.
 
 ## Requisitos previos
 
 - Node.js 20+
 - npm
-- binarios locales de `codex` y / o `claude` si quieres probar manualmente el arranque de providers
+- binarios locales de `codex` y/o `claude` si quieres hacer pruebas manuales con los lanzamientos de proveedores
 
-## Preparación
+## Configuración
 
 ```bash
 npm install
 npm run build
 ```
 
-## Ejecuta la CLI en local
+## Ejecutar la CLI localmente
 
-### Opción 1: ejecutar directamente la entrada ya compilada
+### Opción 1: ejecutar el punto de entrada compilado directamente
 
 ```bash
 node dist/src/cli.js status
@@ -34,7 +34,7 @@ npm link
 gctree status
 ```
 
-Si cambias archivos TypeScript, vuelve a compilar antes de probar otra vez la CLI.
+Si cambias archivos TypeScript, vuelve a compilar antes de probar la CLI de nuevo.
 
 ## Verificación
 
@@ -45,33 +45,55 @@ npm run build
 npm test
 ```
 
-## Tests de repo scope
+### Suite de evaluación
 
-La suite de tests cubre ahora:
+Además de las pruebas unitarias, una suite de evaluación mide la calidad de resolve contra fixtures realistas:
 
-- persistencia del modo de provider (`claude-code`, `codex`, `both`)
-- persistencia del idioma preferido y aplicación estricta del idioma en los launch prompts
-- selección de gc-branch con conciencia de repositorio
-- decisiones interactivas de include / exclude durante `resolve`
-- actualizaciones del branch repo map
-- límites del flujo guiado de onboarding / update
+```bash
+npm run eval                  # suite sintética de 5 escenarios (onboarding, resolve, eficiencia de tokens, actualización, aislamiento)
+npm run eval:verbose          # lo mismo, con detalle por caso
+npm run eval:multi-repo       # prueba de aislamiento entre repositorios usando fixtures de estilo cosmo
+npm run eval:real-docs        # recall y precisión contra exportaciones reales de Notion (requiere documentos locales)
+npm run eval:autoresearch     # bucle iterativo de mejora de resolve (modifica src/resolve.ts en su lugar)
+```
 
-## Comprobaciones manuales E2E de providers
+Líneas base esperadas (ejecuta `npm run eval` para verificar):
 
-Los tests automatizados desactivan el lanzamiento de providers para poder verificar los launch plans sin abrir sesiones reales de Codex o Claude Code.
-Si quieres probar la ruta real de lanzamiento, ejecuta uno de estos comandos dentro de un directorio desechable:
+| Suite | Objetivo |
+| --- | --- |
+| Sintética (5 escenarios) | 5/5 PASS, media ≥ 90% |
+| Multi-repo | ≥ 80% en total |
+| Real-docs | Recall ≥ 90%, F1 ≥ 80% |
+
+Si modificas `src/resolve.ts`, ejecuta `npm test && npm run eval && npm run eval:real-docs` antes de abrir un PR.
+
+## Cobertura de pruebas
+
+El conjunto de pruebas unitarias cubre actualmente:
+
+- persistencia del modo de proveedor (`claude-code`, `codex`, `both`)
+- persistencia del idioma preferido y aplicación estricta del idioma en los prompts de lanzamiento
+- selección de gc-branch según el repositorio
+- decisiones interactivas de incluir/excluir durante `resolve`
+- actualizaciones del mapa de repositorios de la branch
+- límites del flujo guiado de onboarding/actualización
+
+## Verificaciones E2E manuales del proveedor
+
+Las pruebas automatizadas deshabilitan el lanzamiento del proveedor para poder verificar los planes de lanzamiento sin abrir sesiones reales de Codex o Claude Code.
+Si quieres hacer pruebas con el camino de lanzamiento real, ejecuta uno de estos en un directorio de prueba:
 
 ```bash
 gctree init --provider codex
 gctree init --provider claude-code
 ```
 
-Deberías ver que el provider se abre y recibe inmediatamente `$gc-onboard` o `/gc-onboard`.
+Deberías ver cómo se abre el proveedor y recibe inmediatamente `$gc-onboard` o `/gc-onboard`.
 
 ## Estructura del proyecto
 
-- `src/` — CLI, almacenamiento de contexto, selección de provider, mapeo de repo scope, flujos guiados de onboarding / update y lógica de scaffolding
-- `tests/` — tests de CLI y de comportamiento
-- `skills/` — habilidades de flujo de trabajo independientes de la herramienta
-- `scaffolds/` — plantillas de arranque específicas por host
+- `src/` — CLI, almacenamiento de contexto, selección de proveedor, mapeo de alcance del repositorio, flujos guiados de onboarding/actualización y lógica de scaffolding
+- `tests/` — pruebas unitarias y scripts de evaluación
+- `skills/` — skills de flujo de trabajo agnósticas a la herramienta (usadas por Claude Code)
+- `scaffolds/` — directorios de marcador de posición; el contenido de los archivos de scaffold se genera programáticamente en `src/scaffold.ts`
 - `docs/` — documentación de concepto, principios, uso y desarrollo

@@ -36,6 +36,39 @@ That's not an AI problem. It's a **context management problem**.
 
 ---
 
+## Who this is for
+
+You'll get the most out of `gc-tree` if you:
+
+- Work across **multiple repos** (monorepo teams, platform + client repos, backend + frontend stacks)
+- Switch between **multiple products or clients** in the same week
+- Find yourself **re-explaining the same context** at the start of every AI session
+- Want AI tools to understand your **conventions, architecture, and domain knowledge** — not just the current file
+
+If you only ever work in one repo and one product, you probably don't need this. `CLAUDE.md` or `.cursorrules` is enough.
+
+---
+
+## Install & quick start
+
+```bash
+npm install -g @handsupmin/gc-tree
+gctree init
+```
+
+`gctree init` walks you through:
+
+1. Choose provider: `claude-code`, `codex`, or `both`
+2. Scaffold the integration files into your current repo
+3. Run guided onboarding for the `main` gc-branch
+
+After that, your AI tool will know to call `gctree resolve` before planning or implementing.
+
+- **CLI:** `gctree`
+- **Requires:** Node.js 20+
+
+---
+
 ## What gc-tree does
 
 `gc-tree` sits **above the repo level**. It stores durable context in structured markdown files and lets your AI tools pull only what's relevant — before each session, automatically.
@@ -64,34 +97,21 @@ Your AI tool gets the right context. Not the whole knowledge base — just the r
 
 ---
 
-## Who this is for
-
-You'll get the most out of `gc-tree` if you:
-
-- Work across **multiple repos** (monorepo teams, platform + client repos, backend + frontend stacks)
-- Switch between **multiple products or clients** in the same week
-- Find yourself **re-explaining the same context** at the start of every AI session
-- Want AI tools to understand your **conventions, architecture, and domain knowledge** — not just the current file
-
-If you only ever work in one repo and one product, you probably don't need this. `CLAUDE.md` or `.cursorrules` is enough.
-
----
-
 ## Why not just use CLAUDE.md or cursor rules?
 
 `CLAUDE.md` is great — for one repo.
 
 The moment you have multiple repos, clients, or workstreams:
 
-| | `CLAUDE.md` / cursor rules | `gc-tree` |
-|---|---|---|
-| Scope | One repo | Multiple repos, one context |
-| Persistence | Per-repo file | Stored outside repos, reused across sessions |
-| Switching contexts | Manual file edits | `gctree checkout client-b` |
-| Relevance filtering | Everything or nothing | Only injects matching docs (~4% of total) |
-| Onboarding | Hand-written | Guided by your AI tool |
-| Works with Codex | ✅ | ✅ |
-| Works with Claude Code | ✅ | ✅ |
+|                        | `CLAUDE.md` / cursor rules | `gc-tree`                                    |
+| ---------------------- | -------------------------- | -------------------------------------------- |
+| Scope                  | One repo                   | Multiple repos, one context                  |
+| Persistence            | Per-repo file              | Stored outside repos, reused across sessions |
+| Switching contexts     | Manual file edits          | `gctree checkout client-b`                   |
+| Relevance filtering    | Everything or nothing      | Only injects matching docs (~4% of total)    |
+| Onboarding             | Hand-written               | Guided by your AI tool                       |
+| Works with Codex       | ✅                         | ✅                                           |
+| Works with Claude Code | ✅                         | ✅                                           |
 
 ---
 
@@ -99,13 +119,13 @@ The moment you have multiple repos, clients, or workstreams:
 
 Tested against real internal documentation (4 Notion exports, Korean + English mixed queries):
 
-| Metric | Result |
-|---|---|
+| Metric                                       | Result           |
+| -------------------------------------------- | ---------------- |
 | Recall — relevant queries find the right doc | **100%** (16/16) |
-| Precision — irrelevant queries return empty | **80%** (4/5) |
-| F1 score | **88.9%** |
-| Tokens injected per query vs. total context | **~4%** |
-| Works with mixed Korean + English queries | ✅ |
+| Precision — irrelevant queries return empty  | **80%** (4/5)    |
+| F1 score                                     | **88.9%**        |
+| Tokens injected per query vs. total context  | **~4%**          |
+| Works with mixed Korean + English queries    | ✅               |
 
 ---
 
@@ -130,25 +150,6 @@ gctree resolve --query 'NestJS DTO plainToInstance'
 → DTO: class-transformer plainToInstance, class-validator required
 → Error handling: HttpException-based custom exceptions, no raw Error throws
 ```
-
----
-
-## Install & quick start
-
-```bash
-npm install -g @handsupmin/gc-tree
-gctree init
-```
-
-`gctree init` walks you through:
-1. Choose provider: `claude-code`, `codex`, or `both`
-2. Scaffold the integration files into your current repo
-3. Run guided onboarding for the `main` gc-branch
-
-After that, your AI tool will know to call `gctree resolve` before planning or implementing.
-
-- **CLI:** `gctree`
-- **Requires:** Node.js 20+
 
 ---
 
@@ -214,19 +215,19 @@ Context lives outside your repos — no `.gitignore` rules needed, no accidental
 
 ## Core commands
 
-| Goal | Command |
-|---|---|
-| Initialize gc-tree and choose a provider | `gctree init` |
-| Confirm the active gc-branch | `gctree status` |
-| Search the active context | `gctree resolve --query "..."` |
-| Create or switch gc-branches | `gctree checkout <branch>` / `gctree checkout -b <branch>` |
-| List all gc-branches | `gctree branches` |
-| Guided onboarding for an empty gc-branch | `gctree onboard` |
-| Guided durable update for the active gc-branch | `gctree update-global-context` / `gctree ugc` |
-| Show repo-scope rules | `gctree repo-map` |
-| Include/exclude current repo for a gc-branch | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
-| Reset a gc-branch before re-onboarding | `gctree reset-gc-branch --branch <name> --yes` |
-| Scaffold a new environment | `gctree scaffold --host codex --target /path/to/repo` |
+| Goal                                           | Command                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| Initialize gc-tree and choose a provider       | `gctree init`                                                   |
+| Confirm the active gc-branch                   | `gctree status`                                                 |
+| Search the active context                      | `gctree resolve --query "..."`                                  |
+| Create or switch gc-branches                   | `gctree checkout <branch>` / `gctree checkout -b <branch>`      |
+| List all gc-branches                           | `gctree branches`                                               |
+| Guided onboarding for an empty gc-branch       | `gctree onboard`                                                |
+| Guided durable update for the active gc-branch | `gctree update-global-context` / `gctree ugc`                   |
+| Show repo-scope rules                          | `gctree repo-map`                                               |
+| Include/exclude current repo for a gc-branch   | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
+| Reset a gc-branch before re-onboarding         | `gctree reset-gc-branch --branch <name> --yes`                  |
+| Scaffold a new environment                     | `gctree scaffold --host codex --target /path/to/repo`           |
 
 ---
 

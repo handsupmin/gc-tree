@@ -36,7 +36,33 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 | `gctree reset-gc-branch --branch <name> --yes` | Clear a gc-branch so it can be onboarded again. |
 | `gctree update-global-context` | Launch a guided durable update for the active gc-branch. |
 | `gctree update-gc` / `gctree ugc` | Aliases for `gctree update-global-context`. |
-| `gctree scaffold --host <codex|claude-code>` | Install the provider-facing command surface in another environment. |
+| `gctree scaffold --host <codex\|claude-code>` | Install the provider-facing command surface in another environment. |
+
+## What resolve returns
+
+`gctree resolve` scores every document in the active gc-branch against your query and returns only the matching ones. Title matches count twice as much as body matches.
+
+```bash
+gctree resolve --query "auth token rotation policy"
+```
+
+```json
+{
+  "gc_branch": "main",
+  "query": "auth token rotation policy",
+  "matches": [
+    {
+      "title": "Auth & Session Conventions",
+      "path": "docs/auth.md",
+      "score": 4,
+      "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+    }
+  ]
+}
+```
+
+The tool receives the summary and excerpt first. It reads the full document at `path` only when the summary is not enough. A query that matches nothing returns `"matches": []`.
 
 ## Example repo-scope flow
 
@@ -107,13 +133,35 @@ If a newly relevant repo should also become part of the durable context, the nat
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold` installs provider-facing commands such as guided onboarding and guided updates.
-Those commands should explicitly mention the current active gc-branch before they start gathering or applying durable context, and they should keep using the saved workflow language unless the user explicitly asks to switch.
+`gctree scaffold` installs provider-facing command files into the target directory.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
 gctree scaffold --host claude-code --target /path/to/repo
+gctree scaffold --host both --target /path/to/repo
 ```
+
+**Files written for `--host codex`:**
+
+```
+AGENTS.md                                  ← gctree snippet appended to agent instructions
+.codex/prompts/gctree-bootstrap.md         ← bootstrap context for Codex sessions
+.codex/skills/gc-resolve-context/SKILL.md  ← resolve skill
+.codex/skills/gc-onboard/SKILL.md          ← onboarding skill
+.codex/skills/gc-update-global-context/SKILL.md  ← update skill
+```
+
+**Files written for `--host claude-code`:**
+
+```
+CLAUDE.md                                        ← gctree snippet appended
+.claude/hooks/gctree-session-start.md            ← session-start hook
+.claude/commands/gc-resolve-context.md           ← resolve slash command
+.claude/commands/gc-onboard.md                   ← onboard slash command
+.claude/commands/gc-update-global-context.md     ← update slash command
+```
+
+Existing files are left untouched unless you pass `--force`.
 
 ### Runtime behavior
 

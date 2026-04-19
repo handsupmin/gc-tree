@@ -45,9 +45,31 @@ npm run build
 npm test
 ```
 
-## Repo-scope tests
+### Eval suite
 
-The test suite currently covers:
+In addition to the unit tests, an eval suite measures resolve quality against realistic fixtures:
+
+```bash
+npm run eval                  # 5-scenario synthetic suite (onboarding, resolve, token efficiency, update, isolation)
+npm run eval:verbose          # same, with per-case detail
+npm run eval:multi-repo       # cross-repo isolation test using cosmo-style fixtures
+npm run eval:real-docs        # recall and precision against real Notion exports (requires local docs)
+npm run eval:autoresearch     # iterative resolve improvement loop (modifies src/resolve.ts in place)
+```
+
+Expected baselines (run `npm run eval` to verify):
+
+| Suite | Target |
+| --- | --- |
+| Synthetic (5 scenarios) | 5/5 PASS, mean ≥ 90% |
+| Multi-repo | ≥ 80% overall |
+| Real-docs | Recall ≥ 90%, F1 ≥ 80% |
+
+If you modify `src/resolve.ts`, run `npm test && npm run eval && npm run eval:real-docs` before opening a PR.
+
+## Test coverage
+
+The unit test suite currently covers:
 
 - provider mode persistence (`claude-code`, `codex`, `both`)
 - preferred language persistence and strong language enforcement in launch prompts
@@ -71,7 +93,7 @@ You should see the provider open and immediately receive `$gc-onboard` or `/gc-o
 ## Project layout
 
 - `src/` — CLI, context storage, provider selection, repo-scope mapping, guided onboarding/update flows, and scaffolding logic
-- `tests/` — CLI and behavior tests
-- `skills/` — tool-agnostic workflow skills
-- `scaffolds/` — host-specific bootstrap templates
+- `tests/` — unit tests and eval scripts
+- `skills/` — tool-agnostic workflow skills (used by Claude Code)
+- `scaffolds/` — placeholder directories; scaffold file content is generated programmatically in `src/scaffold.ts`
 - `docs/` — concept, principles, usage, and development documentation

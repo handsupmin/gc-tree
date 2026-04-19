@@ -4,45 +4,71 @@
 
 ## Resumen
 
-Un flujo estándar con `gctree` suele ser así: inicializar gc-tree, elegir un provider, hacer onboarding del gc-branch `main`, resolver el contexto activo cuando haga falta, crear nuevos gc-branches cuando el trabajo lo pida, mapear cada repo al gc-branch correcto y usar actualizaciones guiadas para los cambios duraderos.
+Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tree, elegir un proveedor, hacer onboarding de la gc-branch `main` predeterminada, hacer resolve del contexto que necesitas, crear nuevas gc-branches cuando el trabajo merece su propio carril, mapear los repositorios a las gc-branches correctas y usar actualizaciones guiadas para cambios duraderos más adelante.
 
-## Flujo estándar
+## Flujo de trabajo estándar
 
-1. ejecuta `gctree init`
-2. elige tu modo de provider preferido (`claude-code`, `codex` o `both`)
-3. elige el idioma del flujo (`English`, `Korean` o un idioma personalizado)
-4. si elegiste `both`, decide qué provider debe iniciar este onboarding
-5. completa el onboarding guiado del gc-branch `main`
-6. usa `gctree resolve --query "..."` para recuperar el contexto relevante
-7. crea o cambia gc-branches con `gctree checkout`
-8. usa `gctree onboard` solo en un gc-branch vacío
-9. configura el repo scope para que cada gc-branch solo se aplique donde corresponde
-10. usa `gctree update-global-context` para los cambios duraderos posteriores
+1. ejecutar `gctree init`
+2. elegir el modo de proveedor preferido (`claude-code`, `codex` o `both`)
+3. elegir el idioma de trabajo (`English`, `Korean` o un idioma personalizado)
+4. si elegiste `both`, elegir qué proveedor debe iniciar el onboarding ahora
+5. completar el onboarding guiado para la gc-branch `main` predeterminada
+6. hacer resolve del contexto relevante con `gctree resolve --query "..."`
+7. crear o cambiar de gc-branch con `gctree checkout`
+8. ejecutar `gctree onboard` solo para una gc-branch vacía
+9. usar el mapeo de alcance del repositorio para que una gc-branch solo aplique donde corresponde
+10. usar `gctree update-global-context` para cambios duraderos más adelante
 
-## Comandos clave
+## Comandos principales
 
 | Comando | Propósito |
 | --- | --- |
-| `gctree init` | Crea `~/.gctree`, crea el gc-branch `main`, guarda el modo de provider, el provider de onboarding y el idioma preferido, hace scaffold del entorno actual y arranca el onboarding guiado cuando `main` está vacío. |
-| `gctree checkout <branch>` | Cambia el gc-branch activo. |
-| `gctree checkout -b <branch>` | Crea un gc-branch vacío nuevo y cambia a él. |
-| `gctree branches` | Lista los gc-branches disponibles y marca cuál está activo. |
-| `gctree status` | Muestra el gc-branch activo, el repo actual, el estado actual de repo scope, advertencias y el provider preferido. |
-| `gctree resolve --query TEXT` | Busca contexto en el gc-branch relevante. Si el repo actual no está mapeado, `gctree` puede preguntar cómo debe tratarse ese repo. |
-| `gctree repo-map` | Muestra el contenido actual de `branch-repo-map.json`. |
-| `gctree set-repo-scope --branch <name> --include` | Marca el repo actual como incluido para ese gc-branch. |
-| `gctree set-repo-scope --branch <name> --exclude` | Marca el repo actual como ignorado para ese gc-branch. |
-| `gctree onboard` | Lanza el onboarding guiado para el gc-branch activo. Solo funciona si ese gc-branch está vacío. |
-| `gctree reset-gc-branch --branch <name> --yes` | Vacía un gc-branch para poder onboardearlo de nuevo. |
-| `gctree update-global-context` | Lanza una actualización duradera guiada para el gc-branch activo. |
-| `gctree update-gc` / `gctree ugc` | Alias de `gctree update-global-context`. |
-| `gctree scaffold --host <codex|claude-code>` | Instala la superficie de comandos del provider en otro entorno. |
+| `gctree init` | Crear `~/.gctree`, crear la gc-branch `main` predeterminada, guardar el modo de proveedor, el proveedor de onboarding y el idioma preferido, hacer scaffold del entorno actual y comenzar el onboarding guiado cuando `main` está vacía. |
+| `gctree checkout <branch>` | Cambiar la gc-branch activa. |
+| `gctree checkout -b <branch>` | Crear y cambiar a una nueva gc-branch vacía. |
+| `gctree branches` | Listar las gc-branches disponibles y mostrar la activa. |
+| `gctree status` | Mostrar la gc-branch activa, el repositorio actual, el estado del alcance del repositorio actual, advertencias y el proveedor preferido. |
+| `gctree resolve --query TEXT` | Buscar contexto en la gc-branch relevante. Si el repositorio actual no está mapeado, `gctree` puede preguntar cómo debe tratarse ese repositorio. |
+| `gctree repo-map` | Mostrar el contenido actual de `branch-repo-map.json`. |
+| `gctree set-repo-scope --branch <name> --include` | Marcar el repositorio actual como incluido para esa gc-branch. |
+| `gctree set-repo-scope --branch <name> --exclude` | Marcar el repositorio actual como ignorado para esa gc-branch. |
+| `gctree onboard` | Iniciar el onboarding guiado para la gc-branch activa. Solo funciona cuando esa gc-branch está vacía. |
+| `gctree reset-gc-branch --branch <name> --yes` | Limpiar una gc-branch para poder hacer onboarding de nuevo. |
+| `gctree update-global-context` | Iniciar una actualización duradera guiada para la gc-branch activa. |
+| `gctree update-gc` / `gctree ugc` | Alias para `gctree update-global-context`. |
+| `gctree scaffold --host <codex\|claude-code>` | Instalar la interfaz de comandos orientada al proveedor en otro entorno. |
 
-## Ejemplo de repo scope
+## Qué devuelve resolve
 
-Supón que el gc-branch `A` es relevante para los repos `B`, `C` y `D`, pero no para `F`.
+`gctree resolve` puntúa cada documento de la gc-branch activa contra tu consulta y devuelve solo los que coinciden. Las coincidencias en el título cuentan el doble que las coincidencias en el cuerpo.
 
-Puedes gestionarlo así:
+```bash
+gctree resolve --query "auth token rotation policy"
+```
+
+```json
+{
+  "gc_branch": "main",
+  "query": "auth token rotation policy",
+  "matches": [
+    {
+      "title": "Auth & Session Conventions",
+      "path": "docs/auth.md",
+      "score": 4,
+      "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+    }
+  ]
+}
+```
+
+La herramienta recibe primero el resumen y el fragmento. Lee el documento completo en `path` solo cuando el resumen no es suficiente. Una consulta que no coincide con nada devuelve `"matches": []`.
+
+## Ejemplo de flujo de alcance del repositorio
+
+Supongamos que la gc-branch `A` es relevante para los repositorios `B`, `C` y `D`, pero no para `F`.
+
+Puedes gestionarlo mediante:
 
 ```json
 {
@@ -53,19 +79,19 @@ Puedes gestionarlo así:
 }
 ```
 
-Guardado en:
+almacenado en:
 
 ```text
 ~/.gctree/branch-repo-map.json
 ```
 
-Cuando ejecutas `resolve` desde el repo `E` y la rama `A` todavía no está mapeada allí, `gctree` puede preguntarte si quieres:
+Cuando `resolve` se ejecuta desde el repositorio `E` y la branch `A` todavía no está mapeada allí, `gctree` puede preguntar si:
 
-1. continuar solo esta vez
+1. continuar una vez
 2. usar siempre `A` en `E`
 3. ignorar `A` en `E`
 
-## Ejemplo de primera ejecución
+## Ejemplo de flujo en la primera ejecución
 
 ```bash
 gctree init
@@ -73,11 +99,11 @@ gctree init
 
 Luego:
 
-1. elige `codex` o `claude-code`
-2. deja que `gctree` haga scaffold del entorno actual
-3. completa el onboarding guiado del gc-branch `main`
+1. elegir `codex` o `claude-code`
+2. dejar que `gctree` haga scaffold del entorno actual
+3. completar el onboarding guiado para la gc-branch `main`
 
-## Ejemplo con varias ramas
+## Ejemplo de flujo con múltiples branches
 
 ```bash
 gctree checkout -b client-b
@@ -85,7 +111,7 @@ gctree onboard
 gctree resolve --query "billing retry policy"
 ```
 
-## Ejemplo de actualización
+## Ejemplo de flujo de actualización
 
 ```bash
 gctree update-global-context
@@ -98,24 +124,46 @@ gctree update-gc
 gctree ugc
 ```
 
-Si un repo recién relevante también debería formar parte del contexto duradero, el flujo natural es:
+Si un repositorio recién relevante también debería pasar a formar parte del contexto duradero, el flujo natural es:
 
-1. primero mapear ese repo al gc-branch
-2. después ejecutar `update-global-context` para añadir conocimiento duradero sobre qué hace ese repo y por qué importa
+1. mapear ese repositorio a la gc-branch
+2. luego ejecutar `update-global-context` para agregar conocimiento duradero sobre qué hace ese repositorio y por qué es importante
 
 ## Patrones de integración
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold` instala la superficie de comandos orientada al provider, como el onboarding guiado y las actualizaciones guiadas.
-Esos comandos deberían mencionar de forma explícita cuál es el gc-branch activo antes de empezar a recopilar o aplicar contexto duradero, y también deberían seguir usando el idioma guardado salvo que la persona usuaria pida cambiarlo.
+`gctree scaffold` instala archivos de comandos orientados al proveedor en el directorio de destino.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
 gctree scaffold --host claude-code --target /path/to/repo
+gctree scaffold --host both --target /path/to/repo
 ```
 
-### Comportamiento en runtime
+**Archivos escritos para `--host codex`:**
 
-Por defecto, el gc-branch activo es el que apunta `HEAD` dentro de `~/.gctree`, pero el repo mapping puede sobrescribir ese valor si un repositorio está ligado explícitamente a otro gc-branch.
-Eso hace que gc-tree sea práctico incluso para quienes mantienen muchas sesiones abiertas a la vez en repositorios que no tienen relación entre sí.
+```
+AGENTS.md                                  ← fragmento de gctree añadido a las instrucciones del agente
+.codex/prompts/gctree-bootstrap.md         ← contexto de arranque para las sesiones de Codex
+.codex/skills/gc-resolve-context/SKILL.md  ← skill de resolve
+.codex/skills/gc-onboard/SKILL.md          ← skill de onboarding
+.codex/skills/gc-update-global-context/SKILL.md  ← skill de actualización
+```
+
+**Archivos escritos para `--host claude-code`:**
+
+```
+CLAUDE.md                                        ← fragmento de gctree añadido
+.claude/hooks/gctree-session-start.md            ← hook de inicio de sesión
+.claude/commands/gc-resolve-context.md           ← comando slash de resolve
+.claude/commands/gc-onboard.md                   ← comando slash de onboard
+.claude/commands/gc-update-global-context.md     ← comando slash de actualización
+```
+
+Los archivos existentes no se modifican a menos que pases `--force`.
+
+### Comportamiento en tiempo de ejecución
+
+La gc-branch activa es la apuntada por `HEAD` dentro de `~/.gctree`, pero el mapeo del repositorio puede anular ese valor predeterminado cuando un repositorio está vinculado explícitamente a otra gc-branch.
+Esto hace que gc-tree sea práctico para usuarios avanzados que mantienen muchas sesiones no relacionadas abiertas al mismo tiempo.

@@ -33,6 +33,18 @@ That works for a while. Then real work shows up and the cracks start to show:
 
 `gctree` exists to handle that layer cleanly.
 
+## How resolve works
+
+When a tool calls `gctree resolve --query "..."`, gc-tree scores every document in the active gc-branch against the query using keyword matching with Unicode support (Korean, CJK, and mixed-language queries work the same as English). Title matches count twice as much as body matches.
+
+The tool receives only the matching documents — title, summary, and excerpt — not the full knowledge base. In practice this means roughly 4% of total context is injected per query. The tool reads the full document only when the summary is not enough.
+
+This keeps token use low without hiding anything. All context is still explicit, file-backed, and reviewable.
+
+## Provider support
+
+`gctree` works with both Claude Code and Codex. Both providers use the same underlying context store. Scaffold once and both tools can resolve, onboard, and update context from the same gc-branch.
+
 ## Scope boundary
 
 `gctree` is intentionally not:
@@ -64,7 +76,7 @@ A typical home directory looks like this:
 - `settings.json` stores the provider mode, the onboarding provider chosen for runtime launch, and the preferred workflow language.
 - `branch-repo-map.json` stores which repositories are included or excluded for each gc-branch.
 - `branch.json` stores lightweight gc-branch metadata.
-- `index.md` is the compact entry point for tools.
+- `index.md` is the compact entry point for tools — kept under 2000 characters so it loads fast without consuming significant token budget.
 - `docs/` holds the source-of-truth markdown documents.
 
 ## Repo-aware behavior

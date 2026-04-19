@@ -4,7 +4,7 @@
 
 ## Summary
 
-`gctree` follows a small set of product rules: keep context branch-aware, keep source docs summary-first, keep indexes slim, and make repo scope explicit so a gc-branch only influences the repositories where it belongs.
+`gctree` follows a small set of product rules: keep context branch-aware, keep source docs summary-first, keep indexes slim, make repo scope explicit, inject only what is relevant, and support any provider that can run shell commands.
 
 ## 1. Keep context branch-aware
 
@@ -26,7 +26,7 @@ If `resolve` is called from an unmapped repository, the user can decide whether 
 
 The top-level `index.md` is an index, not a dump.
 Its job is to help tools and humans find the right source document quickly.
-It should stay compact and link-oriented instead of duplicating full knowledge inline.
+It should stay under **2000 characters** and remain link-oriented instead of duplicating full knowledge inline.
 
 ## 4. Make source docs summary-first
 
@@ -48,3 +48,16 @@ If a gc-branch already contains context, the correct path is either:
 
 Durable context should not change by accident or through hidden memory.
 The update flow should be explicit, provider-driven, and tied to the currently active gc-branch.
+
+## 7. Inject only what is relevant
+
+A tool session should never receive the entire knowledge base.
+`gctree resolve` scores documents against the query and returns only the matching ones — title, summary, and excerpt. The full document is read only when the summary is not enough.
+
+In practice this means roughly 4% of total stored context is injected per query. The remaining 96% stays on disk, out of the token window, until it is actually needed.
+
+## 8. Stay provider-agnostic
+
+`gctree` stores context in plain markdown files that any tool can read.
+Claude Code and Codex both scaffold against the same underlying store via `gctree scaffold`.
+Adding support for a new provider means writing a new scaffold template — no changes to the core storage or resolve logic.

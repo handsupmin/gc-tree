@@ -45,9 +45,31 @@ npm run build
 npm test
 ```
 
-## repo-scope 测试
+### 评估套件
 
-当前测试套件覆盖了以下内容：
+除单元测试外，还有一套 eval 套件，用于衡量 resolve 在真实场景下的质量：
+
+```bash
+npm run eval                  # 5 场景综合测试（onboarding、resolve、token 效率、update、隔离性）
+npm run eval:verbose          # 同上，输出每条用例的详情
+npm run eval:multi-repo       # 跨仓库隔离测试，使用 cosmo 风格的 fixtures
+npm run eval:real-docs        # 基于真实 Notion 导出文件的 recall 和 precision 测试（需要本地文档）
+npm run eval:autoresearch     # 迭代式 resolve 改进循环（会直接修改 src/resolve.ts）
+```
+
+预期基线（运行 `npm run eval` 可验证）：
+
+| 套件 | 目标 |
+| --- | --- |
+| 综合（5 场景） | 5/5 PASS，均值 ≥ 90% |
+| 多仓库 | 整体 ≥ 80% |
+| 真实文档 | Recall ≥ 90%，F1 ≥ 80% |
+
+如果你修改了 `src/resolve.ts`，在发 PR 之前请运行 `npm test && npm run eval && npm run eval:real-docs`。
+
+## 测试覆盖范围
+
+当前单元测试套件覆盖了以下内容：
 
 - provider 模式持久化（`claude-code`、`codex`、`both`）
 - 偏好语言持久化，以及 launch prompt 中的强语言约束
@@ -71,7 +93,7 @@ gctree init --provider claude-code
 ## 项目结构
 
 - `src/` — CLI、本地上下文存储、provider 选择、repo-scope 映射、带引导的 onboarding / update 流程，以及 scaffolding 逻辑
-- `tests/` — CLI 与行为测试
-- `skills/` — 与工具无关的工作流技能
-- `scaffolds/` — 面向不同 host 的引导模板
+- `tests/` — 单元测试与 eval 脚本
+- `skills/` — 与工具无关的工作流技能（供 Claude Code 使用）
+- `scaffolds/` — 占位目录；scaffold 文件内容由 `src/scaffold.ts` 动态生成
 - `docs/` — 概念、原则、使用方式与开发文档
