@@ -17,16 +17,15 @@ Use this when a user wants to create global context for a product, company, or w
 - do not ask for a full information dump up front
 - if docs, reference material, or reference paths are provided, read them first and summarize your understanding back before asking for more
 - ask whether that summary is correct before continuing, let the user correct it, and skip questions the docs already answered well
-- if no docs are available, continue from the user's own description first and ask for the most relevant repo, path, or file only when needed
-- only inspect docs, repos, directories, or files after the user has pointed you at them or confirmed they matter
-- dig only through the user-provided material and the minimum related files needed for the next question
+- if no docs are available, continue from the user's own description first, then after the user's first answer, proactively inspect related repos, docs, paths, and workflows that appear materially connected
+- use bounded local inspection to confirm or challenge the user's description instead of waiting for them to enumerate every related repo manually
 - do not inspect every source file; prefer docs, READMEs, summaries, and a few pointed paths first
 - when you do present a hypothesis, keep it lightweight and only after the user has narrowed the scope
-- use structured numbered confirmations like:
-  1. This is basically correct.
-  2. Part of it is wrong. I will explain what differs.
-  3. This is the wrong frame. I will explain what you should inspect or how this gc-branch should be approached.
-- if the user picks 2 or 3, ask only for the delta or better pointer instead of restarting from scratch
+- offer only these structured numbered confirmations:
+  1. This is mostly correct.
+  2. Some parts are wrong. Please explain what differs.
+  3. Most of this is wrong. Please explain the right frame.
+- if the user picks 2 or 3, ask only for the delta or right frame instead of restarting from scratch
 - ask whether anything important is still missing before continuing deeper
 - do not start by asking what one repo does
 - ask who the person is and what work they usually own only after the provided docs or description still leave real gaps
@@ -42,15 +41,14 @@ Use this when a user wants to create global context for a product, company, or w
 3. Wait for the user's first answer. Start by asking them to paste or share organized docs or reference material if they have any; otherwise ask what kind of work they mainly do.
 4. Do not scan broad directories like `~/sources`, guess the company/product from unrelated repos, or inspect every source file before the user narrows the scope.
 5. If docs, reference material, or reference paths are provided, read those first, summarize your understanding back, ask whether that summary is correct, and ask whether anything important is still missing before moving on.
-6. If no docs are available, continue from the user's own description first and ask for the most relevant repo, path, or file only when needed.
-7. Only inspect docs, repos, directories, or files after the user has pointed you at them or confirmed they matter.
-8. When you inspect, dig only through the user-provided material and the minimum related files needed for the next question. Prefer docs, READMEs, summaries, and a few pointed paths first.
-9. Once the scope is narrow enough, present a lightweight hypothesis from the evidence you inspected, then ask the user to choose one:
-   1. This is basically correct.
-   2. Part of it is wrong. I will explain what differs.
-   3. This is the wrong frame. I will explain what you should inspect or how this gc-branch should be approached.
-10. If the user picks 2 or 3, ask only for the delta or the next best pointer to inspect instead of requesting a full rewrite of the context.
-11. When the inspected evidence already covers the basics well, confirm that and skip ahead to the missing parts instead of re-asking everything from scratch.
+6. If no docs are available, continue from the user's own description first, then after the user's first answer, proactively inspect related repos, docs, paths, and workflows that appear materially connected.
+7. Use bounded local inspection to confirm or challenge the user's description instead of waiting for them to enumerate every relevant repo manually. Prefer docs, READMEs, summaries, and a few pointed paths first.
+8. Once the scope is narrow enough, present a lightweight hypothesis from the evidence you inspected, then ask the user to choose one:
+   1. This is mostly correct.
+   2. Some parts are wrong. Please explain what differs.
+   3. Most of this is wrong. Please explain the right frame.
+9. If the user picks 2 or 3, ask only for the delta or right frame instead of requesting a full rewrite of the context, then continue inspecting.
+10. When the inspected evidence already covers the basics well, confirm that and skip ahead to the missing parts instead of re-asking everything from scratch.
 12. Start from the person only when the provided docs or description still do not make that clear:
    - who they are
    - what kind of work they usually own or lead
@@ -62,7 +60,7 @@ Use this when a user wants to create global context for a product, company, or w
    - which paths matter most
    - what the actual workflow is
    - what hidden conventions, glossary terms, boundaries, or constraints matter
-17. If a relevant repo, path, or doc is available locally and the user has pointed you to it, inspect it and show a lightweight hypothesis so the user can correct your frame.
+17. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
 18. Ask for company/domain glossary terms and acronyms that should become durable context.
 19. Ask which verification commands should be treated as defaults for this gc-branch.
 20. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
@@ -70,5 +68,6 @@ Use this when a user wants to create global context for a product, company, or w
 22. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
 23. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
 24. Ask whether anything else should be saved while the context is still fresh.
-25. End with remaining risks, blind spots, or details that still need confirmation, and remind the user that future changes belong in `gctree update-global-context`.
-26. Keep the current gc-branch explicit while gathering context.
+25. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+26. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+27. Keep the current gc-branch explicit while gathering context.
