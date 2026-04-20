@@ -30,6 +30,8 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /summarize what you now understand from the saved docs/i);
   assert.match(contents[0]!, /whether that final summary matches the user's reality/i);
   assert.match(contents[0]!, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
+  assert.match(contents[0]!, /verify-onboarding/i);
+  assert.match(contents[0]!, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
   assert.match(contents[0]!, /do not ask for a full information dump/i);
   assert.match(contents[0]!, /when you do present a hypothesis/i);
   assert.match(contents[0]!, /1\. This is mostly correct\./i);

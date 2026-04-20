@@ -70,6 +70,8 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     assert.match(parsed.launch.args[0]!, /summarize what you now understand from the saved docs/i);
     assert.match(parsed.launch.args[0]!, /ask whether that final summary matches the user's reality/i);
     assert.match(parsed.launch.args[0]!, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
+    assert.match(parsed.launch.args[0]!, /run `gctree verify-onboarding/i);
+    assert.match(parsed.launch.args[0]!, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
     assert.match(parsed.launch.args[0]!, /full information dump/i);
     assert.match(parsed.launch.args[0]!, /when you do present a hypothesis/i);
     assert.match(parsed.launch.args[0]!, /offer only these structured numbered confirmations/i);
@@ -368,6 +370,8 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /summarize what you now understand from the saved docs/i);
     assert.match(codexOnboardSkill, /ask whether that final summary matches the user's reality/i);
     assert.match(codexOnboardSkill, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
+    assert.match(codexOnboardSkill, /verify-onboarding/i);
+    assert.match(codexOnboardSkill, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
     assert.match(codexOnboardSkill, /do .*not.* ask for a full information dump/i);
     assert.match(codexOnboardSkill, /when you do present a hypothesis/i);
     assert.match(codexOnboardSkill, /offer only these structured numbered confirmations/i);
@@ -403,6 +407,8 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /summarize what you now understand from the saved docs/i);
     assert.match(claudeOnboardCommand, /ask whether that final summary matches the user's reality/i);
     assert.match(claudeOnboardCommand, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
+    assert.match(claudeOnboardCommand, /verify-onboarding/i);
+    assert.match(claudeOnboardCommand, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
     assert.match(claudeOnboardCommand, /do .*not.* ask for a full information dump/i);
     assert.match(claudeOnboardCommand, /when you do present a hypothesis/i);
     assert.match(claudeOnboardCommand, /offer only these structured numbered confirmations/i);

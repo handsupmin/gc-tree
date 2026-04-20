@@ -27,6 +27,7 @@ import { requirePreferredProvider, writeSettings, readSettings } from './setting
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch, ensureBranchExists, isBranchContextEmpty } from './store.js';
 import type { GcTreeContextUpdateInput, GcTreeOnboardingInput, GcTreeProvider, GcTreeProviderMode } from './types.js';
 import { updateBranchContext } from './update.js';
+import { verifyOnboarding } from './verify-onboarding.js';
 
 function readArg(flag: string): string | undefined {
   const index = process.argv.indexOf(flag);
@@ -47,6 +48,7 @@ function usage(): never {
   gctree set-repo-scope --branch NAME [--repo NAME] [--cwd DIR] (--include|--exclude) [--home DIR]
   gctree status [--home DIR] [--cwd DIR]
   gctree onboard [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
+  gctree verify-onboarding [--home DIR] [--branch NAME]
   gctree reset-gc-branch [--home DIR] [--branch NAME] --yes
   gctree resolve --query TEXT [--home DIR] [--branch NAME] [--cwd DIR]
   gctree show-doc --id ID [--home DIR] [--branch NAME]
@@ -307,6 +309,12 @@ async function main(): Promise<void> {
         noLaunch: hasFlag('--no-launch'),
       });
       console.log(JSON.stringify({ mode: 'guided_onboarding', gc_branch: gcBranch, preferred_provider: provider, scaffold, launch }, null, 2));
+      return;
+    }
+    case 'verify-onboarding': {
+      const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
+      const result = await verifyOnboarding({ home, branch: gcBranch });
+      console.log(JSON.stringify(result, null, 2));
       return;
     }
     case '__apply-onboarding': {

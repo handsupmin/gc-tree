@@ -64,10 +64,12 @@ Use this when a user wants to create global context for a product, company, or w
 18. Ask for company/domain glossary terms and acronyms that should become durable context.
 19. Ask which verification commands should be treated as defaults for this gc-branch.
 20. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
-21. After the onboarding docs are written, explicitly list which durable docs were saved.
-22. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
-23. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
-24. Ask whether anything else should be saved while the context is still fresh.
-25. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-26. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-27. Keep the current gc-branch explicit while gathering context.
+21. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
+22. Do not claim onboarding is complete unless verification returns `status: "complete"`.
+23. After the onboarding docs are written, explicitly list which durable docs were saved.
+24. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
+25. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
+26. Ask whether anything else should be saved while the context is still fresh.
+27. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+28. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+29. Keep the current gc-branch explicit while gathering context.

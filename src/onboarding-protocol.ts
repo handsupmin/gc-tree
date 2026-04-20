@@ -29,6 +29,8 @@ export function onboardingProtocolLines(): string[] {
 
 export function onboardingCompletionLines(): string[] {
   return [
+    'Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.',
+    'Do not claim onboarding is complete unless verification returns `status: "complete"`.',
     'After applying the onboarding docs, explicitly list which durable docs were saved.',
     'Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.',
     'Ask whether that final summary matches the user\'s reality, and capture any corrections before you wrap up.',
