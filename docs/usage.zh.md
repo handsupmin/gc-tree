@@ -145,6 +145,7 @@ gctree scaffold --host both --target /path/to/repo
 
 ```
 AGENTS.md                                  ← gctree 代码片段追加到 agent 指令中
+.codex/hooks.json                         ← SessionStart / UserPromptSubmit 自动 resolve hook
 .codex/prompts/gctree-bootstrap.md         ← Codex 会话的引导上下文
 .codex/skills/gc-resolve-context/SKILL.md  ← resolve 技能
 .codex/skills/gc-onboard/SKILL.md          ← onboarding 技能
@@ -155,7 +156,8 @@ AGENTS.md                                  ← gctree 代码片段追加到 agen
 
 ```
 CLAUDE.md                                        ← gctree 代码片段追加
-.claude/hooks/gctree-session-start.md            ← 会话启动钩子
+.claude/hooks/hooks.json                         ← SessionStart / UserPromptSubmit 自动 resolve hook
+.claude/hooks/gctree-session-start.md            ← 会话启动 fallback 说明
 .claude/commands/gc-resolve-context.md           ← resolve 斜杠命令
 .claude/commands/gc-onboard.md                   ← onboard 斜杠命令
 .claude/commands/gc-update-global-context.md     ← 更新斜杠命令

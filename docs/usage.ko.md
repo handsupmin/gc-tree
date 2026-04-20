@@ -145,6 +145,7 @@ gctree scaffold --host both --target /path/to/repo
 
 ```
 AGENTS.md                                  ← 에이전트 지시사항에 gctree 스니펫 추가
+.codex/hooks.json                         ← SessionStart/UserPromptSubmit 자동 resolve 훅
 .codex/prompts/gctree-bootstrap.md         ← Codex 세션의 부트스트랩 컨텍스트
 .codex/skills/gc-resolve-context/SKILL.md  ← resolve 스킬
 .codex/skills/gc-onboard/SKILL.md          ← 온보딩 스킬
@@ -155,7 +156,8 @@ AGENTS.md                                  ← 에이전트 지시사항에 gctr
 
 ```
 CLAUDE.md                                        ← gctree 스니펫 추가
-.claude/hooks/gctree-session-start.md            ← 세션 시작 훅
+.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit 자동 resolve 훅
+.claude/hooks/gctree-session-start.md            ← 세션 시작 fallback 메모
 .claude/commands/gc-resolve-context.md           ← resolve 슬래시 명령
 .claude/commands/gc-onboard.md                   ← onboard 슬래시 명령
 .claude/commands/gc-update-global-context.md     ← 업데이트 슬래시 명령

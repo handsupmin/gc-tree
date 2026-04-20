@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { stdin } from 'node:process';
 
+import { dispatchGcTreeHook } from './hook.js';
 import { onboardBranch } from './onboard.js';
 import {
   buildProviderLaunchPlan,
@@ -56,12 +57,21 @@ function usage(): never {
 Internal commands:
   gctree __apply-onboarding --input FILE [--home DIR] [--branch NAME]
   gctree __apply-update --input FILE [--home DIR] [--branch NAME]
+  gctree __hook --event <SessionStart|UserPromptSubmit> [--home DIR]
 `);
   process.exit(1);
 }
 
 async function readJsonFile<T>(path: string): Promise<T> {
   return JSON.parse(await readFile(path, 'utf8')) as T;
+}
+
+async function readStdinText(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+  }
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 function normalizeProvider(value: string | undefined): GcTreeProvider | undefined {
@@ -415,6 +425,21 @@ async function main(): Promise<void> {
       const gcBranch = readArg('--branch') || input.branch || (await readHead(home)) || DEFAULT_BRANCH;
       const result = await updateBranchContext({ home, input, branch: gcBranch });
       console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    case '__hook': {
+      const event = readArg('--event');
+      if (event !== 'SessionStart' && event !== 'UserPromptSubmit') usage();
+      const raw = await readStdinText();
+      const payload = raw.trim() ? JSON.parse(raw) : {};
+      const result = await dispatchGcTreeHook({
+        event,
+        home,
+        payload,
+      });
+      if (result) {
+        console.log(JSON.stringify(result, null, 2));
+      }
       return;
     }
     case 'scaffold': {

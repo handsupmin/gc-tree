@@ -62,7 +62,7 @@ gctree init
 2. Scaffold the integration files into your current repo
 3. Run guided onboarding for the `main` gc-branch
 
-After that, your AI tool will know to call `gctree resolve` before planning or implementing.
+After that, your AI tool gets real SessionStart/UserPromptSubmit hook integration, so it auto-checks gc-tree before work and caches empty/no-match results for the session.
 
 - **CLI:** `gctree`
 - **Requires:** Node.js 20+

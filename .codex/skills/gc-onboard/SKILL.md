@@ -32,5 +32,9 @@ Use this only when the active gc-branch is empty.
 26. Synthesize the interview into durable docs such as a role/profile summary, work types, repository roles, glossary, and verification defaults.
 27. Then create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).
 28. Run `gctree __apply-onboarding --input <temp-file>`.
-29. Show the written docs and remind the user that future changes belong in `gctree update-global-context`.
-30. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.
+29. After applying the onboarding docs, explicitly list which durable docs were saved.
+30. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
+31. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
+32. Ask whether anything else should be saved while the context is still fresh.
+33. End with remaining risks, blind spots, or details that still need confirmation, then remind the user that future changes belong in `gctree update-global-context`.
+34. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.

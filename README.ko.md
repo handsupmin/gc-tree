@@ -62,7 +62,7 @@ gctree init
 2. 현재 레포에 통합 파일 스캐폴딩
 3. `main` gc-branch 가이드형 온보딩 실행
 
-이후 AI 도구가 계획·구현 전에 `gctree resolve`를 호출하는 법을 자동으로 알게 됩니다.
+이후 AI 도구에 실제 SessionStart/UserPromptSubmit 훅 통합이 설치되어, 작업 전에 gc-tree를 자동 확인하고 세션 동안 빈 결과·no-match를 캐시합니다.
 
 - **CLI:** `gctree`
 - **요구 사항:** Node.js 20+

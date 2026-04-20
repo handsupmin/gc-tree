@@ -78,7 +78,7 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     assert.match(parsed.launch.args[0]!, /3\. This is the wrong frame/i);
     assert.equal(parsed.launch.launched, false);
     assert.equal(parsed.scaffold.hosts, 'codex');
-    assert.equal(parsed.scaffold.written.length, 5);
+    assert.equal(parsed.scaffold.written.length, 6);
 
     const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as {
       provider_mode: string;
@@ -89,6 +89,7 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     assert.equal(settings.preferred_provider, 'codex');
     assert.equal(settings.preferred_language, 'English');
     assert.match(await readFile(join(targetDir, 'AGENTS.md'), 'utf8'), /gc-branch/i);
+    assert.match(await readFile(join(targetDir, '.codex', 'hooks.json'), 'utf8'), /UserPromptSubmit/);
     assert.match(await readFile(join(targetDir, '.codex', 'skills', 'gc-onboard', 'SKILL.md'), 'utf8'), /active gc-branch/i);
   } finally {
     await rm(home, { recursive: true, force: true });
@@ -118,7 +119,7 @@ test('init supports provider mode both, scaffolds both runtimes, and stores pref
     assert.equal(parsed.launch.preferred_language, 'Korean');
     assert.match(parsed.launch.args[0]!, /Use Korean for every message/i);
     assert.equal(parsed.scaffold.hosts, 'both');
-    assert.equal(parsed.scaffold.written.length, 10);
+    assert.equal(parsed.scaffold.written.length, 12);
 
     const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as {
       provider_mode: string;
@@ -130,6 +131,8 @@ test('init supports provider mode both, scaffolds both runtimes, and stores pref
     assert.equal(settings.preferred_language, 'Korean');
     assert.match(await readFile(join(targetDir, 'AGENTS.md'), 'utf8'), /gc-branch/i);
     assert.match(await readFile(join(targetDir, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
+    assert.match(await readFile(join(targetDir, '.codex', 'hooks.json'), 'utf8'), /SessionStart/);
+    assert.match(await readFile(join(targetDir, '.claude', 'hooks', 'hooks.json'), 'utf8'), /UserPromptSubmit/);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });
@@ -346,7 +349,7 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     let result = await runCli(['scaffold', '--host', 'codex', '--target', codexTarget]);
     assert.equal(result.code, 0, result.stderr);
     let parsed = JSON.parse(result.stdout) as { written: string[] };
-    assert.equal(parsed.written.length, 5);
+    assert.equal(parsed.written.length, 6);
     const codexOnboardSkill = await readFile(join(codexTarget, '.codex', 'skills', 'gc-onboard', 'SKILL.md'), 'utf8');
     assert.match(codexOnboardSkill, /gc-branch/i);
     assert.match(codexOnboardSkill, /wait for the user's first answer/i);
@@ -374,12 +377,13 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /what kind of person/i);
     assert.match(codexOnboardSkill, /glossary terms/i);
     assert.match(codexOnboardSkill, /verification commands/i);
+    assert.match(await readFile(join(codexTarget, '.codex', 'hooks.json'), 'utf8'), /gctree __hook --event UserPromptSubmit/);
     assert.match(await readFile(join(codexTarget, '.codex', 'skills', 'gc-update-global-context', 'SKILL.md'), 'utf8'), /__apply-update/i);
 
     result = await runCli(['scaffold', '--host', 'claude-code', '--target', claudeTarget]);
     assert.equal(result.code, 0, result.stderr);
     parsed = JSON.parse(result.stdout) as { written: string[] };
-    assert.equal(parsed.written.length, 5);
+    assert.equal(parsed.written.length, 6);
     assert.match(await readFile(join(claudeTarget, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
     const claudeOnboardCommand = await readFile(join(claudeTarget, '.claude', 'commands', 'gc-onboard.md'), 'utf8');
     assert.match(claudeOnboardCommand, /gc-branch/i);
@@ -408,6 +412,7 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /what kind of person/i);
     assert.match(claudeOnboardCommand, /glossary terms/i);
     assert.match(claudeOnboardCommand, /verification commands/i);
+    assert.match(await readFile(join(claudeTarget, '.claude', 'hooks', 'hooks.json'), 'utf8'), /gctree __hook --event SessionStart/);
     assert.match(await readFile(join(claudeTarget, '.claude', 'hooks', 'gctree-session-start.md'), 'utf8'), /gc-branch/i);
   } finally {
     await rm(codexTarget, { recursive: true, force: true });

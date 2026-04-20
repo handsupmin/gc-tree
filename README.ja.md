@@ -62,7 +62,7 @@ gctree init
 2. 現在のリポジトリへの統合ファイルのインストール
 3. `main` gc-branch のガイド付きオンボーディング実行
 
-その後は、AI ツールが計画・実装の前に `gctree resolve` を呼ぶ流れを自然に覚えます。
+その後は、AI ツールに実際の SessionStart / UserPromptSubmit フック統合が入り、作業前に gc-tree を自動確認し、空結果や no-match をセッション中キャッシュします。
 
 - **CLI：** `gctree`
 - **動作条件：** Node.js 20+

@@ -145,6 +145,7 @@ gctree scaffold --host both --target /path/to/repo
 
 ```
 AGENTS.md                                  ← fragmento de gctree añadido a las instrucciones del agente
+.codex/hooks.json                         ← hooks de auto-resolve para SessionStart/UserPromptSubmit
 .codex/prompts/gctree-bootstrap.md         ← contexto de arranque para las sesiones de Codex
 .codex/skills/gc-resolve-context/SKILL.md  ← skill de resolve
 .codex/skills/gc-onboard/SKILL.md          ← skill de onboarding
@@ -155,7 +156,8 @@ AGENTS.md                                  ← fragmento de gctree añadido a la
 
 ```
 CLAUDE.md                                        ← fragmento de gctree añadido
-.claude/hooks/gctree-session-start.md            ← hook de inicio de sesión
+.claude/hooks/hooks.json                         ← hooks de auto-resolve para SessionStart/UserPromptSubmit
+.claude/hooks/gctree-session-start.md            ← nota fallback de inicio de sesión
 .claude/commands/gc-resolve-context.md           ← comando slash de resolve
 .claude/commands/gc-onboard.md                   ← comando slash de onboard
 .claude/commands/gc-update-global-context.md     ← comando slash de actualización

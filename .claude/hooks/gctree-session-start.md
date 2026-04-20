@@ -1,5 +1,6 @@
 # gctree Claude Code SessionStart note
 
-- At session start, confirm the active gc-branch with `gctree status` when reusable global context may matter.
+- gctree init installs real SessionStart/UserPromptSubmit hooks via `.claude/hooks/hooks.json`.
+- At session start, use the injected hook context to confirm the active gc-branch.
 - Refer to gctree branches as **gc-branches** in user-facing language.
-- Resolve summaries before planning or implementation when branch-level context may change the answer.
+- If hook context is missing or stale, resolve summaries before planning or implementation when branch-level context may change the answer.

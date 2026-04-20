@@ -10,8 +10,8 @@ function renderCodexAgentsSnippet(): string {
     '# gctree Codex integration snippet',
     '',
     '- Treat the active gctree branch as a **gc-branch** when you describe it to users.',
-    '- Before planning or implementation, run `gctree status` to confirm the active gc-branch if it is unclear.',
-    '- Use `gctree resolve --query "<task>"` when reusable global context may matter.',
+    '- gctree init installs SessionStart and UserPromptSubmit hooks that auto-check gc-tree before work.',
+    '- Use the hook-injected gc-tree context first. If hooks are unavailable or clearly stale, run `gctree status` and `gctree resolve --query "<task>"` yourself before planning or implementation.',
     '- Use `$gc-onboard` only for an empty gc-branch.',
     '- Use `$gc-update-global-context` when durable context in the active gc-branch should change.',
     '',
@@ -23,11 +23,43 @@ function renderCodexBootstrapPrompt(): string {
     '# gctree Bootstrap',
     '',
     '- Keep the active gc-branch explicit whenever global context matters.',
-    '- Resolve reusable global context before planning or implementation when it may change the answer.',
+    '- Trust auto-resolved gc-tree hook context first; if it is missing, resolve reusable global context before planning or implementation.',
     '- Read summaries first and only open full docs when needed.',
     '- Treat gctree docs as explicit source-of-truth markdown, not hidden memory.',
     '',
   ].join('\n');
+}
+
+function renderCodexHooksJson(): string {
+  return JSON.stringify(
+    {
+      hooks: {
+        SessionStart: [
+          {
+            matcher: 'startup|resume',
+            hooks: [
+              {
+                type: 'command',
+                command: 'gctree __hook --event SessionStart',
+              },
+            ],
+          },
+        ],
+        UserPromptSubmit: [
+          {
+            hooks: [
+              {
+                type: 'command',
+                command: 'gctree __hook --event UserPromptSubmit',
+              },
+            ],
+          },
+        ],
+      },
+    },
+    null,
+    2,
+  );
 }
 
 function renderCodexResolveSkill(): string {
@@ -89,8 +121,8 @@ function renderClaudeSnippet(): string {
     '# gctree Claude Code integration snippet',
     '',
     '- Treat the active gctree branch as a **gc-branch** in user-facing language.',
-    '- Run `gctree status` before relying on global context if the active gc-branch is unclear.',
-    '- Use `gctree resolve --query "<task>"` when reusable global context may matter.',
+    '- gctree init installs SessionStart and UserPromptSubmit hooks that auto-check gc-tree before work.',
+    '- Use the hook-injected gc-tree context first. If hooks are unavailable or clearly stale, run `gctree status` and `gctree resolve --query "<task>"` yourself before planning or implementation.',
     '- Use `/gc-onboard` only for an empty gc-branch.',
     '- Use `/gc-update-global-context` when durable context in the active gc-branch should change.',
     '',
@@ -101,11 +133,47 @@ function renderClaudeSessionStartHook(): string {
   return [
     '# gctree Claude Code SessionStart note',
     '',
-    '- At session start, confirm the active gc-branch with `gctree status` when reusable global context may matter.',
+    '- gctree init installs real SessionStart/UserPromptSubmit hooks via `.claude/hooks/hooks.json`.',
+    '- At session start, use the injected hook context to confirm the active gc-branch.',
     '- Refer to gctree branches as **gc-branches** in user-facing language.',
-    '- Resolve summaries before planning or implementation when branch-level context may change the answer.',
+    '- If hook context is missing or stale, resolve summaries before planning or implementation when branch-level context may change the answer.',
     '',
   ].join('\n');
+}
+
+function renderClaudeHooksJson(): string {
+  return JSON.stringify(
+    {
+      hooks: {
+        SessionStart: [
+          {
+            matcher: '*',
+            hooks: [
+              {
+                type: 'command',
+                command: 'gctree __hook --event SessionStart',
+                timeout: 10,
+              },
+            ],
+          },
+        ],
+        UserPromptSubmit: [
+          {
+            matcher: '*',
+            hooks: [
+              {
+                type: 'command',
+                command: 'gctree __hook --event UserPromptSubmit',
+                timeout: 10,
+              },
+            ],
+          },
+        ],
+      },
+    },
+    null,
+    2,
+  );
 }
 
 function renderClaudeResolveCommand(): string {
@@ -164,6 +232,7 @@ function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string 
   if (host === 'codex') {
     return [
       { path: 'AGENTS.md', content: renderCodexAgentsSnippet() },
+      { path: '.codex/hooks.json', content: renderCodexHooksJson() },
       { path: '.codex/prompts/gctree-bootstrap.md', content: renderCodexBootstrapPrompt() },
       { path: '.codex/skills/gc-resolve-context/SKILL.md', content: renderCodexResolveSkill() },
       { path: '.codex/skills/gc-onboard/SKILL.md', content: renderCodexOnboardSkill() },
@@ -173,6 +242,7 @@ function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string 
 
   return [
     { path: 'CLAUDE.md', content: renderClaudeSnippet() },
+    { path: '.claude/hooks/hooks.json', content: renderClaudeHooksJson() },
     { path: '.claude/hooks/gctree-session-start.md', content: renderClaudeSessionStartHook() },
     { path: '.claude/commands/gc-resolve-context.md', content: renderClaudeResolveCommand() },
     { path: '.claude/commands/gc-onboard.md', content: renderClaudeOnboardCommand() },

@@ -36,3 +36,10 @@ export function branchDocsDir(home: string, branch: string): string {
   return join(branchDir(home, branch), 'docs');
 }
 
+export function hookCacheDir(home: string): string {
+  return join(home, 'hook-cache');
+}
+
+export function hookCachePath(home: string, sessionId: string): string {
+  return join(hookCacheDir(home), `${sessionId}.json`);
+}
