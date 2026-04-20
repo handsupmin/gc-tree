@@ -6,7 +6,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "gctree __hook --event SessionStart"
+            "command": "gctree __hook --event SessionStart",
+            "metadata": {
+              "owner": "gctree"
+            }
           }
         ]
       }
@@ -16,7 +19,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "gctree __hook --event UserPromptSubmit"
+            "command": "gctree __hook --event UserPromptSubmit",
+            "metadata": {
+              "owner": "gctree"
+            },
+            "timeout": 10
           }
         ]
       }

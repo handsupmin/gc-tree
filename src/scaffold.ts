@@ -1,6 +1,12 @@
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
+import {
+  gctreeHookJsonTargets,
+  gctreeManagedMarkdownTargets,
+  mergeGcTreeHooksJson,
+  upsertManagedMarkdownBlock,
+} from './integration-files.js';
 import { onboardingCompletionLines, onboardingProtocolLines } from './onboarding-protocol.js';
 
 type GcTreeHost = 'codex' | 'claude-code';
@@ -228,7 +234,7 @@ function renderClaudeUpdateCommand(): string {
   ].join('\n');
 }
 
-function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string }> {
+export function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string }> {
   if (host === 'codex') {
     return [
       { path: 'AGENTS.md', content: renderCodexAgentsSnippet() },
@@ -263,10 +269,33 @@ export async function scaffoldHostIntegration({
   const written: string[] = [];
   const skippedExisting: string[] = [];
 
+  const markdownTargets = gctreeManagedMarkdownTargets(targetDir);
+  const hookTargets = gctreeHookJsonTargets(targetDir);
+  const isCodex = host === 'codex';
+
+  const managedMarkdownPath = isCodex ? markdownTargets.codex : markdownTargets.claude;
+  const managedMarkdownContent = isCodex ? renderCodexAgentsSnippet() : renderClaudeSnippet();
+  await upsertManagedMarkdownBlock({
+    filePath: managedMarkdownPath,
+    content: managedMarkdownContent,
+    marker: isCodex ? 'codex' : 'claude',
+  });
+  written.push(managedMarkdownPath);
+
+  const hookPath = isCodex ? hookTargets.codex : hookTargets.claude;
+  await mergeGcTreeHooksJson({
+    filePath: hookPath,
+    target: isCodex ? 'codex' : 'claude-code',
+  });
+  written.push(hookPath);
+
   const targets = files.map((file) => ({
     ...file,
     fullPath: join(targetDir, file.path),
-  }));
+  })).filter((target) => {
+    if (isCodex) return target.path !== 'AGENTS.md' && target.path !== '.codex/hooks.json';
+    return target.path !== 'CLAUDE.md' && target.path !== '.claude/hooks/hooks.json';
+  });
 
   for (const target of targets) {
     let exists = false;

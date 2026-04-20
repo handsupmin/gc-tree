@@ -27,6 +27,7 @@ import { requirePreferredProvider, writeSettings, readSettings } from './setting
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch, ensureBranchExists, isBranchContextEmpty } from './store.js';
 import type { GcTreeContextUpdateInput, GcTreeOnboardingInput, GcTreeProvider, GcTreeProviderMode } from './types.js';
 import { updateBranchContext } from './update.js';
+import { uninstallGcTree } from './uninstall.js';
 import { verifyOnboarding } from './verify-onboarding.js';
 
 function readArg(flag: string): string | undefined {
@@ -50,6 +51,7 @@ function usage(): never {
   gctree onboard [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree verify-onboarding [--home DIR] [--branch NAME]
   gctree reset-gc-branch [--home DIR] [--branch NAME] --yes
+  gctree uninstall [--home DIR] [--target DIR] [--host <codex|claude-code|both>] [--keep-home] --yes
   gctree resolve --query TEXT [--home DIR] [--branch NAME] [--cwd DIR]
   gctree show-doc --id ID [--home DIR] [--branch NAME]
   gctree related --id ID [--home DIR] [--branch NAME]
@@ -337,6 +339,21 @@ async function main(): Promise<void> {
       }
       const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
       const result = await resetBranchContext(home, gcBranch);
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    case 'uninstall': {
+      if (!hasFlag('--yes')) {
+        throw new Error('uninstall is destructive. Re-run with --yes to confirm.');
+      }
+      const host = normalizeProviderMode(readArg('--host')) || 'both';
+      const targetDir = readArg('--target') || process.cwd();
+      const result = await uninstallGcTree({
+        home,
+        targetDir,
+        host,
+        keepHome: hasFlag('--keep-home'),
+      });
       console.log(JSON.stringify(result, null, 2));
       return;
     }
