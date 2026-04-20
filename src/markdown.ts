@@ -41,7 +41,7 @@ export function renderDocMarkdown(doc: GcTreeDocInput): string {
 export function renderIndexMarkdown(input: {
   branch: string;
   branchSummary: string;
-  docs: Array<{ title: string; path: string }>;
+  docs: Array<{ title: string; label?: string; category?: string; path: string }>;
 }): string {
   const lines = [
     '# gc-tree Index',
@@ -54,37 +54,95 @@ export function renderIndexMarkdown(input: {
   if (input.docs.length === 0) {
     lines.push('- No source docs yet.', '');
   } else {
-    for (const doc of input.docs.sort((a, b) => a.title.localeCompare(b.title))) {
-      lines.push(`- ${doc.title} -> ${doc.path}`);
+    const categoryOrder = ['role', 'repos', 'domain', 'workflows', 'conventions', 'infra', 'verification', 'general'];
+    const grouped = new Map<string, Array<{ title: string; label?: string; path: string }>>();
+    for (const doc of input.docs) {
+      const category = normalizeCategory(doc.category || deriveCategoryFromPath(doc.path));
+      if (!grouped.has(category)) grouped.set(category, []);
+      grouped.get(category)!.push(doc);
     }
-    lines.push('');
+    const categories = [...grouped.keys()].sort((a, b) => {
+      const ai = categoryOrder.indexOf(a);
+      const bi = categoryOrder.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    for (const category of categories) {
+      lines.push(`## ${displayCategory(category)}`, '');
+      for (const doc of grouped.get(category)!.sort((a, b) =>
+        (a.label || a.title).localeCompare(b.label || b.title),
+      )) {
+        lines.push(`- ${doc.label || doc.title} -> ${doc.path}`);
+      }
+      lines.push('');
+    }
   }
 
   return lines.join('\n');
 }
 
 export function docIdFromPath(docPath: string): string {
-  const fileName = String(docPath || '')
-    .trim()
-    .split('/')
-    .pop() || '';
-  return fileName.replace(/\.md$/i, '') || 'doc';
+  const normalized = String(docPath || '').trim().replace(/^docs\//, '');
+  return normalized.replace(/\.md$/i, '') || 'doc';
 }
 
-export function parseIndexEntries(indexContent: string): Array<{ id: string; title: string; path: string }> {
+export function normalizeCategory(value: string): string {
+  return slugify(value || 'general');
+}
+
+export function deriveCategoryFromPath(docPath: string): string {
+  const normalized = String(docPath || '').trim().replace(/^docs\//, '');
+  const parts = normalized.split('/').filter(Boolean);
+  if (parts.length > 1) return normalizeCategory(parts[0]!);
+  return 'general';
+}
+
+export function displayCategory(category: string): string {
+  const normalized = normalizeCategory(category);
+  const predefined: Record<string, string> = {
+    role: 'Role',
+    repos: 'Repos',
+    domain: 'Domain',
+    workflows: 'Workflows',
+    conventions: 'Conventions',
+    infra: 'Infra',
+    verification: 'Verification',
+    general: 'General',
+  };
+  return predefined[normalized] || normalized.split('-').map((part) => part[0]?.toUpperCase() + part.slice(1)).join(' ');
+}
+
+export function parseIndexEntries(indexContent: string): Array<{ id: string; title: string; label: string; category: string; path: string }> {
+  let currentCategory = 'general';
   return String(indexContent || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => /^- .+ -> .+$/.test(line) && !line.startsWith('- gc-branch:') && !line.startsWith('- summary:'))
-    .map((line) => {
+    .flatMap((line) => {
+      if (!line) return [];
+      const heading = line.match(/^##\s+(.+)$/);
+      if (heading) {
+        currentCategory = normalizeCategory(heading[1] || 'general');
+        return [];
+      }
+      if (!/^-\s+.+\s+->\s+.+$/.test(line) || line.startsWith('- gc-branch:') || line.startsWith('- summary:')) {
+        return [];
+      }
       const body = line.slice(2);
-      const [title, path] = body.split('->').map((part) => part.trim());
-      return { id: docIdFromPath(path), title, path };
+      const [label, path] = body.split('->').map((part) => part.trim());
+      const category = deriveCategoryFromPath(path) || currentCategory;
+      return [{ id: docIdFromPath(path), title: label, label, category, path }];
     });
 }
 
 export function extractSummary(markdown: string): string {
   const match = String(markdown || '').match(/## Summary\s+([\s\S]*?)(?:\n## |$)/);
+  return match?.[1]?.trim() || '';
+}
+
+export function extractTitle(markdown: string): string {
+  const match = String(markdown || '').match(/^#\s+(.+)$/m);
   return match?.[1]?.trim() || '';
 }
 

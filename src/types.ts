@@ -7,6 +7,8 @@ export interface GcTreeDocInput {
   summary: string;
   body: string;
   tags?: string[];
+  category?: string;
+  indexLabel?: string;
 }
 
 export interface GcTreeOnboardingInput {
@@ -78,6 +80,8 @@ export interface GcTreeBranchMeta {
 
 export interface GcTreeResolveMatch {
   id: string;
+  label: string;
+  category: string;
   title: string;
   path: string;
   score: number;
@@ -96,6 +100,8 @@ export type GcTreeResolveStatus =
 export interface GcTreeDocRecord {
   id: string;
   title: string;
+  label: string;
+  category: string;
   path: string;
   summary: string;
   content: string;

@@ -1,10 +1,17 @@
-import { mkdir, readdir, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 
-import { renderDocMarkdown } from './markdown.js';
+import { renderDocMarkdown, slugify } from './markdown.js';
 import { branchDocsDir, DEFAULT_BRANCH } from './paths.js';
 import { ensureBranchExists, updateBranchMeta, writeIndexFromDocs } from './store.js';
 import type { GcTreeOnboardingInput } from './types.js';
+
+function docRelativePath(doc: GcTreeOnboardingInput['docs'][number]): string {
+  if (doc.slug?.includes('/')) return `${doc.slug.replace(/\.md$/i, '')}.md`;
+  const fileBase = slugify(doc.slug || doc.indexLabel || doc.title);
+  const category = doc.category ? slugify(doc.category) : '';
+  return category ? `${category}/${fileBase}.md` : `${fileBase}.md`;
+}
 
 export async function onboardBranch({
   home,
@@ -17,24 +24,13 @@ export async function onboardBranch({
 }): Promise<{ gc_branch: string; docs_written: string[]; index_path: string }> {
   const targetBranch = branch || input.branch || DEFAULT_BRANCH;
   await ensureBranchExists(home, targetBranch);
+  await rm(branchDocsDir(home, targetBranch), { recursive: true, force: true });
   await mkdir(branchDocsDir(home, targetBranch), { recursive: true });
-  const existing = await readdir(branchDocsDir(home, targetBranch)).catch(() => []);
-  await Promise.all(
-    existing
-      .filter((file) => file.endsWith('.md'))
-      .map((file) => unlink(join(branchDocsDir(home, targetBranch), file))),
-  );
 
   const written: string[] = [];
   for (const doc of input.docs) {
-    const relativePath = `${doc.slug ? doc.slug : doc.title}`;
-    const fileName = `${relativePath
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'doc'}.md`;
-    const fullPath = join(branchDocsDir(home, targetBranch), fileName);
+    const fullPath = join(branchDocsDir(home, targetBranch), docRelativePath(doc));
+    await mkdir(dirname(fullPath), { recursive: true });
     await writeFile(fullPath, renderDocMarkdown(doc), 'utf8');
     written.push(fullPath);
   }

@@ -32,7 +32,10 @@ Use this when a user wants to create global context for a product, company, or w
 - ask for multiple work types if needed, then multiple repos inside each work type if needed
 - ask about glossary terms and default verification commands before you finish
 - write compact source docs with a required `## Summary` section near the top
-- keep `index.md` as an index only
+- prefer an encyclopedia-style context set with many small docs instead of a few broad docs
+- prefer category directories like `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/`
+- prefer one concept, one repository, one workflow, or one convention per file when possible
+- keep `index.md` as a human-readable dictionary-style TOC grouped by category headings and `label -> path` entries
 - use onboarding only for an empty gc-branch
 
 ## Procedure
@@ -63,13 +66,15 @@ Use this when a user wants to create global context for a product, company, or w
 17. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
 18. Ask for company/domain glossary terms and acronyms that should become durable context.
 19. Ask which verification commands should be treated as defaults for this gc-branch.
-20. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
-21. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
-22. Do not claim onboarding is complete unless verification returns `status: "complete"`.
-23. After the onboarding docs are written, explicitly list which durable docs were saved.
-24. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
-25. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
-26. Ask whether anything else should be saved while the context is still fresh.
-27. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-28. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-29. Keep the current gc-branch explicit while gathering context.
+20. Structure the durable docs as a small encyclopedia: split by category directory, keep one concept/repo/workflow/convention per file when possible, and keep a short `## Summary` at the top of each doc.
+21. Render `index.md` as a category-grouped dictionary-style table of contents with `label -> path` entries.
+22. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
+23. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
+24. Do not claim onboarding is complete unless verification returns `status: "complete"`.
+25. After the onboarding docs are written, explicitly list which durable docs were saved.
+26. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
+27. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
+28. Ask whether anything else should be saved while the context is still fresh.
+29. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+30. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+31. Keep the current gc-branch explicit while gathering context.

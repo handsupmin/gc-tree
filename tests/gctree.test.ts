@@ -30,6 +30,41 @@ const onboardingInput = {
   ],
 };
 
+const categorizedOnboardingInput = {
+  branchSummary: 'Cosmo backend lead global context.',
+  docs: [
+    {
+      title: 'Como',
+      category: 'domain',
+      indexLabel: 'como',
+      summary: '투표권 토큰 도메인 개념.',
+      body: 'Como는 Abstract 블록체인에서 발행되는 투표권 토큰이다.',
+    },
+    {
+      title: 'Gravity',
+      category: 'domain',
+      indexLabel: 'gravity',
+      summary: '투표 이벤트 도메인 개념.',
+      body: 'Gravity는 어드민에 등록되고 온체인에 반영되는 투표 이벤트다.',
+    },
+    {
+      title: 'G3 Repository',
+      category: 'repos',
+      indexLabel: 'g3',
+      slug: 'g3',
+      summary: '주요 NestJS 서버 저장소.',
+      body: 'Customer/Admin/Worker/CLI 모듈을 포함한다.',
+    },
+    {
+      title: 'DB Migration Workflow',
+      category: 'workflows',
+      indexLabel: 'db-migration',
+      summary: 'DB 변경 워크플로우.',
+      body: 'model.py 수정 후 revision 생성, up은 개발자가 수동 실행한다.',
+    },
+  ],
+};
+
 test('init creates the home and default gc-branch', async () => {
   const home = await createHome('gctree-home-');
   try {
@@ -78,6 +113,30 @@ test('onboard writes summary-first docs and a compact index', async () => {
     assert.match(doc, /## Summary/);
     assert.match(doc, /CLI-first tool for auth-heavy API work/);
     assert.match(doc, /## Details/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('onboard can write categorized docs and render a sectioned dictionary index', async () => {
+  const home = await createHome('gctree-onboard-categorized-');
+  try {
+    await initHome(home);
+    const result = await onboardBranch({ home, input: categorizedOnboardingInput });
+    assert.equal(result.gc_branch, DEFAULT_BRANCH);
+
+    const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
+    assert.match(index, /## Domain/);
+    assert.match(index, /- como -> docs\/domain\/como\.md/);
+    assert.match(index, /- gravity -> docs\/domain\/gravity\.md/);
+    assert.match(index, /## Repos/);
+    assert.match(index, /- g3 -> docs\/repos\/g3\.md/);
+    assert.match(index, /## Workflows/);
+    assert.match(index, /- db-migration -> docs\/workflows\/db-migration\.md/);
+
+    const comoDoc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'domain', 'como.md'), 'utf8');
+    assert.match(comoDoc, /## Summary/);
+    assert.match(comoDoc, /투표권 토큰 도메인 개념/);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

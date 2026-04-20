@@ -23,7 +23,11 @@ export function onboardingProtocolLines(): string[] {
     'Ask whether there are additional repositories for the current work type before moving on.',
     'After repository coverage, ask for company/domain glossary terms and acronyms that should become durable context.',
     'Then ask which verification commands should be treated as defaults for this kind of work.',
-    'Synthesize the interview into durable docs such as a role/profile summary, work types, repository roles, glossary, and verification defaults.',
+    'Synthesize the interview into an encyclopedia-style context set with many small docs instead of a few broad docs.',
+    'Prefer category directories such as `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/` whenever that split fits the material.',
+    'Prefer one concept, one repository, one workflow, or one convention per file when possible.',
+    'Keep each doc summary-first so the top section gives the gist before deeper details.',
+    'Treat `index.md` as a human-readable dictionary-style table of contents grouped by category headings and `label -> path` entries.',
   ];
 }
 

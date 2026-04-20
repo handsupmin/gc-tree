@@ -31,10 +31,12 @@ Use this only when the active gc-branch is empty.
 25. Synthesize the interview into durable docs such as a role/profile summary, work types, repository roles, glossary, and verification defaults.
 26. Then create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).
 27. Run `gctree __apply-onboarding --input <temp-file>`.
-28. After applying the onboarding docs, explicitly list which durable docs were saved.
-29. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
-30. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
-31. Ask whether anything else should be saved while the context is still fresh.
-32. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-33. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-34. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.
+28. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
+29. Do not claim onboarding is complete unless verification returns `status: "complete"`.
+30. After applying the onboarding docs, explicitly list which durable docs were saved.
+31. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
+32. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
+33. Ask whether anything else should be saved while the context is still fresh.
+34. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+35. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+36. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.

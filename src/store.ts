@@ -15,6 +15,21 @@ import {
 import { renderIndexMarkdown } from './markdown.js';
 import type { GcTreeBranchMeta } from './types.js';
 
+async function listDocRelativePaths(dir: string, prefix = ''): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  const files: string[] = [];
+  for (const entry of entries) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listDocRelativePaths(fullPath, relative)));
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(relative);
+    }
+  }
+  return files.sort();
+}
+
 export async function ensureHome(home: string): Promise<void> {
   await mkdir(branchesRoot(home), { recursive: true });
 }
@@ -116,12 +131,15 @@ export async function checkoutBranch(home: string, branch: string, create = fals
 export async function writeIndexFromDocs(home: string, branch: string): Promise<{ index_path: string; doc_count: number }> {
   const docsDir = branchDocsDir(home, branch);
   await mkdir(docsDir, { recursive: true });
-  const files = (await readdir(docsDir)).filter((file) => file.endsWith('.md')).sort();
+  const files = await listDocRelativePaths(docsDir);
   const docs = await Promise.all(
     files.map(async (file) => {
       const raw = await readFile(join(docsDir, file), 'utf8');
       const title = raw.match(/^#\s+(.+)$/m)?.[1]?.trim() || file.replace(/\.md$/i, '').replace(/-/g, ' ');
-      return { title, path: `docs/${file}` };
+      const parts = file.replace(/\.md$/i, '').split('/').filter(Boolean);
+      const category = parts.length > 1 ? parts[0] : 'general';
+      const label = parts.length > 1 ? parts[parts.length - 1] : title;
+      return { title, label, category, path: `docs/${file}` };
     }),
   );
   const meta = await readBranchMeta(home, branch);
@@ -131,7 +149,7 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
 }
 
 export async function isBranchContextEmpty(home: string, branch: string): Promise<boolean> {
-  const docs = (await readdir(branchDocsDir(home, branch)).catch(() => [])).filter((file) => file.endsWith('.md'));
+  const docs = await listDocRelativePaths(branchDocsDir(home, branch));
   return docs.length === 0;
 }
 
@@ -157,7 +175,7 @@ export async function statusForBranch(home: string, branch: string): Promise<{
   warnings: string[];
 }> {
   const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
-  const docs = (await readdir(branchDocsDir(home, branch)).catch(() => [])).filter((file) => file.endsWith('.md'));
+  const docs = await listDocRelativePaths(branchDocsDir(home, branch));
   const warnings: string[] = [];
   if (indexRaw.length > INDEX_WARNING_CHARS) {
     warnings.push(`index.md is ${indexRaw.length} chars; keep it closer to an index than a knowledge dump.`);

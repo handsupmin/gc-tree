@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { docIdFromPath, extractExcerpt, extractSummary, parseIndexEntries } from './markdown.js';
+import { deriveCategoryFromPath, docIdFromPath, extractExcerpt, extractSummary, extractTitle, parseIndexEntries } from './markdown.js';
 import { branchDir, branchIndexPath } from './paths.js';
 import type { GcTreeDocRecord, GcTreeResolveMatch, GcTreeResolveStatus } from './types.js';
 
@@ -56,7 +56,9 @@ async function readBranchDocs(home: string, branch: string): Promise<GcTreeDocRe
       const raw = await readFile(fullPath, 'utf8');
       return {
         id: entry.id || docIdFromPath(entry.path),
-        title: entry.title,
+        title: extractTitle(raw) || entry.title,
+        label: entry.label,
+        category: entry.category || deriveCategoryFromPath(entry.path),
         path: entry.path,
         summary: extractSummary(raw),
         content: raw,
@@ -86,6 +88,8 @@ export async function resolveContext({
     if (score <= 0) continue;
     matches.push({
       id: entry.id,
+      label: entry.label,
+      category: entry.category,
       title: entry.title,
       path: entry.path,
       score,
@@ -145,6 +149,8 @@ export async function findRelatedDocs({
       return score > 0
         ? {
             id: doc.id,
+            label: doc.label,
+            category: doc.category,
             title: doc.title,
             path: doc.path,
             score,
