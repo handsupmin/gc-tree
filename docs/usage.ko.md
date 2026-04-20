@@ -14,10 +14,12 @@
 4. `both`를 선택한 경우, 지금 온보딩을 시작할 프로바이더 선택
 5. 기본 `main` gc-branch의 안내된 온보딩 완료
 6. `gctree resolve --query "..."`로 관련 컨텍스트 resolve
-7. `gctree checkout`으로 gc-branch 생성 또는 전환
-8. 빈 gc-branch에만 `gctree onboard` 실행
-9. 저장소 범위 매핑으로 gc-branch가 해당하는 곳에만 적용되도록 설정
-10. 이후 지속 변경에는 `gctree update-global-context` 사용
+7. `gctree related --id <match-id>`로 supporting docs 확인
+8. `gctree show-doc --id <match-id>`로 필요할 때만 전체 문서 읽기
+9. `gctree checkout`으로 gc-branch 생성 또는 전환
+10. 빈 gc-branch에만 `gctree onboard` 실행
+11. 저장소 범위 매핑으로 gc-branch가 해당하는 곳에만 적용되도록 설정
+12. 이후 지속 변경에는 `gctree update-global-context` 사용
 
 ## 핵심 명령어
 
@@ -28,7 +30,9 @@
 | `gctree checkout -b <branch>` | 새 빈 gc-branch를 생성하고 전환. |
 | `gctree branches` | 사용 가능한 gc-branch 목록 표시 및 현재 활성 브랜치 표시. |
 | `gctree status` | 활성 gc-branch, 현재 저장소, 현재 저장소 범위 상태, 경고, 선호 프로바이더 표시. |
-| `gctree resolve --query TEXT` | 관련 gc-branch에서 컨텍스트 검색. 현재 저장소가 매핑되지 않은 경우, `gctree`가 해당 저장소 처리 방법을 물어볼 수 있습니다. |
+| `gctree resolve --query TEXT` | 쿼리에 대한 compact index layer를 반환합니다. match에는 stable ID와 후속 조회 명령이 포함됩니다. |
+| `gctree related --id <match-id>` | 하나의 resolved match 주변 supporting docs를 전체 markdown 없이 반환합니다. |
+| `gctree show-doc --id <match-id>` | stable match ID 하나에 대한 전체 markdown source-of-truth 문서를 반환합니다. |
 | `gctree repo-map` | `branch-repo-map.json`의 현재 내용 표시. |
 | `gctree set-repo-scope --branch <name> --include` | 현재 저장소를 해당 gc-branch에 포함으로 표시. |
 | `gctree set-repo-scope --branch <name> --exclude` | 현재 저장소를 해당 gc-branch에서 무시로 표시. |
@@ -40,7 +44,7 @@
 
 ## resolve가 반환하는 것
 
-`gctree resolve`는 활성 gc-branch의 모든 문서를 쿼리에 대해 점수를 매기고 매칭된 것만 반환합니다. 제목 매칭은 본문 매칭보다 두 배의 가중치를 가집니다.
+`gctree resolve`는 progressive-disclosure 워크플로우의 **compact index layer**입니다. 활성 gc-branch의 문서를 쿼리에 대해 점수화하고 stable ID가 포함된 match만 반환합니다. 제목 매칭은 본문 매칭보다 두 배의 가중치를 가집니다.
 
 ```bash
 gctree resolve --query "auth token rotation policy"
@@ -50,19 +54,36 @@ gctree resolve --query "auth token rotation policy"
 {
   "gc_branch": "main",
   "query": "auth token rotation policy",
+  "status": "matched",
   "matches": [
     {
+      "id": "auth",
       "title": "Auth & Session Conventions",
       "path": "docs/auth.md",
       "score": 4,
       "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
-      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request...",
+      "commands": {
+        "show_doc": "gctree show-doc --id \"auth\" --home \"~/.gctree\" --branch \"main\"",
+        "related": "gctree related --id \"auth\" --home \"~/.gctree\" --branch \"main\""
+      }
     }
   ]
 }
 ```
 
-도구는 먼저 요약과 발췌문을 받습니다. 요약만으로 충분하지 않을 때만 `path`의 전체 문서를 읽습니다. 아무것도 매칭되지 않는 쿼리는 `"matches": []`를 반환합니다.
+권장 흐름은 다음과 같습니다:
+
+1. `resolve` → compact index
+2. `related` → 특정 match 주변 supporting docs
+3. `show-doc` → 필요할 때만 전체 markdown
+
+Graceful degradation도 명시적입니다:
+
+- 빈 gc-branch → `status: "empty_branch"`
+- 제외된 repo → `status: "excluded"`
+- 결과 없음 → `status: "no_match"`
+- 문서 ID 없음 → `status: "doc_not_found"`
 
 ## 저장소 범위 설정 예시 흐름
 

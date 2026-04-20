@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 
 import { onboardBranch } from '../src/onboard.js';
 import { DEFAULT_BRANCH, branchDocsDir, branchIndexPath } from '../src/paths.js';
-import { resolveContext } from '../src/resolve.js';
+import { getDocById, findRelatedDocs, resolveContext } from '../src/resolve.js';
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch } from '../src/store.js';
 import { updateBranchContext } from '../src/update.js';
 
@@ -108,7 +108,37 @@ test('resolve searches only the active gc-branch', async () => {
     const branchB = await resolveContext({ home, branch: 'client-b', query: 'token rotation' });
 
     assert.equal(branchA.matches.length > 0, true);
+    assert.equal(branchA.matches[0]?.id, 'domain-glossary');
     assert.equal(branchB.matches.length, 0);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('getDocById returns full doc payload for progressive disclosure', async () => {
+  const home = await createHome('gctree-doc-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: onboardingInput });
+
+    const doc = await getDocById({ home, branch: 'main', id: 'project-identity' });
+    assert.equal(doc?.id, 'project-identity');
+    assert.equal(doc?.title, 'Project Identity');
+    assert.match(doc?.content || '', /CLI-first tool for auth-heavy API work/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('findRelatedDocs returns supporting docs for a selected resolve result', async () => {
+  const home = await createHome('gctree-related-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: onboardingInput });
+
+    const related = await findRelatedDocs({ home, branch: 'main', id: 'project-identity' });
+    assert.equal(related.status, 'matched');
+    assert.equal(related.matches[0]?.id, 'domain-glossary');
   } finally {
     await rm(home, { recursive: true, force: true });
   }

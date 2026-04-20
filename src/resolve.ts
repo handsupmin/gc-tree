@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { extractExcerpt, extractSummary, parseIndexEntries } from './markdown.js';
+import { docIdFromPath, extractExcerpt, extractSummary, parseIndexEntries } from './markdown.js';
 import { branchDir, branchIndexPath } from './paths.js';
-import type { GcTreeResolveMatch } from './types.js';
+import type { GcTreeDocRecord, GcTreeResolveMatch, GcTreeResolveStatus } from './types.js';
 
 // Common English stop words that are too short or generic to be meaningful query signals.
 const STOP_WORDS = new Set([
@@ -46,6 +46,25 @@ function scoreText(text: string, query: string): number {
   }, 0);
 }
 
+async function readBranchDocs(home: string, branch: string): Promise<GcTreeDocRecord[]> {
+  const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
+  const entries = parseIndexEntries(indexRaw);
+
+  return Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = join(branchDir(home, branch), entry.path);
+      const raw = await readFile(fullPath, 'utf8');
+      return {
+        id: entry.id || docIdFromPath(entry.path),
+        title: entry.title,
+        path: entry.path,
+        summary: extractSummary(raw),
+        content: raw,
+      };
+    }),
+  );
+}
+
 export async function resolveContext({
   home,
   branch,
@@ -55,26 +74,23 @@ export async function resolveContext({
   branch: string;
   query: string;
 }): Promise<{ branch: string; query: string; matches: GcTreeResolveMatch[] }> {
-  const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
-  const entries = parseIndexEntries(indexRaw);
+  const entries = await readBranchDocs(home, branch);
   const matches: GcTreeResolveMatch[] = [];
 
   for (const entry of entries) {
-    const fullPath = join(branchDir(home, branch), entry.path);
-    const raw = await readFile(fullPath, 'utf8');
-    const summary = extractSummary(raw);
-    const combined = `${entry.title}\n${summary}\n${raw}`;
+    const combined = `${entry.title}\n${entry.summary}\n${entry.content}`;
     // Title matches count double (higher signal density)
     const titleScore = scoreText(entry.title, query);
-    const bodyScore = scoreText(`${summary}\n${raw}`, query);
+    const bodyScore = scoreText(`${entry.summary}\n${entry.content}`, query);
     const score = titleScore * 2 + bodyScore;
     if (score <= 0) continue;
     matches.push({
+      id: entry.id,
       title: entry.title,
       path: entry.path,
       score,
-      summary,
-      excerpt: extractExcerpt(raw, query),
+      summary: entry.summary,
+      excerpt: extractExcerpt(entry.content, query),
     });
   }
 
@@ -82,5 +98,68 @@ export async function resolveContext({
     branch,
     query,
     matches: matches.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)),
+  };
+}
+
+export async function getDocById({
+  home,
+  branch,
+  id,
+}: {
+  home: string;
+  branch: string;
+  id: string;
+}): Promise<GcTreeDocRecord | null> {
+  const docs = await readBranchDocs(home, branch);
+  return docs.find((doc) => doc.id === id) || null;
+}
+
+export async function findRelatedDocs({
+  home,
+  branch,
+  id,
+  limit = 5,
+}: {
+  home: string;
+  branch: string;
+  id: string;
+  limit?: number;
+}): Promise<{ status: GcTreeResolveStatus; selected: GcTreeDocRecord | null; matches: GcTreeResolveMatch[] }> {
+  const docs = await readBranchDocs(home, branch);
+  if (docs.length === 0) {
+    return { status: 'empty_branch', selected: null, matches: [] };
+  }
+
+  const selected = docs.find((doc) => doc.id === id) || null;
+  if (!selected) {
+    return { status: 'doc_not_found', selected: null, matches: [] };
+  }
+
+  const query = `${selected.title}\n${selected.summary}`;
+  const matches = docs
+    .filter((doc) => doc.id !== selected.id)
+    .map((doc) => {
+      const titleScore = scoreText(doc.title, query);
+      const bodyScore = scoreText(`${doc.summary}\n${doc.content}`, query);
+      const score = titleScore * 2 + bodyScore;
+      return score > 0
+        ? {
+            id: doc.id,
+            title: doc.title,
+            path: doc.path,
+            score,
+            summary: doc.summary,
+            excerpt: extractExcerpt(doc.content, query),
+          }
+        : null;
+    })
+    .filter((match): match is GcTreeResolveMatch => Boolean(match))
+    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
+    .slice(0, limit);
+
+  return {
+    status: matches.length > 0 ? 'matched' : 'no_related_docs',
+    selected,
+    matches,
   };
 }

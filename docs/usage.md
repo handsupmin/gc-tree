@@ -14,10 +14,12 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 4. if you picked `both`, choose which provider should start onboarding now
 5. complete guided onboarding for the default `main` gc-branch
 6. resolve relevant context with `gctree resolve --query "..."`
-7. create or switch gc-branches with `gctree checkout`
-8. run `gctree onboard` only for an empty gc-branch
-9. use repo scope mapping so a gc-branch only applies where it belongs
-10. use `gctree update-global-context` for durable changes later
+7. inspect supporting docs with `gctree related --id <match-id>`
+8. read the full doc only when needed with `gctree show-doc --id <match-id>`
+9. create or switch gc-branches with `gctree checkout`
+10. run `gctree onboard` only for an empty gc-branch
+11. use repo scope mapping so a gc-branch only applies where it belongs
+12. use `gctree update-global-context` for durable changes later
 
 ## Core commands
 
@@ -28,7 +30,9 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 | `gctree checkout -b <branch>` | Create and switch to a new empty gc-branch. |
 | `gctree branches` | List available gc-branches and show the active one. |
 | `gctree status` | Show the active gc-branch, the current repo, the current repo-scope status, warnings, and the preferred provider. |
-| `gctree resolve --query TEXT` | Search the relevant gc-branch for context. If the current repo is unmapped, `gctree` can ask how that repo should be treated. |
+| `gctree resolve --query TEXT` | Return the compact index layer for a query. Matches include stable IDs plus follow-up commands for deeper inspection. |
+| `gctree related --id <match-id>` | Return supporting docs related to one resolved match without expanding the full markdown yet. |
+| `gctree show-doc --id <match-id>` | Return the full markdown source-of-truth doc for one stable match ID. |
 | `gctree repo-map` | Show the current contents of `branch-repo-map.json`. |
 | `gctree set-repo-scope --branch <name> --include` | Mark the current repo as included for that gc-branch. |
 | `gctree set-repo-scope --branch <name> --exclude` | Mark the current repo as ignored for that gc-branch. |
@@ -40,7 +44,7 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 
 ## What resolve returns
 
-`gctree resolve` scores every document in the active gc-branch against your query and returns only the matching ones. Title matches count twice as much as body matches.
+`gctree resolve` is the compact **index layer** in a progressive-disclosure workflow. It scores every document in the active gc-branch against your query and returns only matching docs with stable IDs. Title matches count twice as much as body matches.
 
 ```bash
 gctree resolve --query "auth token rotation policy"
@@ -50,19 +54,36 @@ gctree resolve --query "auth token rotation policy"
 {
   "gc_branch": "main",
   "query": "auth token rotation policy",
+  "status": "matched",
   "matches": [
     {
+      "id": "auth",
       "title": "Auth & Session Conventions",
       "path": "docs/auth.md",
       "score": 4,
       "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
-      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request...",
+      "commands": {
+        "show_doc": "gctree show-doc --id \"auth\" --home \"~/.gctree\" --branch \"main\"",
+        "related": "gctree related --id \"auth\" --home \"~/.gctree\" --branch \"main\""
+      }
     }
   ]
 }
 ```
 
-The tool receives the summary and excerpt first. It reads the full document at `path` only when the summary is not enough. A query that matches nothing returns `"matches": []`.
+The intended flow is:
+
+1. `resolve` → compact index
+2. `related` → supporting docs around one match
+3. `show-doc` → full markdown only when needed
+
+Graceful degradation is explicit:
+
+- empty gc-branch → `status: "empty_branch"`
+- excluded repo → `status: "excluded"`
+- no hits → `status: "no_match"`
+- missing doc id → `status: "doc_not_found"`
 
 ## Example repo-scope flow
 

@@ -14,10 +14,12 @@
 4. 如果选择了 `both`，选择哪个提供商现在开始 onboarding
 5. 对默认的 `main` gc-branch 完成有引导的 onboarding
 6. 使用 `gctree resolve --query "..."` 解析相关上下文
-7. 使用 `gctree checkout` 创建或切换 gc-branch
-8. 仅对空的 gc-branch 运行 `gctree onboard`
-9. 使用仓库作用范围映射，使 gc-branch 只在其适用的地方生效
-10. 使用 `gctree update-global-context` 进行后续的持久化变更
+7. 使用 `gctree related --id <match-id>` 查看 supporting docs
+8. 仅在需要时使用 `gctree show-doc --id <match-id>` 读取完整文档
+9. 使用 `gctree checkout` 创建或切换 gc-branch
+10. 仅对空的 gc-branch 运行 `gctree onboard`
+11. 使用仓库作用范围映射，使 gc-branch 只在其适用的地方生效
+12. 使用 `gctree update-global-context` 进行后续的持久化变更
 
 ## 核心命令
 
@@ -28,7 +30,9 @@
 | `gctree checkout -b <branch>` | 创建并切换到一个新的空 gc-branch。 |
 | `gctree branches` | 列出可用的 gc-branch 并显示当前活跃的那个。 |
 | `gctree status` | 显示活跃的 gc-branch、当前仓库、当前仓库的作用范围状态、警告信息及首选提供商。 |
-| `gctree resolve --query TEXT` | 在相关的 gc-branch 中搜索上下文。如果当前仓库尚未映射，`gctree` 会询问该如何处理这个仓库。 |
+| `gctree resolve --query TEXT` | 返回查询的紧凑索引层。匹配项包含稳定 ID 和后续深入查看的命令。 |
+| `gctree related --id <match-id>` | 返回某个 resolved 匹配周围的 supporting docs，而不立即展开完整 markdown。 |
+| `gctree show-doc --id <match-id>` | 返回某个稳定匹配 ID 对应的完整 markdown source-of-truth 文档。 |
 | `gctree repo-map` | 显示 `branch-repo-map.json` 的当前内容。 |
 | `gctree set-repo-scope --branch <name> --include` | 将当前仓库标记为该 gc-branch 的包含仓库。 |
 | `gctree set-repo-scope --branch <name> --exclude` | 将当前仓库标记为该 gc-branch 的忽略仓库。 |
@@ -40,7 +44,7 @@
 
 ## resolve 返回的内容
 
-`gctree resolve` 对活跃 gc-branch 中的每个文档与查询内容进行评分，只返回匹配的文档。标题匹配的权重是正文匹配的两倍。
+`gctree resolve` 是 progressive-disclosure 工作流中的**紧凑索引层**。它对活跃 gc-branch 中的每个文档与查询内容进行评分，只返回带稳定 ID 的匹配文档。标题匹配的权重是正文匹配的两倍。
 
 ```bash
 gctree resolve --query "auth token rotation policy"
@@ -50,19 +54,36 @@ gctree resolve --query "auth token rotation policy"
 {
   "gc_branch": "main",
   "query": "auth token rotation policy",
+  "status": "matched",
   "matches": [
     {
+      "id": "auth",
       "title": "Auth & Session Conventions",
       "path": "docs/auth.md",
       "score": 4,
       "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
-      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request...",
+      "commands": {
+        "show_doc": "gctree show-doc --id \"auth\" --home \"~/.gctree\" --branch \"main\"",
+        "related": "gctree related --id \"auth\" --home \"~/.gctree\" --branch \"main\""
+      }
     }
   ]
 }
 ```
 
-工具首先接收摘要和摘录。只有在摘要不足以满足需求时，才会读取 `path` 指向的完整文档。如果查询没有任何匹配，则返回 `"matches": []`。
+推荐的流程是：
+
+1. `resolve` → 紧凑索引
+2. `related` → 某个匹配周围的 supporting docs
+3. `show-doc` → 仅在需要时读取完整 markdown
+
+Graceful degradation 也是显式的：
+
+- 空 gc-branch → `status: "empty_branch"`
+- 被排除的 repo → `status: "excluded"`
+- 无匹配结果 → `status: "no_match"`
+- 文档 ID 不存在 → `status: "doc_not_found"`
 
 ## 仓库作用范围示例流程
 

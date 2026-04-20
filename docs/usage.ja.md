@@ -14,10 +14,12 @@
 4. `both` を選んだ場合は、今回のオンボーディングをどちらのプロバイダーで始めるか選ぶ
 5. デフォルトの `main` gc-branch に対するガイド付きオンボーディングを完了する
 6. `gctree resolve --query "..."` で必要なコンテキストを取り出す
-7. `gctree checkout` で gc-branch を作成または切り替える
-8. `gctree onboard` は空の gc-branch に対してだけ使う
-9. repo scope を設定して gc-branch が本来のリポジトリにだけ作用するようにする
-10. 後からの永続的な変更には `gctree update-global-context` を使う
+7. `gctree related --id <match-id>` で supporting docs を確認する
+8. `gctree show-doc --id <match-id>` で必要なときだけフルドキュメントを読む
+9. `gctree checkout` で gc-branch を作成または切り替える
+10. `gctree onboard` は空の gc-branch に対してだけ使う
+11. repo scope を設定して gc-branch が本来のリポジトリにだけ作用するようにする
+12. 後からの永続的な変更には `gctree update-global-context` を使う
 
 ## 主要コマンド
 
@@ -28,7 +30,9 @@
 | `gctree checkout -b <branch>` | 新しい空の gc-branch を作成し、そのまま切り替えます。 |
 | `gctree branches` | 利用可能な gc-branch 一覧と、現在アクティブなものを表示します。 |
 | `gctree status` | アクティブな gc-branch、現在のリポジトリ、現在の repo-scope 状態、警告、優先プロバイダーを表示します。 |
-| `gctree resolve --query TEXT` | 関係する gc-branch からコンテキストを検索します。現在のリポジトリが未マップなら、そのリポジトリをどう扱うかを尋ねる場合があります。 |
+| `gctree resolve --query TEXT` | クエリに対する compact index layer を返します。各 match には stable ID と次の確認コマンドが含まれます。 |
+| `gctree related --id <match-id>` | 1つの resolved match に関連する supporting docs を、フル markdown を開かずに返します。 |
+| `gctree show-doc --id <match-id>` | stable match ID に対応するフル markdown の source-of-truth ドキュメントを返します。 |
 | `gctree repo-map` | 現在の `branch-repo-map.json` の内容を表示します。 |
 | `gctree set-repo-scope --branch <name> --include` | 現在のリポジトリを、その gc-branch に含まれるものとして記録します。 |
 | `gctree set-repo-scope --branch <name> --exclude` | 現在のリポジトリを、その gc-branch では無視するものとして記録します。 |
@@ -40,7 +44,7 @@
 
 ## resolve が返す内容
 
-`gctree resolve` はアクティブな gc-branch 内のすべてのドキュメントをクエリに対してスコアリングし、マッチしたものだけを返します。タイトルの一致はボディの一致の 2 倍の重みを持ちます。
+`gctree resolve` は progressive-disclosure ワークフローにおける **compact index layer** です。アクティブな gc-branch 内のドキュメントをクエリに対してスコアリングし、stable ID 付きの match だけを返します。タイトルの一致は本文の一致の 2 倍の重みを持ちます。
 
 ```bash
 gctree resolve --query "auth token rotation policy"
@@ -50,19 +54,36 @@ gctree resolve --query "auth token rotation policy"
 {
   "gc_branch": "main",
   "query": "auth token rotation policy",
+  "status": "matched",
   "matches": [
     {
+      "id": "auth",
       "title": "Auth & Session Conventions",
       "path": "docs/auth.md",
       "score": 4,
       "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
-      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request...",
+      "commands": {
+        "show_doc": "gctree show-doc --id \"auth\" --home \"~/.gctree\" --branch \"main\"",
+        "related": "gctree related --id \"auth\" --home \"~/.gctree\" --branch \"main\""
+      }
     }
   ]
 }
 ```
 
-ツールはまずサマリーと抜粋を受け取ります。サマリーだけでは不足する場合にのみ、`path` にあるフルドキュメントを読み込みます。何もマッチしないクエリの場合は `"matches": []` が返ります。
+推奨フローは次のとおりです。
+
+1. `resolve` → compact index
+2. `related` → その match の周辺にある supporting docs
+3. `show-doc` → 必要なときだけフル markdown
+
+Graceful degradation も明示的です。
+
+- 空の gc-branch → `status: "empty_branch"`
+- 除外された repo → `status: "excluded"`
+- ヒットなし → `status: "no_match"`
+- 文書 ID が見つからない → `status: "doc_not_found"`
 
 ## repo scope の設定例
 

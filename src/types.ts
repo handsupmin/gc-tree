@@ -77,9 +77,26 @@ export interface GcTreeBranchMeta {
 }
 
 export interface GcTreeResolveMatch {
+  id: string;
   title: string;
   path: string;
   score: number;
   summary: string;
   excerpt: string;
+}
+
+export type GcTreeResolveStatus =
+  | 'matched'
+  | 'no_match'
+  | 'empty_branch'
+  | 'excluded'
+  | 'doc_not_found'
+  | 'no_related_docs';
+
+export interface GcTreeDocRecord {
+  id: string;
+  title: string;
+  path: string;
+  summary: string;
+  content: string;
 }

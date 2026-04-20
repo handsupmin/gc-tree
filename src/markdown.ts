@@ -63,7 +63,15 @@ export function renderIndexMarkdown(input: {
   return lines.join('\n');
 }
 
-export function parseIndexEntries(indexContent: string): Array<{ title: string; path: string }> {
+export function docIdFromPath(docPath: string): string {
+  const fileName = String(docPath || '')
+    .trim()
+    .split('/')
+    .pop() || '';
+  return fileName.replace(/\.md$/i, '') || 'doc';
+}
+
+export function parseIndexEntries(indexContent: string): Array<{ id: string; title: string; path: string }> {
   return String(indexContent || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -71,7 +79,7 @@ export function parseIndexEntries(indexContent: string): Array<{ title: string; 
     .map((line) => {
       const body = line.slice(2);
       const [title, path] = body.split('->').map((part) => part.trim());
-      return { title, path };
+      return { id: docIdFromPath(path), title, path };
     });
 }
 

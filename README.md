@@ -73,6 +73,14 @@ After that, your AI tool gets real SessionStart/UserPromptSubmit hook integratio
 
 `gc-tree` sits **above the repo level**. It stores durable context in structured markdown files and lets your AI tools pull only what's relevant — before each session, automatically.
 
+`gctree resolve` is the compact **index layer** in a progressive-disclosure workflow:
+
+- `gctree resolve --query "..."` → compact matches with stable IDs
+- `gctree related --id <match-id>` → supporting docs around one match
+- `gctree show-doc --id <match-id>` → full markdown for that doc
+
+When no docs exist, a repo is excluded, or a query has no hits, gc-tree returns an explicit status instead of failing ambiguously.
+
 ```bash
 gctree resolve --query "auth token rotation policy"
 ```

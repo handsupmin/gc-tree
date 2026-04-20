@@ -14,10 +14,12 @@ Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tr
 4. si elegiste `both`, elegir qué proveedor debe iniciar el onboarding ahora
 5. completar el onboarding guiado para la gc-branch `main` predeterminada
 6. hacer resolve del contexto relevante con `gctree resolve --query "..."`
-7. crear o cambiar de gc-branch con `gctree checkout`
-8. ejecutar `gctree onboard` solo para una gc-branch vacía
-9. usar el mapeo de alcance del repositorio para que una gc-branch solo aplique donde corresponde
-10. usar `gctree update-global-context` para cambios duraderos más adelante
+7. inspeccionar documentos de apoyo con `gctree related --id <match-id>`
+8. leer el documento completo solo cuando haga falta con `gctree show-doc --id <match-id>`
+9. crear o cambiar de gc-branch con `gctree checkout`
+10. ejecutar `gctree onboard` solo para una gc-branch vacía
+11. usar el mapeo de alcance del repositorio para que una gc-branch solo aplique donde corresponde
+12. usar `gctree update-global-context` para cambios duraderos más adelante
 
 ## Comandos principales
 
@@ -28,7 +30,9 @@ Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tr
 | `gctree checkout -b <branch>` | Crear y cambiar a una nueva gc-branch vacía. |
 | `gctree branches` | Listar las gc-branches disponibles y mostrar la activa. |
 | `gctree status` | Mostrar la gc-branch activa, el repositorio actual, el estado del alcance del repositorio actual, advertencias y el proveedor preferido. |
-| `gctree resolve --query TEXT` | Buscar contexto en la gc-branch relevante. Si el repositorio actual no está mapeado, `gctree` puede preguntar cómo debe tratarse ese repositorio. |
+| `gctree resolve --query TEXT` | Devuelve la capa de índice compacto para una consulta. Las coincidencias incluyen IDs estables y comandos de seguimiento para profundizar. |
+| `gctree related --id <match-id>` | Devuelve documentos de apoyo relacionados con una coincidencia resuelta, sin expandir todavía el markdown completo. |
+| `gctree show-doc --id <match-id>` | Devuelve el documento source-of-truth en markdown completo para un ID estable. |
 | `gctree repo-map` | Mostrar el contenido actual de `branch-repo-map.json`. |
 | `gctree set-repo-scope --branch <name> --include` | Marcar el repositorio actual como incluido para esa gc-branch. |
 | `gctree set-repo-scope --branch <name> --exclude` | Marcar el repositorio actual como ignorado para esa gc-branch. |
@@ -40,7 +44,7 @@ Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tr
 
 ## Qué devuelve resolve
 
-`gctree resolve` puntúa cada documento de la gc-branch activa contra tu consulta y devuelve solo los que coinciden. Las coincidencias en el título cuentan el doble que las coincidencias en el cuerpo.
+`gctree resolve` es ahora la **capa de índice compacto** dentro de un flujo de progressive disclosure. Puntúa cada documento de la gc-branch activa contra tu consulta y devuelve solo coincidencias con IDs estables. Las coincidencias en el título cuentan el doble que las coincidencias en el cuerpo.
 
 ```bash
 gctree resolve --query "auth token rotation policy"
@@ -50,19 +54,36 @@ gctree resolve --query "auth token rotation policy"
 {
   "gc_branch": "main",
   "query": "auth token rotation policy",
+  "status": "matched",
   "matches": [
     {
+      "id": "auth",
       "title": "Auth & Session Conventions",
       "path": "docs/auth.md",
       "score": 4,
       "summary": "JWT rotation on every request, refresh tokens in httpOnly cookies, 15-min access token TTL",
-      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request..."
+      "excerpt": "## Auth Flow\nAccess token: 15-min TTL, rotated on every authenticated request...",
+      "commands": {
+        "show_doc": "gctree show-doc --id \"auth\" --home \"~/.gctree\" --branch \"main\"",
+        "related": "gctree related --id \"auth\" --home \"~/.gctree\" --branch \"main\""
+      }
     }
   ]
 }
 ```
 
-La herramienta recibe primero el resumen y el fragmento. Lee el documento completo en `path` solo cuando el resumen no es suficiente. Una consulta que no coincide con nada devuelve `"matches": []`.
+El flujo recomendado es:
+
+1. `resolve` → índice compacto
+2. `related` → documentos de apoyo alrededor de una coincidencia
+3. `show-doc` → markdown completo solo cuando hace falta
+
+La degradación elegante también es explícita:
+
+- gc-branch vacía → `status: "empty_branch"`
+- repo excluido → `status: "excluded"`
+- sin resultados → `status: "no_match"`
+- ID de documento inexistente → `status: "doc_not_found"`
 
 ## Ejemplo de flujo de alcance del repositorio
 

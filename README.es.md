@@ -73,6 +73,14 @@ Después, tu herramienta de IA instala integración real de hooks SessionStart/U
 
 `gc-tree` opera **por encima del nivel del repositorio**. Almacena contexto en archivos Markdown estructurados y permite que tus herramientas de IA traigan solo lo relevante antes de cada sesión, de forma automática.
 
+`gctree resolve` es la **capa de índice compacto** dentro de un flujo de progressive disclosure:
+
+- `gctree resolve --query "..."` → lista compacta de coincidencias con IDs estables
+- `gctree related --id <match-id>` → documentos de apoyo alrededor de una coincidencia
+- `gctree show-doc --id <match-id>` → markdown completo de ese documento
+
+Además, cuando la branch está vacía, el repositorio está excluido o la consulta no tiene resultados, gc-tree devuelve un estado explícito en lugar de fallar de forma ambigua.
+
 ```bash
 gctree resolve --query "auth token rotation policy"
 ```

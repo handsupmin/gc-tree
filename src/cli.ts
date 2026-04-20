@@ -21,7 +21,7 @@ import {
   resolveBranchForRepo,
   setRepoScopeForBranch,
 } from './repo-map.js';
-import { resolveContext } from './resolve.js';
+import { findRelatedDocs, getDocById, resolveContext } from './resolve.js';
 import { scaffoldHostIntegration } from './scaffold.js';
 import { requirePreferredProvider, writeSettings, readSettings } from './settings.js';
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch, ensureBranchExists, isBranchContextEmpty } from './store.js';
@@ -49,6 +49,8 @@ function usage(): never {
   gctree onboard [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree reset-gc-branch [--home DIR] [--branch NAME] --yes
   gctree resolve --query TEXT [--home DIR] [--branch NAME] [--cwd DIR]
+  gctree show-doc --id ID [--home DIR] [--branch NAME]
+  gctree related --id ID [--home DIR] [--branch NAME]
   gctree update-global-context [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree update-gc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree ugc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
@@ -72,6 +74,15 @@ async function readStdinText(): Promise<string> {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
   }
   return Buffer.concat(chunks).toString('utf8');
+}
+
+function compactMatchCommands(id: string, home: string, branch: string): { show_doc: string; related: string } {
+  const homeArg = `--home ${JSON.stringify(home)}`;
+  const branchArg = `--branch ${JSON.stringify(branch)}`;
+  return {
+    show_doc: `gctree show-doc --id ${JSON.stringify(id)} ${homeArg} ${branchArg}`,
+    related: `gctree related --id ${JSON.stringify(id)} ${homeArg} ${branchArg}`,
+  };
 }
 
 function normalizeProvider(value: string | undefined): GcTreeProvider | undefined {
@@ -365,11 +376,34 @@ async function main(): Promise<void> {
         console.log(
           JSON.stringify(
             {
+              status: 'excluded',
               gc_branch: gcBranch,
               query,
               current_repo: currentRepo,
               source: resolved.source,
               repo_scope_status: 'excluded',
+              message: `Repo "${currentRepo}" is excluded from gc-branch "${gcBranch}".`,
+              matches: [],
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      const branchStatus = await statusForBranch(home, gcBranch);
+      if (branchStatus.doc_count === 0) {
+        console.log(
+          JSON.stringify(
+            {
+              status: 'empty_branch',
+              gc_branch: gcBranch,
+              query,
+              current_repo: currentRepo,
+              source: resolved.source,
+              repo_scope_status: scopeStatus,
+              message: `gc-branch "${gcBranch}" has no docs yet. Run gctree onboard to add durable context.`,
               matches: [],
             },
             null,
@@ -383,12 +417,83 @@ async function main(): Promise<void> {
       console.log(
         JSON.stringify(
           {
+            status: result.matches.length > 0 ? 'matched' : 'no_match',
             gc_branch: result.branch,
             query: result.query,
             current_repo: currentRepo,
             source: resolved.source,
             repo_scope_status: scopeStatus,
-            matches: result.matches,
+            message:
+              result.matches.length > 0
+                ? `Found ${result.matches.length} matching docs. Use show-doc/related for progressive disclosure.`
+                : `No matching docs found in gc-branch "${gcBranch}" for this query.`,
+            matches: result.matches.map((match) => ({
+              ...match,
+              commands: compactMatchCommands(match.id, home, gcBranch),
+            })),
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    case 'show-doc': {
+      const id = readArg('--id');
+      if (!id) usage();
+      const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
+      const branchStatus = await statusForBranch(home, gcBranch);
+      if (branchStatus.doc_count === 0) {
+        console.log(JSON.stringify({ status: 'empty_branch', gc_branch: gcBranch, id, message: `gc-branch "${gcBranch}" has no docs yet.`, doc: null }, null, 2));
+        return;
+      }
+      const doc = await getDocById({ home, branch: gcBranch, id });
+      console.log(
+        JSON.stringify(
+          {
+            status: doc ? 'matched' : 'doc_not_found',
+            gc_branch: gcBranch,
+            id,
+            message: doc ? `Loaded doc "${id}".` : `Doc "${id}" was not found in gc-branch "${gcBranch}".`,
+            doc,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    case 'related': {
+      const id = readArg('--id');
+      if (!id) usage();
+      const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
+      const result = await findRelatedDocs({ home, branch: gcBranch, id });
+      console.log(
+        JSON.stringify(
+          {
+            status: result.status,
+            gc_branch: gcBranch,
+            id,
+            message:
+              result.status === 'matched'
+                ? `Found ${result.matches.length} related docs for "${id}".`
+                : result.status === 'no_related_docs'
+                  ? `No related docs found for "${id}".`
+                  : result.status === 'doc_not_found'
+                    ? `Doc "${id}" was not found in gc-branch "${gcBranch}".`
+                    : `gc-branch "${gcBranch}" has no docs yet.`,
+            selected: result.selected
+              ? {
+                  id: result.selected.id,
+                  title: result.selected.title,
+                  path: result.selected.path,
+                  summary: result.selected.summary,
+                }
+              : null,
+            matches: result.matches.map((match) => ({
+              ...match,
+              commands: compactMatchCommands(match.id, home, gcBranch),
+            })),
           },
           null,
           2,

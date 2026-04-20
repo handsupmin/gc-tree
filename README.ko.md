@@ -73,6 +73,14 @@ gctree init
 
 `gc-tree`는 **레포 위 레벨**에 위치합니다. 컨텍스트를 구조화된 마크다운 파일에 저장하고, AI 도구가 매 세션마다 관련된 것만 자동으로 가져오게 합니다.
 
+`gctree resolve`는 progressive-disclosure 워크플로우의 **compact index layer**입니다:
+
+- `gctree resolve --query "..."` → stable ID가 포함된 compact match 목록
+- `gctree related --id <match-id>` → 특정 match 주변의 supporting docs
+- `gctree show-doc --id <match-id>` → 해당 문서의 전체 markdown
+
+또한 문서가 비어 있거나, 저장소가 제외되어 있거나, 쿼리 결과가 없을 때는 모호하게 실패하지 않고 명시적인 status를 반환합니다.
+
 ```bash
 gctree resolve --query "auth token rotation policy"
 ```

@@ -48,7 +48,7 @@ function formatMatches(matches: GcTreeResolveMatch[]): string {
   return limitMatches(matches)
     .map(
       (match, index) =>
-        `${index + 1}. ${match.title}\n   Summary: ${match.summary}\n   Excerpt: ${match.excerpt}`,
+        `${index + 1}. ${match.title} [id=${match.id}]\n   Summary: ${match.summary}\n   Excerpt: ${match.excerpt}`,
     )
     .join('\n');
 }

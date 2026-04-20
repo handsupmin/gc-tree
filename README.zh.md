@@ -73,6 +73,14 @@ gctree init
 
 `gc-tree` 工作在**仓库之上**。它把上下文存储为结构化的 Markdown 文件，让 AI 工具在每次会话前自动拉取相关内容。
 
+`gctree resolve` 是 progressive-disclosure 工作流中的**紧凑索引层**：
+
+- `gctree resolve --query "..."` → 返回带稳定 ID 的紧凑匹配列表
+- `gctree related --id <match-id>` → 返回某个匹配周围的 supporting docs
+- `gctree show-doc --id <match-id>` → 返回该文档的完整 markdown
+
+另外，当 gc-branch 为空、仓库被排除、或查询没有匹配时，gc-tree 会返回明确的状态，而不是模糊地失败。
+
 ```bash
 gctree resolve --query "auth token rotation policy"
 ```
