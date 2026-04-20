@@ -41,6 +41,7 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
   try {
     const result = await runCli(['init', '--home', home, '--provider', 'codex', '--target', targetDir]);
     assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stderr, /__\s*$/m);
 
     const parsed = JSON.parse(result.stdout) as {
       gc_branch: string;
@@ -101,6 +102,22 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });
   }
+});
+
+test('--version prints the installed package version', async () => {
+  const result = await runCli(['--version']);
+  assert.equal(result.code, 0, result.stderr);
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
+    version: string;
+  };
+  assert.equal(result.stdout.trim(), pkg.version);
+});
+
+test('plant prints the ascii tree easter egg', async () => {
+  const result = await runCli(['plant']);
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /QzczXO/);
+  assert.match(result.stdout, /YYYYYYYYUXO/);
 });
 
 test('init supports provider mode both, scaffolds both runtimes, and stores preferred language', async () => {

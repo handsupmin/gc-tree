@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
-import { stdin } from 'node:process';
+import { stdin, stderr, stdout } from 'node:process';
 
+import { readAsciiLogo, readAsciiTree } from './ascii.js';
 import { dispatchGcTreeHook } from './hook.js';
 import { onboardBranch } from './onboard.js';
 import {
@@ -39,8 +40,23 @@ function hasFlag(flag: string): boolean {
   return process.argv.includes(flag);
 }
 
+async function readPackageVersion(): Promise<string> {
+  const candidates = ['../package.json', '../../package.json'];
+  for (const relative of candidates) {
+    try {
+      const raw = await readFile(new URL(relative, import.meta.url), 'utf8');
+      return JSON.parse(raw).version || '0.0.0';
+    } catch {
+      continue;
+    }
+  }
+  return '0.0.0';
+}
+
 function usage(): never {
   console.error(`Usage:
+  gctree --version
+  gctree plant
   gctree init [--home DIR] [--provider <claude-code|codex|both>] [--language TEXT] [--target DIR] [--no-launch]
   gctree checkout <branch> [--home DIR]
   gctree checkout -b <branch> [--home DIR]
@@ -168,13 +184,27 @@ async function launchGuidedFlow({
 }
 
 async function main(): Promise<void> {
+  if (hasFlag('--version') || hasFlag('-v')) {
+    stdout.write(`${await readPackageVersion()}\n`);
+    return;
+  }
+
   const rawCommand = process.argv[2];
   if (!rawCommand || rawCommand === '--help' || rawCommand === 'help') usage();
   const command = rawCommand === 'update-gc' || rawCommand === 'ugc' ? 'update-global-context' : rawCommand;
   const home = resolveHome(readArg('--home'));
 
   switch (command) {
+    case 'plant': {
+      const asciiTree = await readAsciiTree();
+      stdout.write(asciiTree);
+      if (!asciiTree.endsWith('\n')) stdout.write('\n');
+      return;
+    }
     case 'init': {
+      const asciiLogo = await readAsciiLogo();
+      stderr.write(asciiLogo);
+      if (!asciiLogo.endsWith('\n')) stderr.write('\n');
       const providerMode = await maybePromptProviderMode(readArg('--provider'));
       const provider = await resolveLaunchProvider(providerMode);
       const preferredLanguage = await maybePromptLanguage(readArg('--language'));
