@@ -139,7 +139,7 @@ function buildMatchContext({
     `Query: "${query}".`,
     `Use these matching gc-tree summaries before planning or implementation:`,
     formatMatches(matches),
-    `Read full docs only if the summaries are insufficient.`,
+    `Read full docs only if the summaries are insufficient. Each doc has a ## Summary section at the top — read that before the full body.`,
   ].join('\n');
 }
 
