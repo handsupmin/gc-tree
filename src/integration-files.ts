@@ -137,7 +137,7 @@ function mergeHookJson(raw: string | null, target: 'codex' | 'claude-code'): str
   upsertGroup(sessionEvent, target === 'codex' ? 'startup|resume' : '*');
   upsertGroup(promptEvent, target === 'codex' ? undefined : '*');
 
-  return `${JSON.stringify({ hooks }, null, 2)}\n`;
+  return `${JSON.stringify({ ...parsed, hooks }, null, 2)}\n`;
 }
 
 function unmergeHookJson(raw: string, events: HookEventName[]): string {
@@ -158,8 +158,12 @@ function unmergeHookJson(raw: string, events: HookEventName[]): string {
     else delete hooks[event];
   }
 
-  if (Object.keys(hooks).length === 0) return '';
-  return `${JSON.stringify({ hooks }, null, 2)}\n`;
+  const { hooks: _unused, ...otherFields } = parsed;
+  const hasOtherFields = Object.keys(otherFields).length > 0;
+  if (Object.keys(hooks).length === 0) {
+    return hasOtherFields ? `${JSON.stringify(otherFields, null, 2)}\n` : '';
+  }
+  return `${JSON.stringify({ ...otherFields, hooks }, null, 2)}\n`;
 }
 
 export async function mergeGcTreeHooksJson({
@@ -199,6 +203,6 @@ export function gctreeManagedMarkdownTargets(targetDir: string) {
 export function gctreeHookJsonTargets(targetDir: string) {
   return {
     codex: join(targetDir, '.codex', 'hooks.json'),
-    claude: join(targetDir, '.claude', 'hooks', 'hooks.json'),
+    claude: join(targetDir, '.claude', 'settings.json'),
   };
 }

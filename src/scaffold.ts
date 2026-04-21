@@ -5,6 +5,7 @@ import {
   gctreeHookJsonTargets,
   gctreeManagedMarkdownTargets,
   mergeGcTreeHooksJson,
+  unmergeGcTreeHooksJson,
   upsertManagedMarkdownBlock,
 } from './integration-files.js';
 import { onboardingCompletionLines, onboardingProtocolLines } from './onboarding-protocol.js';
@@ -288,6 +289,12 @@ export async function scaffoldHostIntegration({
     target: isCodex ? 'codex' : 'claude-code',
   });
   written.push(hookPath);
+
+  // Migrate: clean up gctree entries from old hooks.json location (claude-code only)
+  if (!isCodex) {
+    const oldHooksPath = join(targetDir, '.claude', 'hooks', 'hooks.json');
+    await unmergeGcTreeHooksJson(oldHooksPath);
+  }
 
   const targets = files.map((file) => ({
     ...file,
