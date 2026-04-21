@@ -598,7 +598,7 @@ async function main(): Promise<void> {
         payload,
       });
       if (result) {
-        console.log(JSON.stringify(result, null, 2));
+        stdout.write(`${result.hookSpecificOutput.additionalContext}\n`);
       }
       return;
     }
