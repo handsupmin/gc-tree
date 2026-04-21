@@ -9,6 +9,7 @@ export interface GcTreeDocInput {
   tags?: string[];
   category?: string;
   indexLabel?: string;
+  indexEntries?: string[];
 }
 
 export interface GcTreeOnboardingInput {

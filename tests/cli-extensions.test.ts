@@ -76,6 +76,9 @@ test('init persists the preferred provider, creates main gc-branch, and prepares
     assert.match(parsed.launch.args[0]!, /encyclopedia-style context set/i);
     assert.match(parsed.launch.args[0]!, /docs\/role\/.*docs\/repos\/.*docs\/domain\//i);
     assert.match(parsed.launch.args[0]!, /one concept, one repository, one workflow, or one convention per file/i);
+    assert.match(parsed.launch.args[0]!, /concept-first/i);
+    assert.match(parsed.launch.args[0]!, /repository nicknames/i);
+    assert.match(parsed.launch.args[0]!, /split glossary docs when a concept is likely to be searched directly/i);
     assert.match(parsed.launch.args[0]!, /dictionary-style table of contents/i);
     assert.match(parsed.launch.args[0]!, /full information dump/i);
     assert.match(parsed.launch.args[0]!, /when you do present a hypothesis/i);
@@ -398,6 +401,9 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /docs\/repos\//i);
     assert.match(codexOnboardSkill, /docs\/domain\//i);
     assert.match(codexOnboardSkill, /one concept, one repository, one workflow, or one convention per file/i);
+    assert.match(codexOnboardSkill, /concept-first/i);
+    assert.match(codexOnboardSkill, /repository nicknames/i);
+    assert.match(codexOnboardSkill, /split glossary docs when a concept is likely to be searched directly/i);
     assert.match(codexOnboardSkill, /dictionary-style table of contents/i);
     assert.match(codexOnboardSkill, /do .*not.* ask for a full information dump/i);
     assert.match(codexOnboardSkill, /when you do present a hypothesis/i);
@@ -439,6 +445,9 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /encyclopedia-style context set/i);
     assert.match(claudeOnboardCommand, /docs\/role\/.*docs\/repos\/.*docs\/domain\//i);
     assert.match(claudeOnboardCommand, /one concept, one repository, one workflow, or one convention per file/i);
+    assert.match(claudeOnboardCommand, /concept-first/i);
+    assert.match(claudeOnboardCommand, /repository nicknames/i);
+    assert.match(claudeOnboardCommand, /split glossary docs when a concept is likely to be searched directly/i);
     assert.match(claudeOnboardCommand, /dictionary-style table of contents/i);
     assert.match(claudeOnboardCommand, /do .*not.* ask for a full information dump/i);
     assert.match(claudeOnboardCommand, /when you do present a hypothesis/i);

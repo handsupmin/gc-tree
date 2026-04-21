@@ -49,9 +49,10 @@ function scoreText(text: string, query: string): number {
 async function readBranchDocs(home: string, branch: string): Promise<GcTreeDocRecord[]> {
   const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
   const entries = parseIndexEntries(indexRaw);
+  const uniqueEntries = [...new Map(entries.map((entry) => [entry.path, entry])).values()];
 
   return Promise.all(
-    entries.map(async (entry) => {
+    uniqueEntries.map(async (entry) => {
       const fullPath = join(branchDir(home, branch), entry.path);
       const raw = await readFile(fullPath, 'utf8');
       return {

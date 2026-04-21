@@ -26,6 +26,9 @@ export function onboardingProtocolLines(): string[] {
     'Synthesize the interview into an encyclopedia-style context set with many small docs instead of a few broad docs.',
     'Prefer category directories such as `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/` whenever that split fits the material.',
     'Prefer one concept, one repository, one workflow, or one convention per file when possible.',
+    'Treat `index.md` as concept-first: show the keywords a user or AI would search for, not just broad document titles.',
+    'Generate index entries automatically from primary concept names, aliases, repository nicknames, and workflow labels when those are clear.',
+    'Split glossary docs when a concept is likely to be searched directly, needs more than a short definition, or carries workflow/constraint details; keep only low-value leftover terms in a shared glossary.',
     'Keep each doc summary-first so the top section gives the gist before deeper details.',
     'Treat `index.md` as a human-readable dictionary-style table of contents grouped by category headings and `label -> path` entries.',
   ];

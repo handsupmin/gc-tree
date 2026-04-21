@@ -35,6 +35,9 @@ Use this when a user wants to create global context for a product, company, or w
 - prefer an encyclopedia-style context set with many small docs instead of a few broad docs
 - prefer category directories like `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/`
 - prefer one concept, one repository, one workflow, or one convention per file when possible
+- treat `index.md` as concept-first: surface the keywords a user or AI would search for, not just broad document titles
+- generate index entries automatically from primary concept names, aliases, repository nicknames, and workflow labels when those are clear
+- split glossary docs when a concept is likely to be searched directly, needs more than a short definition, or carries workflow/constraint details; keep only low-value leftover terms in a shared glossary
 - keep `index.md` as a human-readable dictionary-style TOC grouped by category headings and `label -> path` entries
 - use onboarding only for an empty gc-branch
 

@@ -37,6 +37,7 @@ const categorizedOnboardingInput = {
       title: 'Como',
       category: 'domain',
       indexLabel: 'como',
+      indexEntries: ['como', '투표권', 'voting-token'],
       summary: '투표권 토큰 도메인 개념.',
       body: 'Como는 Abstract 블록체인에서 발행되는 투표권 토큰이다.',
     },
@@ -44,6 +45,7 @@ const categorizedOnboardingInput = {
       title: 'Gravity',
       category: 'domain',
       indexLabel: 'gravity',
+      indexEntries: ['gravity', '투표 이벤트'],
       summary: '투표 이벤트 도메인 개념.',
       body: 'Gravity는 어드민에 등록되고 온체인에 반영되는 투표 이벤트다.',
     },
@@ -128,7 +130,10 @@ test('onboard can write categorized docs and render a sectioned dictionary index
     const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
     assert.match(index, /## Domain/);
     assert.match(index, /- como -> docs\/domain\/como\.md/);
+    assert.match(index, /- 투표권 -> docs\/domain\/como\.md/);
+    assert.match(index, /- voting-token -> docs\/domain\/como\.md/);
     assert.match(index, /- gravity -> docs\/domain\/gravity\.md/);
+    assert.match(index, /- 투표 이벤트 -> docs\/domain\/gravity\.md/);
     assert.match(index, /## Repos/);
     assert.match(index, /- g3 -> docs\/repos\/g3\.md/);
     assert.match(index, /## Workflows/);
@@ -169,6 +174,20 @@ test('resolve searches only the active gc-branch', async () => {
     assert.equal(branchA.matches.length > 0, true);
     assert.equal(branchA.matches[0]?.id, 'domain-glossary');
     assert.equal(branchB.matches.length, 0);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('resolve deduplicates docs even when index exposes multiple entries for the same file', async () => {
+  const home = await createHome('gctree-resolve-dedupe-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: categorizedOnboardingInput });
+
+    const result = await resolveContext({ home, branch: 'main', query: '투표권' });
+    const comoMatches = result.matches.filter((match) => match.id === 'domain/como');
+    assert.equal(comoMatches.length, 1);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

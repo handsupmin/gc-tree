@@ -12,7 +12,7 @@ import {
   headPath,
   INDEX_WARNING_CHARS,
 } from './paths.js';
-import { renderIndexMarkdown } from './markdown.js';
+import { extractIndexEntries, renderIndexMarkdown } from './markdown.js';
 import type { GcTreeBranchMeta } from './types.js';
 
 async function listDocRelativePaths(dir: string, prefix = ''): Promise<string[]> {
@@ -139,11 +139,19 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
       const parts = file.replace(/\.md$/i, '').split('/').filter(Boolean);
       const category = parts.length > 1 ? parts[0] : 'general';
       const label = parts.length > 1 ? parts[parts.length - 1] : title;
-      return { title, label, category, path: `docs/${file}` };
+      const indexEntries = extractIndexEntries(raw);
+      const entryLabels = indexEntries.length > 0 ? indexEntries : [label];
+      return entryLabels.map((entryLabel) => ({
+        title,
+        label: entryLabel,
+        category,
+        path: `docs/${file}`,
+      }));
     }),
   );
+  const flatDocs = docs.flat().sort((a, b) => a.label.localeCompare(b.label));
   const meta = await readBranchMeta(home, branch);
-  const index = renderIndexMarkdown({ branch, branchSummary: meta.summary, docs });
+  const index = renderIndexMarkdown({ branch, branchSummary: meta.summary, docs: flatDocs });
   await writeFile(branchIndexPath(home, branch), index, 'utf8');
   return { index_path: branchIndexPath(home, branch), doc_count: docs.length };
 }

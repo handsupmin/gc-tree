@@ -31,6 +31,9 @@ export function renderDocMarkdown(doc: GcTreeDocInput): string {
     ...(doc.tags && doc.tags.length > 0
       ? ['## Tags', '', ...doc.tags.map((tag) => `- ${tag}`), '']
       : []),
+    ...(doc.indexEntries && doc.indexEntries.length > 0
+      ? ['## Index Entries', '', ...doc.indexEntries.map((entry) => `- ${entry}`), '']
+      : []),
     '## Details',
     '',
     body || '(no details yet)',
@@ -134,6 +137,17 @@ export function parseIndexEntries(indexContent: string): Array<{ id: string; tit
       const category = deriveCategoryFromPath(path) || currentCategory;
       return [{ id: docIdFromPath(path), title: label, label, category, path }];
     });
+}
+
+export function extractIndexEntries(markdown: string): string[] {
+  const match = String(markdown || '').match(/## Index Entries\s+([\s\S]*?)(?:\n## |$)/);
+  if (!match?.[1]) return [];
+  return match[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- '))
+    .map((line) => line.slice(2).trim())
+    .filter(Boolean);
 }
 
 export function extractSummary(markdown: string): string {

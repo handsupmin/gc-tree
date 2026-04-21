@@ -37,6 +37,9 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /docs\/repos\//i);
   assert.match(contents[0]!, /docs\/domain\//i);
   assert.match(contents[0]!, /one concept, one repository, one workflow, or one convention per file/i);
+  assert.match(contents[0]!, /concept-first/i);
+  assert.match(contents[0]!, /repository nicknames/i);
+  assert.match(contents[0]!, /split glossary docs when a concept is likely to be searched directly/i);
   assert.match(contents[0]!, /dictionary-style TOC/i);
   assert.match(contents[0]!, /do not ask for a full information dump/i);
   assert.match(contents[0]!, /when you do present a hypothesis/i);
