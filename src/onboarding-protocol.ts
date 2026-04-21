@@ -42,7 +42,8 @@ export function onboardingCompletionLines(): string[] {
     'Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.',
     'Ask whether that final summary matches the user\'s reality, and capture any corrections before you wrap up.',
     'Ask whether anything else should be saved while the context is still fresh.',
+    'After docs are confirmed correct, ask which repositories discussed during onboarding should be explicitly mapped to this gc-branch. For each confirmed repo, navigate to that directory and run `gctree set-repo-scope --branch <current-gc-branch> --include`. Skip this step only if the user explicitly says repo mapping is not needed.',
     'Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.',
-    'Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.',
+    'Only after the related repos, workflows, glossary, default verification commands, and repo-scope mapping are either captured or explicitly skipped should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.',
   ];
 }
