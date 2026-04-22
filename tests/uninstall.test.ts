@@ -10,6 +10,16 @@ import { fileURLToPath } from 'node:url';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TSX_LOADER = fileURLToPath(new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url));
 
+function globalEnvForArgs(args: string[]): Record<string, string> {
+  const homeIndex = args.indexOf('--home');
+  if (homeIndex === -1 || !args[homeIndex + 1]) return {};
+  const home = args[homeIndex + 1]!;
+  return {
+    GCTREE_CODEX_GLOBAL_DIR: join(home, 'global-codex'),
+    GCTREE_CLAUDE_GLOBAL_DIR: join(home, 'global-claude'),
+  };
+}
+
 async function exists(path: string): Promise<boolean> {
   try {
     await access(path, constants.F_OK);
@@ -19,6 +29,13 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+function globalRoots(home: string) {
+  return {
+    codex: join(home, 'global-codex'),
+    claude: join(home, 'global-claude'),
+  };
+}
+
 async function runCli(args: string[], cwd = REPO_ROOT): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, ['--import', TSX_LOADER, join(REPO_ROOT, 'src/cli.ts'), ...args], {
@@ -26,6 +43,7 @@ async function runCli(args: string[], cwd = REPO_ROOT): Promise<{ code: number; 
       env: {
         ...process.env,
         GCTREE_DISABLE_PROVIDER_LAUNCH: '1',
+        ...globalEnvForArgs(args),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -48,6 +66,7 @@ async function runCli(args: string[], cwd = REPO_ROOT): Promise<{ code: number; 
 test('uninstall removes both scaffold files and gc-tree home state', async () => {
   const home = await mkdtemp(join(tmpdir(), 'gctree-uninstall-home-'));
   const targetDir = await mkdtemp(join(tmpdir(), 'gctree-uninstall-target-'));
+  const globals = globalRoots(home);
 
   try {
     let result = await runCli(['init', '--home', home, '--provider', 'both', '--target', targetDir, '--no-launch']);
@@ -57,6 +76,8 @@ test('uninstall removes both scaffold files and gc-tree home state', async () =>
     assert.equal(await exists(join(targetDir, 'CLAUDE.md')), true);
     assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), true);
     assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), true);
+    assert.equal(await exists(join(globals.codex, 'hooks.json')), true);
+    assert.equal(await exists(join(globals.claude, 'hooks', 'hooks.json')), true);
     assert.equal(await exists(home), true);
 
     result = await runCli(['uninstall', '--home', home, '--target', targetDir, '--host', 'both', '--yes']);
@@ -72,6 +93,8 @@ test('uninstall removes both scaffold files and gc-tree home state', async () =>
     assert.equal(await exists(join(targetDir, 'CLAUDE.md')), false);
     assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), false);
     assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), false);
+    assert.equal(await exists(join(globals.codex, 'hooks.json')), false);
+    assert.equal(await exists(join(globals.claude, 'hooks', 'hooks.json')), false);
     assert.equal(await exists(home), false);
   } finally {
     await rm(home, { recursive: true, force: true });
@@ -193,6 +216,7 @@ test('uninstall without --target removes scaffold files from repo root when run 
   const home = await mkdtemp(join(tmpdir(), 'gctree-uninstall-home-'));
   const targetDir = await mkdtemp(join(tmpdir(), 'gctree-uninstall-target-'));
   const nestedDir = join(targetDir, 'packages', 'app');
+  const globals = globalRoots(home);
 
   try {
     await mkdir(join(targetDir, '.git'), { recursive: true });
@@ -204,10 +228,12 @@ test('uninstall without --target removes scaffold files from repo root when run 
     result = await runCli(['uninstall', '--home', home, '--host', 'both', '--yes', '--keep-home'], nestedDir);
     assert.equal(result.code, 0, result.stderr);
 
-    assert.equal(await exists(join(targetDir, 'AGENTS.md')), false);
-    assert.equal(await exists(join(targetDir, 'CLAUDE.md')), false);
-    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), false);
-    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), false);
+    assert.equal(await exists(join(targetDir, 'AGENTS.md')), true);
+    assert.equal(await exists(join(targetDir, 'CLAUDE.md')), true);
+    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), true);
+    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), true);
+    assert.equal(await exists(join(globals.codex, 'hooks.json')), false);
+    assert.equal(await exists(join(globals.claude, 'hooks', 'hooks.json')), false);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });

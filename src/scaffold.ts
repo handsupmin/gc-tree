@@ -2,6 +2,8 @@ import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
+  gctreeGlobalHookJsonTarget,
+  gctreeGlobalRoot,
   gctreeHookJsonTargets,
   gctreeManagedMarkdownTargets,
   mergeGcTreeHooksJson,
@@ -11,6 +13,7 @@ import {
 import { onboardingCompletionLines, onboardingProtocolLines } from './onboarding-protocol.js';
 
 type GcTreeHost = 'codex' | 'claude-code';
+type GcTreeScaffoldScope = 'local' | 'global';
 
 function renderCodexAgentsSnippet(): string {
   return [
@@ -235,8 +238,17 @@ function renderClaudeUpdateCommand(): string {
   ].join('\n');
 }
 
-export function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: string }> {
+export function scaffoldFiles(host: GcTreeHost, scope: GcTreeScaffoldScope = 'local'): Array<{ path: string; content: string }> {
   if (host === 'codex') {
+    if (scope === 'global') {
+      return [
+        { path: 'hooks.json', content: renderCodexHooksJson() },
+        { path: 'prompts/gctree-bootstrap.md', content: renderCodexBootstrapPrompt() },
+        { path: 'skills/gc-resolve-context/SKILL.md', content: renderCodexResolveSkill() },
+        { path: 'skills/gc-onboard/SKILL.md', content: renderCodexOnboardSkill() },
+        { path: 'skills/gc-update-global-context/SKILL.md', content: renderCodexUpdateSkill() },
+      ];
+    }
     return [
       { path: 'AGENTS.md', content: renderCodexAgentsSnippet() },
       { path: '.codex/hooks.json', content: renderCodexHooksJson() },
@@ -244,6 +256,16 @@ export function scaffoldFiles(host: GcTreeHost): Array<{ path: string; content: 
       { path: '.codex/skills/gc-resolve-context/SKILL.md', content: renderCodexResolveSkill() },
       { path: '.codex/skills/gc-onboard/SKILL.md', content: renderCodexOnboardSkill() },
       { path: '.codex/skills/gc-update-global-context/SKILL.md', content: renderCodexUpdateSkill() },
+    ];
+  }
+
+  if (scope === 'global') {
+    return [
+      { path: 'hooks/hooks.json', content: renderClaudeHooksJson() },
+      { path: 'hooks/gctree-session-start.md', content: renderClaudeSessionStartHook() },
+      { path: 'commands/gc-resolve-context.md', content: renderClaudeResolveCommand() },
+      { path: 'commands/gc-onboard.md', content: renderClaudeOnboardCommand() },
+      { path: 'commands/gc-update-global-context.md', content: renderClaudeUpdateCommand() },
     ];
   }
 
@@ -261,47 +283,57 @@ export async function scaffoldHostIntegration({
   host,
   targetDir,
   force = false,
+  scope = 'local',
 }: {
   host: GcTreeHost;
-  targetDir: string;
+  targetDir?: string;
   force?: boolean;
+  scope?: GcTreeScaffoldScope;
 }): Promise<{ host: GcTreeHost; target_dir: string; written: string[]; skipped_existing: string[] }> {
-  const files = scaffoldFiles(host);
+  const resolvedTargetDir = scope === 'global' ? gctreeGlobalRoot(host) : targetDir!;
+  const files = scaffoldFiles(host, scope);
   const written: string[] = [];
   const skippedExisting: string[] = [];
-
-  const markdownTargets = gctreeManagedMarkdownTargets(targetDir);
-  const hookTargets = gctreeHookJsonTargets(targetDir);
   const isCodex = host === 'codex';
+  let managedMarkdownPath: string | null = null;
+  let hookPath: string;
 
-  const managedMarkdownPath = isCodex ? markdownTargets.codex : markdownTargets.claude;
-  const managedMarkdownContent = isCodex ? renderCodexAgentsSnippet() : renderClaudeSnippet();
-  await upsertManagedMarkdownBlock({
-    filePath: managedMarkdownPath,
-    content: managedMarkdownContent,
-    marker: isCodex ? 'codex' : 'claude',
-  });
-  written.push(managedMarkdownPath);
+  if (scope === 'local') {
+    const markdownTargets = gctreeManagedMarkdownTargets(resolvedTargetDir);
+    const hookTargets = gctreeHookJsonTargets(resolvedTargetDir);
+    managedMarkdownPath = isCodex ? markdownTargets.codex : markdownTargets.claude;
+    const managedMarkdownContent = isCodex ? renderCodexAgentsSnippet() : renderClaudeSnippet();
+    await upsertManagedMarkdownBlock({
+      filePath: managedMarkdownPath,
+      content: managedMarkdownContent,
+      marker: isCodex ? 'codex' : 'claude',
+    });
+    written.push(managedMarkdownPath);
+    hookPath = isCodex ? hookTargets.codex : hookTargets.claude;
 
-  const hookPath = isCodex ? hookTargets.codex : hookTargets.claude;
+    if (!isCodex) {
+      const oldHooksPath = join(resolvedTargetDir, '.claude', 'settings.json');
+      await unmergeGcTreeHooksJson(oldHooksPath);
+    }
+  } else {
+    hookPath = gctreeGlobalHookJsonTarget(host);
+    if (!isCodex) {
+      const oldHooksPath = join(resolvedTargetDir, 'settings.json');
+      await unmergeGcTreeHooksJson(oldHooksPath);
+    }
+  }
+
   await mergeGcTreeHooksJson({
     filePath: hookPath,
     target: isCodex ? 'codex' : 'claude-code',
   });
   written.push(hookPath);
 
-  // Migrate: clean up gctree entries from old hooks.json location (claude-code only)
-  if (!isCodex) {
-    const oldHooksPath = join(targetDir, '.claude', 'settings.json');
-    await unmergeGcTreeHooksJson(oldHooksPath);
-  }
-
   const targets = files.map((file) => ({
     ...file,
-    fullPath: join(targetDir, file.path),
+    fullPath: join(resolvedTargetDir, file.path),
   })).filter((target) => {
-    if (isCodex) return target.path !== 'AGENTS.md' && target.path !== '.codex/hooks.json';
-    return target.path !== 'CLAUDE.md' && target.path !== '.claude/hooks/hooks.json';
+    return target.fullPath !== hookPath && target.fullPath !== managedMarkdownPath;
   });
 
   for (const target of targets) {
@@ -326,7 +358,7 @@ export async function scaffoldHostIntegration({
 
   return {
     host,
-    target_dir: targetDir,
+    target_dir: resolvedTargetDir,
     written,
     skipped_existing: skippedExisting,
   };

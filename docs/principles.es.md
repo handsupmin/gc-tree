@@ -36,7 +36,7 @@ Esto le da a las herramientas aguas abajo un camino rápido: leer primero la ver
 ## 5. Hacer el onboarding explícito y guiado
 
 Un usuario no debería tener que escribir a mano JSON de onboarding solo para crear un árbol de contexto útil.
-`gctree init` y `gctree onboard` deben guiar al usuario a través de su proveedor preferido y escribir el contexto resultante en la gc-branch activa.
+`gctree init` y `gctree onboard` deben guiar al usuario a través de su proveedor preferido, habilitar ese proveedor globalmente y escribir el contexto resultante en la gc-branch activa.
 
 El onboarding es solo para gc-branches vacías.
 Si una gc-branch ya contiene contexto, el camino correcto es:
@@ -59,5 +59,5 @@ En la práctica, esto significa que se inyecta aproximadamente el 4 % del contex
 ## 8. Mantenerse agnóstico al proveedor
 
 `gctree` almacena el contexto en archivos markdown simples que cualquier herramienta puede leer.
-Claude Code y Codex hacen scaffold contra el mismo almacén subyacente mediante `gctree scaffold`.
+Claude Code y Codex usan el mismo almacén subyacente. `gctree init` instala la superficie global de hooks orientada al proveedor, y `gctree scaffold` es la ruta de override local para un repositorio o workspace concreto.
 Agregar soporte para un nuevo proveedor significa escribir una nueva plantilla de scaffold — sin cambios en la lógica central de almacenamiento ni de resolve.

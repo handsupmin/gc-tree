@@ -36,7 +36,7 @@ That gives downstream tools a fast path: read the short version first, then expa
 ## 5. Make onboarding explicit and guided
 
 A user should not have to hand-author onboarding JSON just to create a useful context tree.
-`gctree init` and `gctree onboard` should guide the user through their preferred provider and write the resulting context into the active gc-branch.
+`gctree init` and `gctree onboard` should guide the user through their preferred provider, enable that provider globally, and write the resulting context into the active gc-branch.
 
 Onboarding is only for empty gc-branches.
 If a gc-branch already contains context, the correct path is either:
@@ -59,5 +59,5 @@ In practice this means roughly 4% of total stored context is injected per query.
 ## 8. Stay provider-agnostic
 
 `gctree` stores context in plain markdown files that any tool can read.
-Claude Code and Codex both scaffold against the same underlying store via `gctree scaffold`.
+Claude Code and Codex both use the same underlying store. `gctree init` installs the global provider-facing hook surface, and `gctree scaffold` is the local override path for one repository or workspace.
 Adding support for a new provider means writing a new scaffold template — no changes to the core storage or resolve logic.

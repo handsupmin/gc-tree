@@ -8,6 +8,16 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
+function globalEnvForArgs(args: string[]): Record<string, string> {
+  const homeIndex = args.indexOf('--home');
+  if (homeIndex === -1 || !args[homeIndex + 1]) return {};
+  const home = args[homeIndex + 1]!;
+  return {
+    GCTREE_CODEX_GLOBAL_DIR: join(home, 'global-codex'),
+    GCTREE_CLAUDE_GLOBAL_DIR: join(home, 'global-claude'),
+  };
+}
+
 async function runCli(
   args: string[],
   {
@@ -24,6 +34,7 @@ async function runCli(
       env: {
         ...process.env,
         GCTREE_DISABLE_PROVIDER_LAUNCH: '1',
+        ...globalEnvForArgs(args),
       },
       stdio: ['pipe', 'pipe', 'pipe'],
     });

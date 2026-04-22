@@ -127,24 +127,21 @@ async function ensureScaffold({
   providerMode,
   targetDir,
   force = false,
+  scope = 'local',
 }: {
   providerMode: GcTreeProviderMode;
-  targetDir: string;
+  targetDir?: string;
   force?: boolean;
+  scope?: 'local' | 'global';
 }): Promise<{ hosts: GcTreeProviderMode; target_dir: string; written: string[]; skipped_existing: string[] }> {
   const hosts: GcTreeProvider[] = providerMode === 'both' ? ['claude-code', 'codex'] : [providerMode];
-  const combined = { hosts: providerMode, target_dir: targetDir, written: [] as string[], skipped_existing: [] as string[] };
+  const combined = { hosts: providerMode, target_dir: scope === 'global' ? '(global)' : (targetDir || process.cwd()), written: [] as string[], skipped_existing: [] as string[] };
   for (const host of hosts) {
-    const result = await scaffoldHostIntegration({ host, targetDir, force });
+    const result = await scaffoldHostIntegration({ host, targetDir, force, scope });
     combined.written.push(...result.written);
     combined.skipped_existing.push(...result.skipped_existing);
   }
   return combined;
-}
-
-async function resolveTargetDir(explicitTarget?: string): Promise<string> {
-  if (explicitTarget) return explicitTarget;
-  return (await detectRepoRoot(process.cwd())) || process.cwd();
 }
 
 async function maybePromptProviderMode(explicitProvider: string | undefined): Promise<GcTreeProviderMode> {
@@ -215,7 +212,8 @@ async function main(): Promise<void> {
       const providerMode = await maybePromptProviderMode(readArg('--provider'));
       const provider = await resolveLaunchProvider(providerMode);
       const preferredLanguage = await maybePromptLanguage(readArg('--language'));
-      const targetDir = readArg('--target') || process.cwd();
+      const explicitTargetDir = readArg('--target');
+      const launchTargetDir = explicitTargetDir || process.cwd();
       const result = await initHome(home);
       const settings = await writeSettings({
         home,
@@ -223,13 +221,16 @@ async function main(): Promise<void> {
         preferredProvider: provider,
         preferredLanguage,
       });
-      const scaffold = await ensureScaffold({ providerMode, targetDir, force: hasFlag('--force') });
+      const globalScaffold = await ensureScaffold({ providerMode, scope: 'global', force: hasFlag('--force') });
+      const scaffold = explicitTargetDir
+        ? await ensureScaffold({ providerMode, targetDir: explicitTargetDir, scope: 'local', force: hasFlag('--force') })
+        : null;
       const launch = (await isBranchContextEmpty(home, result.gc_branch))
         ? await launchGuidedFlow({
             provider,
             providerMode,
             preferredLanguage,
-            targetDir,
+            targetDir: launchTargetDir,
             gcBranch: result.gc_branch,
             command: 'gc-onboard',
             noLaunch: hasFlag('--no-launch'),
@@ -242,6 +243,7 @@ async function main(): Promise<void> {
             provider_mode: settings.provider_mode,
             preferred_provider: settings.preferred_provider,
             preferred_language: settings.preferred_language,
+            global_scaffold: globalScaffold,
             scaffold,
             launch,
           },
@@ -340,7 +342,9 @@ async function main(): Promise<void> {
       const provider = await resolvePreferredProvider(home, readArg('--provider'));
       const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
-      const scaffold = await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, force: hasFlag('--force') });
+      const scaffold = readArg('--target')
+        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force') })
+        : null;
       const launch = await launchGuidedFlow({
         provider,
         providerMode: settings?.provider_mode || provider,
@@ -387,10 +391,9 @@ async function main(): Promise<void> {
         throw new Error('uninstall is destructive. Re-run with --yes to confirm.');
       }
       const host = normalizeProviderMode(readArg('--host')) || 'both';
-      const targetDir = await resolveTargetDir(readArg('--target'));
       const result = await uninstallGcTree({
         home,
-        targetDir,
+        targetDir: readArg('--target'),
         host,
         keepHome: hasFlag('--keep-home'),
       });
@@ -575,7 +578,9 @@ async function main(): Promise<void> {
       const provider = await resolvePreferredProvider(home, readArg('--provider'));
       const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
-      const scaffold = await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, force: hasFlag('--force') });
+      const scaffold = readArg('--target')
+        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force') })
+        : null;
       const launch = await launchGuidedFlow({
         provider,
         providerMode: settings?.provider_mode || provider,

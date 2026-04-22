@@ -25,7 +25,7 @@
 
 | 명령어 | 설명 |
 | --- | --- |
-| `gctree init` | `~/.gctree` 생성, 기본 `main` gc-branch 생성, 프로바이더 모드·온보딩 프로바이더·선호 언어 저장, 현재 환경 scaffold, `main`이 비어 있으면 안내된 온보딩 시작. |
+| `gctree init` | `~/.gctree` 생성, 기본 `main` gc-branch 생성, 프로바이더 모드·온보딩 프로바이더·선호 언어 저장, 전역 프로바이더 훅/명령/스킬 설치, `main`이 비어 있으면 안내된 온보딩 시작. |
 | `gctree checkout <branch>` | 활성 gc-branch 전환. |
 | `gctree checkout -b <branch>` | 새 빈 gc-branch를 생성하고 전환. |
 | `gctree branches` | 사용 가능한 gc-branch 목록 표시 및 현재 활성 브랜치 표시. |
@@ -40,7 +40,8 @@
 | `gctree reset-gc-branch --branch <name> --yes` | gc-branch를 초기화하여 다시 온보딩할 수 있게 함. |
 | `gctree update-global-context` | 활성 gc-branch의 안내된 지속 업데이트 실행. |
 | `gctree update-gc` / `gctree ugc` | `gctree update-global-context`의 별칭. |
-| `gctree scaffold --host <codex\|claude-code>` | 다른 환경에 프로바이더 대면 명령 표면 설치. |
+| `gctree scaffold --host <codex\|claude-code>` | 특정 저장소나 워크스페이스에 로컬 프로바이더 override 설치. |
+| `gctree uninstall --yes` | `~/.gctree`와 전역 gctree 활성화를 제거. |
 
 ## resolve가 반환하는 것
 
@@ -121,7 +122,7 @@ gctree init
 이후:
 
 1. `codex` 또는 `claude-code` 선택
-2. `gctree`가 현재 환경을 scaffold하도록 허용
+2. `gctree`가 해당 프로바이더에 대해 전역 활성화를 설치하도록 허용
 3. `main` gc-branch의 안내된 온보딩 완료
 
 ## 다중 브랜치 예시 흐름
@@ -154,7 +155,7 @@ gctree ugc
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold`는 대상 디렉토리에 프로바이더 대면 명령 파일을 설치합니다.
+`gctree init`은 전역 프로바이더 훅 표면을 설치합니다. `gctree scaffold`는 특정 저장소에 자체 markdown 스니펫이나 로컬 명령 표면이 필요할 때 대상 디렉토리에 로컬 override를 설치합니다.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
@@ -162,7 +163,17 @@ gctree scaffold --host claude-code --target /path/to/repo
 gctree scaffold --host both --target /path/to/repo
 ```
 
-**`--host codex`로 작성되는 파일:**
+**Codex 전역 파일 (`gctree init`):**
+
+```
+~/.codex/hooks.json                              ← SessionStart/UserPromptSubmit 자동 resolve 훅
+~/.codex/prompts/gctree-bootstrap.md            ← Codex 세션 부트스트랩 컨텍스트
+~/.codex/skills/gc-resolve-context/SKILL.md     ← resolve 스킬
+~/.codex/skills/gc-onboard/SKILL.md             ← 온보딩 스킬
+~/.codex/skills/gc-update-global-context/SKILL.md  ← 업데이트 스킬
+```
+
+**`gctree scaffold --host codex` 로컬 override 파일:**
 
 ```
 AGENTS.md                                  ← 에이전트 지시사항에 gctree 스니펫 추가
@@ -173,7 +184,17 @@ AGENTS.md                                  ← 에이전트 지시사항에 gctr
 .codex/skills/gc-update-global-context/SKILL.md  ← 업데이트 스킬
 ```
 
-**`--host claude-code`로 작성되는 파일:**
+**Claude Code 전역 파일 (`gctree init`):**
+
+```
+~/.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit 자동 resolve 훅
+~/.claude/hooks/gctree-session-start.md            ← 세션 시작 fallback 메모
+~/.claude/commands/gc-resolve-context.md           ← resolve 슬래시 명령
+~/.claude/commands/gc-onboard.md                   ← onboard 슬래시 명령
+~/.claude/commands/gc-update-global-context.md     ← 업데이트 슬래시 명령
+```
+
+**`gctree scaffold --host claude-code` 로컬 override 파일:**
 
 ```
 CLAUDE.md                                        ← gctree 스니펫 추가
@@ -184,7 +205,7 @@ CLAUDE.md                                        ← gctree 스니펫 추가
 .claude/commands/gc-update-global-context.md     ← 업데이트 슬래시 명령
 ```
 
-`--force`를 전달하지 않으면 기존 파일은 그대로 유지됩니다.
+`--force`를 전달하지 않으면 기존 로컬 파일은 그대로 유지됩니다.
 
 ### 런타임 동작
 

@@ -152,6 +152,7 @@ Tested against real internal documentation (4 Notion exports, Korean + English m
 ## Works with Claude Code and Codex — both verified
 
 ```bash
+gctree init                         # sets up ~/.gctree and global activation for your chosen provider(s)
 gctree scaffold --host claude-code   # installs CLAUDE.md snippet + /gc-onboard, /gc-update-global-context
 gctree scaffold --host codex         # installs AGENTS.md snippet + $gc-onboard, $gc-update-global-context
 gctree scaffold --host both          # both at once
@@ -217,7 +218,7 @@ gctree set-repo-scope --branch client-b --exclude   # exclude current repo
 ~/.gctree/
   branches/
     main/
-      index.md          ← compact index, ≤2000 chars, loaded first
+      index.md          ← compact index, loaded first
       docs/
         auth.md         ← full doc, read only when needed
         architecture.md
@@ -247,7 +248,8 @@ Context lives outside your repos — no `.gitignore` rules needed, no accidental
 | Show repo-scope rules                          | `gctree repo-map`                                               |
 | Include/exclude current repo for a gc-branch   | `gctree set-repo-scope --branch <name> --include` / `--exclude` |
 | Reset a gc-branch before re-onboarding         | `gctree reset-gc-branch --branch <name> --yes`                  |
-| Scaffold a new environment                     | `gctree scaffold --host codex --target /path/to/repo`           |
+| Add a local override in one repo               | `gctree scaffold --host codex --target /path/to/repo`           |
+| Remove global gc-tree activation and context   | `gctree uninstall --yes`                                        |
 
 ---
 

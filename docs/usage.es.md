@@ -25,7 +25,7 @@ Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tr
 
 | Comando | Propósito |
 | --- | --- |
-| `gctree init` | Crear `~/.gctree`, crear la gc-branch `main` predeterminada, guardar el modo de proveedor, el proveedor de onboarding y el idioma preferido, hacer scaffold del entorno actual y comenzar el onboarding guiado cuando `main` está vacía. |
+| `gctree init` | Crear `~/.gctree`, crear la gc-branch `main` predeterminada, guardar el modo de proveedor, el proveedor de onboarding y el idioma preferido, instalar hooks/comandos/skills globales del proveedor y comenzar el onboarding guiado cuando `main` está vacía. |
 | `gctree checkout <branch>` | Cambiar la gc-branch activa. |
 | `gctree checkout -b <branch>` | Crear y cambiar a una nueva gc-branch vacía. |
 | `gctree branches` | Listar las gc-branches disponibles y mostrar la activa. |
@@ -40,7 +40,8 @@ Un flujo de trabajo estándar con `gctree` tiene este aspecto: inicializar gc-tr
 | `gctree reset-gc-branch --branch <name> --yes` | Limpiar una gc-branch para poder hacer onboarding de nuevo. |
 | `gctree update-global-context` | Iniciar una actualización duradera guiada para la gc-branch activa. |
 | `gctree update-gc` / `gctree ugc` | Alias para `gctree update-global-context`. |
-| `gctree scaffold --host <codex\|claude-code>` | Instalar la interfaz de comandos orientada al proveedor en otro entorno. |
+| `gctree scaffold --host <codex\|claude-code>` | Instalar un override local orientado al proveedor en un repositorio o workspace concreto. |
+| `gctree uninstall --yes` | Eliminar `~/.gctree` y la activación global de gctree. |
 
 ## Qué devuelve resolve
 
@@ -121,7 +122,7 @@ gctree init
 Luego:
 
 1. elegir `codex` o `claude-code`
-2. dejar que `gctree` haga scaffold del entorno actual
+2. dejar que `gctree` instale la activación global para ese proveedor
 3. completar el onboarding guiado para la gc-branch `main`
 
 ## Ejemplo de flujo con múltiples branches
@@ -154,7 +155,7 @@ Si un repositorio recién relevante también debería pasar a formar parte del c
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold` instala archivos de comandos orientados al proveedor en el directorio de destino.
+`gctree init` instala la superficie global de hooks orientada al proveedor. `gctree scaffold` instala un override local en un directorio de destino cuando un repositorio concreto necesita sus propios snippets markdown o una superficie de comandos local.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
@@ -162,7 +163,17 @@ gctree scaffold --host claude-code --target /path/to/repo
 gctree scaffold --host both --target /path/to/repo
 ```
 
-**Archivos escritos para `--host codex`:**
+**Archivos globales de Codex (`gctree init`):**
+
+```
+~/.codex/hooks.json                              ← hooks de auto-resolve para SessionStart/UserPromptSubmit
+~/.codex/prompts/gctree-bootstrap.md            ← contexto de arranque para sesiones de Codex
+~/.codex/skills/gc-resolve-context/SKILL.md     ← skill de resolve
+~/.codex/skills/gc-onboard/SKILL.md             ← skill de onboarding
+~/.codex/skills/gc-update-global-context/SKILL.md  ← skill de actualización
+```
+
+**Archivos de override local para `gctree scaffold --host codex`:**
 
 ```
 AGENTS.md                                  ← fragmento de gctree añadido a las instrucciones del agente
@@ -173,7 +184,17 @@ AGENTS.md                                  ← fragmento de gctree añadido a la
 .codex/skills/gc-update-global-context/SKILL.md  ← skill de actualización
 ```
 
-**Archivos escritos para `--host claude-code`:**
+**Archivos globales de Claude Code (`gctree init`):**
+
+```
+~/.claude/hooks/hooks.json                         ← hooks de auto-resolve para SessionStart/UserPromptSubmit
+~/.claude/hooks/gctree-session-start.md            ← nota fallback de inicio de sesión
+~/.claude/commands/gc-resolve-context.md           ← comando slash de resolve
+~/.claude/commands/gc-onboard.md                   ← comando slash de onboard
+~/.claude/commands/gc-update-global-context.md     ← comando slash de actualización
+```
+
+**Archivos de override local para `gctree scaffold --host claude-code`:**
 
 ```
 CLAUDE.md                                        ← fragmento de gctree añadido
@@ -184,7 +205,7 @@ CLAUDE.md                                        ← fragmento de gctree añadid
 .claude/commands/gc-update-global-context.md     ← comando slash de actualización
 ```
 
-Los archivos existentes no se modifican a menos que pases `--force`.
+Los archivos locales existentes no se modifican a menos que pases `--force`.
 
 ### Comportamiento en tiempo de ejecución
 

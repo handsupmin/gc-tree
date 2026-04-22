@@ -25,7 +25,7 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 
 | Command | Purpose |
 | --- | --- |
-| `gctree init` | Create `~/.gctree`, create the default `main` gc-branch, save the provider mode, onboarding provider, and preferred language, scaffold the current environment, and start guided onboarding when `main` is empty. |
+| `gctree init` | Create `~/.gctree`, create the default `main` gc-branch, save the provider mode, onboarding provider, and preferred language, install global provider hooks/commands/skills, and start guided onboarding when `main` is empty. |
 | `gctree checkout <branch>` | Switch the active gc-branch. |
 | `gctree checkout -b <branch>` | Create and switch to a new empty gc-branch. |
 | `gctree branches` | List available gc-branches and show the active one. |
@@ -40,7 +40,8 @@ A standard `gctree` workflow looks like this: initialize gc-tree, choose a provi
 | `gctree reset-gc-branch --branch <name> --yes` | Clear a gc-branch so it can be onboarded again. |
 | `gctree update-global-context` | Launch a guided durable update for the active gc-branch. |
 | `gctree update-gc` / `gctree ugc` | Aliases for `gctree update-global-context`. |
-| `gctree scaffold --host <codex\|claude-code>` | Install the provider-facing command surface in another environment. |
+| `gctree scaffold --host <codex\|claude-code>` | Install a local provider-facing override in one repository or workspace. |
+| `gctree uninstall --yes` | Remove `~/.gctree` and the global gctree activation for the configured providers. |
 
 ## What resolve returns
 
@@ -121,7 +122,7 @@ gctree init
 Then:
 
 1. choose `codex` or `claude-code`
-2. let `gctree` scaffold the current environment
+2. let `gctree` install global activation for that provider
 3. complete guided onboarding for the `main` gc-branch
 
 ## Example multi-branch flow
@@ -154,7 +155,7 @@ If a newly relevant repo should also become part of the durable context, the nat
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold` installs provider-facing command files into the target directory.
+`gctree init` installs the provider-facing hook surface globally. `gctree scaffold` installs a local override into one target directory when a specific repository needs its own markdown snippets or local command surface.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
@@ -162,7 +163,17 @@ gctree scaffold --host claude-code --target /path/to/repo
 gctree scaffold --host both --target /path/to/repo
 ```
 
-**Files written for `--host codex`:**
+**Global files for Codex (`gctree init`):**
+
+```
+~/.codex/hooks.json                              ← SessionStart/UserPromptSubmit auto-resolve hooks
+~/.codex/prompts/gctree-bootstrap.md            ← bootstrap context for Codex sessions
+~/.codex/skills/gc-resolve-context/SKILL.md     ← resolve skill
+~/.codex/skills/gc-onboard/SKILL.md             ← onboarding skill
+~/.codex/skills/gc-update-global-context/SKILL.md  ← update skill
+```
+
+**Local override files for `gctree scaffold --host codex`:**
 
 ```
 AGENTS.md                                  ← gctree snippet appended to agent instructions
@@ -173,7 +184,17 @@ AGENTS.md                                  ← gctree snippet appended to agent 
 .codex/skills/gc-update-global-context/SKILL.md  ← update skill
 ```
 
-**Files written for `--host claude-code`:**
+**Global files for Claude Code (`gctree init`):**
+
+```
+~/.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit auto-resolve hooks
+~/.claude/hooks/gctree-session-start.md            ← session-start fallback note
+~/.claude/commands/gc-resolve-context.md           ← resolve slash command
+~/.claude/commands/gc-onboard.md                   ← onboard slash command
+~/.claude/commands/gc-update-global-context.md     ← update slash command
+```
+
+**Local override files for `gctree scaffold --host claude-code`:**
 
 ```
 CLAUDE.md                                        ← gctree snippet appended
@@ -184,7 +205,7 @@ CLAUDE.md                                        ← gctree snippet appended
 .claude/commands/gc-update-global-context.md     ← update slash command
 ```
 
-Existing files are left untouched unless you pass `--force`.
+Existing local files are left untouched unless you pass `--force`.
 
 ### Runtime behavior
 

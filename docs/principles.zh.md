@@ -36,7 +36,7 @@ gc-branch 不应该悄无声息地影响机器上的每一个代码仓库。
 ## 5. 让 onboarding 明确且有引导
 
 用户不应该仅仅为了创建一个有用的上下文树而手动编写 onboarding JSON。
-`gctree init` 和 `gctree onboard` 应该引导用户选择首选的提供商，并将生成的上下文写入活跃的 gc-branch。
+`gctree init` 和 `gctree onboard` 应该引导用户选择首选的提供商，为该提供商启用全局激活，并将生成的上下文写入活跃的 gc-branch。
 
 Onboarding 仅适用于空的 gc-branch。
 如果一个 gc-branch 已经包含上下文，正确的做法是：
@@ -59,5 +59,5 @@ Onboarding 仅适用于空的 gc-branch。
 ## 8. 保持提供商无关性
 
 `gctree` 将上下文存储在任何工具都能读取的纯 Markdown 文件中。
-Claude Code 和 Codex 都通过 `gctree scaffold` 对接同一个底层存储。
+Claude Code 和 Codex 使用同一个底层存储。`gctree init` 安装全局 provider hook 表面，`gctree scaffold` 则是针对单个仓库或工作区的本地 override 路径。
 添加对新提供商的支持，意味着编写一个新的 scaffold 模板——无需对核心存储或 resolve 逻辑做任何修改。

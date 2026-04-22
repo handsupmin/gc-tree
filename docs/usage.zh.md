@@ -25,7 +25,7 @@
 
 | 命令 | 用途 |
 | --- | --- |
-| `gctree init` | 创建 `~/.gctree`，创建默认的 `main` gc-branch，保存提供商模式、onboarding 提供商及首选语言，scaffold 当前环境，并在 `main` 为空时启动有引导的 onboarding。 |
+| `gctree init` | 创建 `~/.gctree`，创建默认的 `main` gc-branch，保存提供商模式、onboarding 提供商及首选语言，安装全局 provider hook/command/skill，并在 `main` 为空时启动有引导的 onboarding。 |
 | `gctree checkout <branch>` | 切换活跃的 gc-branch。 |
 | `gctree checkout -b <branch>` | 创建并切换到一个新的空 gc-branch。 |
 | `gctree branches` | 列出可用的 gc-branch 并显示当前活跃的那个。 |
@@ -40,7 +40,8 @@
 | `gctree reset-gc-branch --branch <name> --yes` | 清空一个 gc-branch，使其可以重新 onboard。 |
 | `gctree update-global-context` | 为活跃的 gc-branch 启动有引导的持久化更新。 |
 | `gctree update-gc` / `gctree ugc` | `gctree update-global-context` 的别名。 |
-| `gctree scaffold --host <codex\|claude-code>` | 在另一个环境中安装面向提供商的命令接口。 |
+| `gctree scaffold --host <codex\|claude-code>` | 在单个仓库或工作区中安装本地 provider override。 |
+| `gctree uninstall --yes` | 删除 `~/.gctree` 和全局 gctree 激活。 |
 
 ## resolve 返回的内容
 
@@ -121,7 +122,7 @@ gctree init
 然后：
 
 1. 选择 `codex` 或 `claude-code`
-2. 让 `gctree` scaffold 当前环境
+2. 让 `gctree` 为该 provider 安装全局激活
 3. 对 `main` gc-branch 完成有引导的 onboarding
 
 ## 多分支示例流程
@@ -154,7 +155,7 @@ gctree ugc
 
 ### Codex CLI / Claude Code CLI
 
-`gctree scaffold` 将面向提供商的命令文件安装到目标目录中。
+`gctree init` 会安装全局 provider hook 表面。`gctree scaffold` 则在某个仓库需要自己的 markdown 片段或本地命令表面时，将本地 override 安装到目标目录中。
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
@@ -162,7 +163,17 @@ gctree scaffold --host claude-code --target /path/to/repo
 gctree scaffold --host both --target /path/to/repo
 ```
 
-**`--host codex` 写入的文件：**
+**Codex 全局文件（`gctree init`）：**
+
+```
+~/.codex/hooks.json                              ← SessionStart / UserPromptSubmit 自动 resolve hook
+~/.codex/prompts/gctree-bootstrap.md            ← Codex 会话引导上下文
+~/.codex/skills/gc-resolve-context/SKILL.md     ← resolve 技能
+~/.codex/skills/gc-onboard/SKILL.md             ← onboarding 技能
+~/.codex/skills/gc-update-global-context/SKILL.md  ← 更新技能
+```
+
+**`gctree scaffold --host codex` 的本地 override 文件：**
 
 ```
 AGENTS.md                                  ← gctree 代码片段追加到 agent 指令中
@@ -173,7 +184,17 @@ AGENTS.md                                  ← gctree 代码片段追加到 agen
 .codex/skills/gc-update-global-context/SKILL.md  ← 更新技能
 ```
 
-**`--host claude-code` 写入的文件：**
+**Claude Code 全局文件（`gctree init`）：**
+
+```
+~/.claude/hooks/hooks.json                         ← SessionStart / UserPromptSubmit 自动 resolve hook
+~/.claude/hooks/gctree-session-start.md            ← 会话启动 fallback 说明
+~/.claude/commands/gc-resolve-context.md           ← resolve 斜杠命令
+~/.claude/commands/gc-onboard.md                   ← onboard 斜杠命令
+~/.claude/commands/gc-update-global-context.md     ← 更新斜杠命令
+```
+
+**`gctree scaffold --host claude-code` 的本地 override 文件：**
 
 ```
 CLAUDE.md                                        ← gctree 代码片段追加
@@ -184,7 +205,7 @@ CLAUDE.md                                        ← gctree 代码片段追加
 .claude/commands/gc-update-global-context.md     ← 更新斜杠命令
 ```
 
-除非传入 `--force`，否则已有文件不会被修改。
+除非传入 `--force`，否则已有本地文件不会被修改。
 
 ### 运行时行为
 

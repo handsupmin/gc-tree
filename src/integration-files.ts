@@ -1,5 +1,6 @@
 import { access, readFile, rm, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 
@@ -205,4 +206,16 @@ export function gctreeHookJsonTargets(targetDir: string) {
     codex: join(targetDir, '.codex', 'hooks.json'),
     claude: join(targetDir, '.claude', 'hooks', 'hooks.json'),
   };
+}
+
+export function gctreeGlobalRoot(host: 'codex' | 'claude-code'): string {
+  if (host === 'codex') {
+    return process.env.GCTREE_CODEX_GLOBAL_DIR || join(homedir(), '.codex');
+  }
+  return process.env.GCTREE_CLAUDE_GLOBAL_DIR || join(homedir(), '.claude');
+}
+
+export function gctreeGlobalHookJsonTarget(host: 'codex' | 'claude-code'): string {
+  const root = gctreeGlobalRoot(host);
+  return host === 'codex' ? join(root, 'hooks.json') : join(root, 'hooks', 'hooks.json');
 }
