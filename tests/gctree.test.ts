@@ -108,7 +108,8 @@ test('onboard writes summary-first docs and a compact index', async () => {
     const result = await onboardBranch({ home, input: onboardingInput });
     assert.equal(result.gc_branch, DEFAULT_BRANCH);
     const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
-    assert.match(index, /Project Identity -> docs\/project-identity.md/);
+    assert.match(index, /## General/);
+    assert.match(index, /- Project Identity\n  - docs\/project-identity.md/);
     assert.doesNotMatch(index, /Auth policy and API ergonomics matter most/);
 
     const doc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'project-identity.md'), 'utf8');
@@ -129,15 +130,15 @@ test('onboard can write categorized docs and render a sectioned dictionary index
 
     const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
     assert.match(index, /## Domain/);
-    assert.match(index, /- como -> docs\/domain\/como\.md/);
-    assert.match(index, /- 투표권 -> docs\/domain\/como\.md/);
-    assert.match(index, /- voting-token -> docs\/domain\/como\.md/);
-    assert.match(index, /- gravity -> docs\/domain\/gravity\.md/);
-    assert.match(index, /- 투표 이벤트 -> docs\/domain\/gravity\.md/);
+    assert.match(index, /- como\n  - docs\/domain\/como\.md/);
+    assert.match(index, /- 투표권\n  - docs\/domain\/como\.md/);
+    assert.match(index, /- voting-token\n  - docs\/domain\/como\.md/);
+    assert.match(index, /- gravity\n  - docs\/domain\/gravity\.md/);
+    assert.match(index, /- 투표 이벤트\n  - docs\/domain\/gravity\.md/);
     assert.match(index, /## Repos/);
-    assert.match(index, /- g3 -> docs\/repos\/g3\.md/);
+    assert.match(index, /- g3\n  - docs\/repos\/g3\.md/);
     assert.match(index, /## Workflows/);
-    assert.match(index, /- db-migration -> docs\/workflows\/db-migration\.md/);
+    assert.match(index, /- db-migration\n  - docs\/workflows\/db-migration\.md/);
 
     const comoDoc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'domain', 'como.md'), 'utf8');
     assert.match(comoDoc, /## Summary/);
@@ -269,7 +270,7 @@ test('resetBranchContext clears docs so the gc-branch can be onboarded again', a
   }
 });
 
-test('status warns when index grows beyond the compact budget', async () => {
+test('status does not warn just because index.md is large', async () => {
   const home = await createHome('gctree-status-');
   try {
     await initHome(home);
@@ -281,8 +282,7 @@ test('status warns when index grows beyond the compact budget', async () => {
       },
     });
     const status = await statusForBranch(home, DEFAULT_BRANCH);
-    assert.equal(status.warnings.length > 0, true);
-    assert.match(status.warnings[0] ?? '', /index\.md/i);
+    assert.equal(status.warnings.length, 0);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

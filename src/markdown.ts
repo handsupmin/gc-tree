@@ -77,7 +77,8 @@ export function renderIndexMarkdown(input: {
       for (const doc of grouped.get(category)!.sort((a, b) =>
         (a.label || a.title).localeCompare(b.label || b.title),
       )) {
-        lines.push(`- ${doc.label || doc.title} -> ${doc.path}`);
+        lines.push(`- ${doc.label || doc.title}`);
+        lines.push(`  - ${doc.path}`);
       }
       lines.push('');
     }
@@ -119,24 +120,50 @@ export function displayCategory(category: string): string {
 
 export function parseIndexEntries(indexContent: string): Array<{ id: string; title: string; label: string; category: string; path: string }> {
   let currentCategory = 'general';
-  return String(indexContent || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .flatMap((line) => {
-      if (!line) return [];
-      const heading = line.match(/^##\s+(.+)$/);
-      if (heading) {
-        currentCategory = normalizeCategory(heading[1] || 'general');
-        return [];
-      }
-      if (!/^-\s+.+\s+->\s+.+$/.test(line) || line.startsWith('- gc-branch:') || line.startsWith('- summary:')) {
-        return [];
-      }
-      const body = line.slice(2);
-      const [label, path] = body.split('->').map((part) => part.trim());
+  let pendingLabel: string | null = null;
+  const entries: Array<{ id: string; title: string; label: string; category: string; path: string }> = [];
+
+  for (const rawLine of String(indexContent || '').split(/\r?\n/)) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+    if (!trimmed) {
+      pendingLabel = null;
+      continue;
+    }
+
+    const heading = trimmed.match(/^##\s+(.+)$/);
+    if (heading) {
+      currentCategory = normalizeCategory(heading[1] || 'general');
+      pendingLabel = null;
+      continue;
+    }
+
+    if (trimmed.startsWith('- gc-branch:') || trimmed.startsWith('- summary:') || trimmed === '- No source docs yet.') {
+      pendingLabel = null;
+      continue;
+    }
+
+    const pathMatch = rawLine.match(/^\s{2,}-\s+(docs\/.+)$/);
+    if (pathMatch && pendingLabel) {
+      const path = pathMatch[1]!.trim();
       const category = deriveCategoryFromPath(path) || currentCategory;
-      return [{ id: docIdFromPath(path), title: label, label, category, path }];
-    });
+      entries.push({
+        id: docIdFromPath(path),
+        title: pendingLabel,
+        label: pendingLabel,
+        category,
+        path,
+      });
+      continue;
+    }
+
+    const labelMatch = trimmed.match(/^-\s+(.+)$/);
+    if (labelMatch) {
+      pendingLabel = labelMatch[1]!.trim();
+    }
+  }
+
+  return entries;
 }
 
 export function extractIndexEntries(markdown: string): string[] {

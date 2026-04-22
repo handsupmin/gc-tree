@@ -10,7 +10,6 @@ import {
   branchesRoot,
   DEFAULT_BRANCH,
   headPath,
-  INDEX_WARNING_CHARS,
 } from './paths.js';
 import { extractIndexEntries, renderIndexMarkdown } from './markdown.js';
 import type { GcTreeBranchMeta } from './types.js';
@@ -185,9 +184,6 @@ export async function statusForBranch(home: string, branch: string): Promise<{
   const indexRaw = await readFile(branchIndexPath(home, branch), 'utf8');
   const docs = await listDocRelativePaths(branchDocsDir(home, branch));
   const warnings: string[] = [];
-  if (indexRaw.length > INDEX_WARNING_CHARS) {
-    warnings.push(`index.md is ${indexRaw.length} chars; keep it closer to an index than a knowledge dump.`);
-  }
   for (const doc of docs) {
     const raw = await readFile(join(branchDocsDir(home, branch), doc), 'utf8');
     if (!/^## Summary$/m.test(raw)) {
