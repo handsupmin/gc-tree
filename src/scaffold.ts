@@ -292,7 +292,7 @@ export async function scaffoldHostIntegration({
 
   // Migrate: clean up gctree entries from old hooks.json location (claude-code only)
   if (!isCodex) {
-    const oldHooksPath = join(targetDir, '.claude', 'hooks', 'hooks.json');
+    const oldHooksPath = join(targetDir, '.claude', 'settings.json');
     await unmergeGcTreeHooksJson(oldHooksPath);
   }
 

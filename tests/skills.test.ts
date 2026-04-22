@@ -46,6 +46,11 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /1\. This is mostly correct\./i);
   assert.match(contents[0]!, /2\. Some parts are wrong\. Please explain what differs\./i);
   assert.match(contents[0]!, /3\. Most of this is wrong\. Please explain the right frame\./i);
+  assert.match(contents[0]!, /do not ask them to explain those repositories from scratch/i);
+  assert.match(contents[0]!, /read the strongest available evidence first/i);
+  assert.match(contents[0]!, /repository-level hypothesis/i);
+  assert.match(contents[0]!, /ask only for the missing deltas|ask only for missing deltas/i);
+  assert.match(contents[0]!, /only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence/i);
   assert.match(contents[0]!, /what kind of work/i);
   assert.match(contents[0]!, /glossary terms/i);
   assert.match(contents[0]!, /verification commands/i);

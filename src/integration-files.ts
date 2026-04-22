@@ -203,6 +203,6 @@ export function gctreeManagedMarkdownTargets(targetDir: string) {
 export function gctreeHookJsonTargets(targetDir: string) {
   return {
     codex: join(targetDir, '.codex', 'hooks.json'),
-    claude: join(targetDir, '.claude', 'settings.json'),
+    claude: join(targetDir, '.claude', 'hooks', 'hooks.json'),
   };
 }

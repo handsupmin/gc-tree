@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -220,6 +220,20 @@ test('guided onboard only works for an empty gc-branch and __apply-onboarding wr
   }
 });
 
+test('status before init shows a guided error instead of raw ENOENT', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-cli-home-'));
+
+  try {
+    const result = await runCli(['status', '--home', home]);
+    assert.notEqual(result.code, 0);
+    assert.match(result.stderr, /gc-tree is not initialized/i);
+    assert.match(result.stderr, /Run `gctree init` first\./i);
+    assert.doesNotMatch(result.stderr, /ENOENT/i);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
 
 test('init skips auto-onboarding when main gc-branch already has context', async () => {
   const home = await mkdtemp(join(tmpdir(), 'gctree-cli-home-'));
@@ -411,6 +425,11 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /1\. This is mostly correct\./i);
     assert.match(codexOnboardSkill, /2\. Some parts are wrong\. Please explain what differs\./i);
     assert.match(codexOnboardSkill, /3\. Most of this is wrong\. Please explain the right frame\./i);
+    assert.match(codexOnboardSkill, /do not ask them to explain those repositories from scratch/i);
+    assert.match(codexOnboardSkill, /read the strongest available evidence first/i);
+    assert.match(codexOnboardSkill, /repository-level hypothesis/i);
+    assert.match(codexOnboardSkill, /ask only for missing deltas/i);
+    assert.match(codexOnboardSkill, /only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence/i);
     assert.match(codexOnboardSkill, /what kind of person/i);
     assert.match(codexOnboardSkill, /glossary terms/i);
     assert.match(codexOnboardSkill, /verification commands/i);
@@ -455,6 +474,11 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /1\. This is mostly correct\./i);
     assert.match(claudeOnboardCommand, /2\. Some parts are wrong\. Please explain what differs\./i);
     assert.match(claudeOnboardCommand, /3\. Most of this is wrong\. Please explain the right frame\./i);
+    assert.match(claudeOnboardCommand, /do not ask them to explain those repositories from scratch/i);
+    assert.match(claudeOnboardCommand, /read the strongest available evidence first/i);
+    assert.match(claudeOnboardCommand, /repository-level hypothesis/i);
+    assert.match(claudeOnboardCommand, /ask only for missing deltas/i);
+    assert.match(claudeOnboardCommand, /only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence/i);
     assert.match(claudeOnboardCommand, /what kind of person/i);
     assert.match(claudeOnboardCommand, /glossary terms/i);
     assert.match(claudeOnboardCommand, /verification commands/i);

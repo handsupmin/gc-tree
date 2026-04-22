@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { stdin, stderr, stdout } from 'node:process';
 
@@ -12,11 +13,12 @@ import {
   promptLaunchProviderSelection,
   promptProviderSelection,
 } from './provider.js';
-import { DEFAULT_BRANCH, resolveHome } from './paths.js';
+import { DEFAULT_BRANCH, branchDir, resolveHome } from './paths.js';
 import {
   branchRepoMapPath,
   branchScopeStatus,
   detectCurrentRepoId,
+  detectRepoRoot,
   promptResolveScopeDecision,
   readBranchRepoMap,
   resolveBranchForRepo,
@@ -138,6 +140,11 @@ async function ensureScaffold({
     combined.skipped_existing.push(...result.skipped_existing);
   }
   return combined;
+}
+
+async function resolveTargetDir(explicitTarget?: string): Promise<string> {
+  if (explicitTarget) return explicitTarget;
+  return (await detectRepoRoot(process.cwd())) || process.cwd();
 }
 
 async function maybePromptProviderMode(explicitProvider: string | undefined): Promise<GcTreeProviderMode> {
@@ -298,6 +305,9 @@ async function main(): Promise<void> {
     }
     case 'status': {
       const gcBranch = (await readHead(home)) || DEFAULT_BRANCH;
+      if (!existsSync(branchDir(home, gcBranch))) {
+        throw new Error('gc-tree is not initialized. Run `gctree init` first.');
+      }
       const result = await statusForBranch(home, gcBranch);
       const settings = await readSettings(home);
       const mapping = await readBranchRepoMap(home);
@@ -377,7 +387,7 @@ async function main(): Promise<void> {
         throw new Error('uninstall is destructive. Re-run with --yes to confirm.');
       }
       const host = normalizeProviderMode(readArg('--host')) || 'both';
-      const targetDir = readArg('--target') || process.cwd();
+      const targetDir = await resolveTargetDir(readArg('--target'));
       const result = await uninstallGcTree({
         home,
         targetDir,
@@ -598,7 +608,7 @@ async function main(): Promise<void> {
         payload,
       });
       if (result) {
-        stdout.write(`${result.hookSpecificOutput.additionalContext}\n`);
+        stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       }
       return;
     }

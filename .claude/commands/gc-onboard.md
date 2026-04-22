@@ -23,20 +23,24 @@ Use this only when the active gc-branch is empty.
 17. Ask next for one core recurring work type only when the provided docs or description still do not make the work types clear, then ask whether there are more work types to capture.
 18. For each work type, ask how that work shows up day to day.
 19. Only after the work types are clear should you ask which repositories are involved in each work type.
-20. For each repository, ask what role it plays in the work, what directories or files matter most, what the actual workflow is, and what hidden conventions, glossary terms, or boundaries matter.
-21. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
-22. Ask whether there are additional repositories for the current work type before moving on.
-23. After repository coverage, ask for company/domain glossary terms and acronyms that should become durable context.
-24. Then ask which verification commands should be treated as defaults for this kind of work.
-25. Synthesize the interview into durable docs such as a role/profile summary, work types, repository roles, glossary, and verification defaults.
-26. Then create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).
-27. Run `gctree __apply-onboarding --input <temp-file>`.
-28. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
-29. Do not claim onboarding is complete unless verification returns `status: "complete"`.
-30. After applying the onboarding docs, explicitly list which durable docs were saved.
-31. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
-32. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
-33. Ask whether anything else should be saved while the context is still fresh.
-34. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-35. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-36. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.
+20. Once the user names concrete repositories, do not ask them to explain those repositories from scratch when recoverable local evidence exists.
+21. For each repository that can be inspected locally, read the strongest available evidence first (README, docs, package metadata, top-level entrypoints, deployment/config files, and a few pointed paths), then present your current understanding back as a short hypothesis.
+22. After that repository-level hypothesis, ask the user to choose only one structured confirmation: 1. This is mostly correct. 2. Some parts are wrong. Please explain what differs. 3. Most of this is wrong. Please explain the right frame.
+23. When local evidence already covers the repository role, important paths, workflow, or conventions well enough, skip the open-ended questions and ask only for missing deltas.
+24. Only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence.
+25. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
+26. Ask whether there are additional repositories for the current work type before moving on.
+27. After repository coverage, ask for company/domain glossary terms and acronyms that should become durable context.
+28. Then ask which verification commands should be treated as defaults for this kind of work.
+29. Synthesize the interview into durable docs such as a role/profile summary, work types, repository roles, glossary, and verification defaults.
+30. Then create a temporary JSON file with `branchSummary` and `docs[]` (`title`, `summary`, `body`).
+31. Run `gctree __apply-onboarding --input <temp-file>`.
+32. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
+33. Do not claim onboarding is complete unless verification returns `status: "complete"`.
+34. After applying the onboarding docs, explicitly list which durable docs were saved.
+35. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
+36. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
+37. Ask whether anything else should be saved while the context is still fresh.
+38. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+39. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+40. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.
