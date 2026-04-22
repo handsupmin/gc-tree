@@ -28,7 +28,14 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /whether that summary is correct/i);
   assert.match(contents[0]!, /anything important is still missing/i);
   assert.match(contents[0]!, /summarize what you now understand from the saved docs/i);
-  assert.match(contents[0]!, /whether that final summary matches the user's reality/i);
+  assert.match(contents[0]!, /final summary, do not ask an open-ended validation question first/i);
+  assert.match(contents[0]!, /1\. This matches well enough\./i);
+  assert.match(contents[0]!, /2\. Some parts are wrong\. I will give the delta\./i);
+  assert.match(contents[0]!, /3\. The frame is wrong\. I will restate it\./i);
+  assert.match(contents[0]!, /propose the concrete repository candidates/i);
+  assert.match(contents[0]!, /1\. Map these candidates\./i);
+  assert.match(contents[0]!, /2\. Map these, but with corrections\./i);
+  assert.match(contents[0]!, /3\. Skip repo mapping for now\./i);
   assert.match(contents[0]!, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
   assert.match(contents[0]!, /verify-onboarding/i);
   assert.match(contents[0]!, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);

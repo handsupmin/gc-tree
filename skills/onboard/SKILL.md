@@ -83,9 +83,17 @@ Use this when a user wants to create global context for a product, company, or w
 28. Do not claim onboarding is complete unless verification returns `status: "complete"`.
 29. After the onboarding docs are written, explicitly list which durable docs were saved.
 30. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
-31. Ask whether that final summary matches the user's reality, and capture any corrections before you wrap up.
-32. Ask whether anything else should be saved while the context is still fresh.
-33. After docs are confirmed correct, ask which repositories discussed during onboarding should be explicitly mapped to this gc-branch. For each confirmed repo, navigate to that directory and run `gctree set-repo-scope --branch <gc-branch> --include`. Skip this step only if the user explicitly says repo mapping is not needed.
-34. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-35. Only after the related repos, workflows, glossary, default verification commands, and repo-scope mapping are either captured or explicitly skipped should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-36. Keep the current gc-branch explicit while gathering context.
+31. For that final summary, do not ask an open-ended validation question first. Present the summary and ask the user to choose only one:
+   - 1. This matches well enough.
+   - 2. Some parts are wrong. I will give the delta.
+   - 3. The frame is wrong. I will restate it.
+32. If the user picks 2 or 3 for the final summary, ask only for the correction delta or replacement frame, then update the saved understanding instead of restarting the interview.
+33. Ask whether anything else should be saved while the context is still fresh.
+34. After docs are confirmed correct, do not ask the user to recall repo-scope mappings from scratch. Propose the concrete repository candidates that appear materially tied to this gc-branch, then ask the user to choose only one:
+   - 1. Map these candidates.
+   - 2. Map these, but with corrections.
+   - 3. Skip repo mapping for now.
+35. If the user picks 2 for repo mapping, ask only for the repo delta to add or remove. If the user picks 1 or gives corrected candidates, navigate to each confirmed repo and run `gctree set-repo-scope --branch <gc-branch> --include`. Skip mapping only if the user picks 3 or explicitly says mapping is not needed.
+36. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+37. Only after the related repos, workflows, glossary, default verification commands, and repo-scope mapping are either captured or explicitly skipped should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
+38. Keep the current gc-branch explicit while gathering context.
