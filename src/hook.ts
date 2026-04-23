@@ -21,6 +21,8 @@ export interface GcTreeHookPayload {
   prompt?: string;
 }
 
+const SELF_REVIEW_INTERVAL = 5;
+
 interface GcTreeHookCache {
   version: 1;
   session_id: string;
@@ -30,6 +32,7 @@ interface GcTreeHookCache {
   branch_empty: boolean;
   branch_excluded: boolean;
   no_match_signatures: string[];
+  prompt_count: number;
   updated_at: string;
 }
 
@@ -144,6 +147,16 @@ function buildMatchContext({
   ].join('\n');
 }
 
+function buildSelfReviewAppend(promptCount: number): string {
+  return [
+    `\n[gc-tree] CONTEXT SELF-REVIEW (every ${SELF_REVIEW_INTERVAL} prompts — this is prompt #${promptCount}):`,
+    `At the END of your response to this task, review the current gc-tree global context and compare it against what you have observed or changed in this session.`,
+    `If any docs need updating (new conventions discovered, corrected info, new repos or workflows, outdated content), propose the specific changes to the user and ask whether to apply them.`,
+    `Use \`/gc-update-global-context\` (Claude Code) or \`gctree update-global-context\` (CLI) to apply.`,
+    `If nothing meaningful changed, skip silently — do not mention this review to the user.`,
+  ].join('\n');
+}
+
 async function readHookCache(home: string, sessionId: string): Promise<GcTreeHookCache | null> {
   try {
     const raw = await readFile(hookCachePath(home, sessionId), 'utf8');
@@ -188,6 +201,7 @@ function nextCacheState(
     branch_empty: changed ? false : previous.branch_empty,
     branch_excluded: changed ? false : previous.branch_excluded,
     no_match_signatures: changed ? [] : previous.no_match_signatures,
+    prompt_count: (previous?.prompt_count ?? 0) + 1,
     updated_at: new Date().toISOString(),
   };
 }
@@ -240,91 +254,45 @@ export async function dispatchGcTreeHook({
     repoScopeStatus,
   });
 
+  let additionalContext: string;
+
   if (repoScopeStatus === 'excluded') {
     cache.branch_excluded = true;
-    cache.updated_at = new Date().toISOString();
-    await writeHookCache(home, cache);
-    return {
-      hookSpecificOutput: {
-        hookEventName: event,
-        additionalContext: buildExcludedContext({
-          gcBranch,
-          currentRepo,
-          cached: previousCache?.branch_excluded === true,
-        }),
-      },
-    };
-  }
-
-  if (branchStatus.doc_count === 0) {
+    additionalContext = buildExcludedContext({
+      gcBranch,
+      currentRepo,
+      cached: previousCache?.branch_excluded === true,
+    });
+  } else if (branchStatus.doc_count === 0) {
     const wasCached = cache.branch_empty;
     cache.branch_empty = true;
-    cache.updated_at = new Date().toISOString();
-    await writeHookCache(home, cache);
-    return {
-      hookSpecificOutput: {
-        hookEventName: event,
-        additionalContext: buildEmptyBranchContext({
-          gcBranch,
-          currentRepo,
-          cached: wasCached,
-        }),
-      },
-    };
+    additionalContext = buildEmptyBranchContext({ gcBranch, currentRepo, cached: wasCached });
+  } else {
+    const query = currentRepo ? `${currentRepo} ${prompt}` : prompt;
+    const signature = hashQuery(query);
+
+    if (cache.no_match_signatures.includes(signature)) {
+      additionalContext = buildNoMatchContext({ gcBranch, currentRepo, query, cached: true });
+    } else {
+      const result = await resolveContext({ home, branch: gcBranch, query });
+
+      if (result.matches.length === 0) {
+        cache.no_match_signatures = [...new Set([...cache.no_match_signatures, signature])];
+        additionalContext = buildNoMatchContext({ gcBranch, currentRepo, query, cached: false });
+      } else {
+        cache.no_match_signatures = cache.no_match_signatures.filter((entry) => entry !== signature);
+        additionalContext = buildMatchContext({ gcBranch, currentRepo, repoScopeStatus, query, matches: result.matches });
+      }
+    }
+
+    if (cache.prompt_count > 0 && cache.prompt_count % SELF_REVIEW_INTERVAL === 0) {
+      additionalContext += buildSelfReviewAppend(cache.prompt_count);
+      cache.prompt_count = 0;
+    }
   }
 
-  const query = currentRepo ? `${currentRepo} ${prompt}` : prompt;
-  const signature = hashQuery(query);
-
-  if (cache.no_match_signatures.includes(signature)) {
-    cache.updated_at = new Date().toISOString();
-    await writeHookCache(home, cache);
-    return {
-      hookSpecificOutput: {
-        hookEventName: event,
-        additionalContext: buildNoMatchContext({
-          gcBranch,
-          currentRepo,
-          query,
-          cached: true,
-        }),
-      },
-    };
-  }
-
-  const result = await resolveContext({ home, branch: gcBranch, query });
-
-  if (result.matches.length === 0) {
-    cache.no_match_signatures = [...new Set([...cache.no_match_signatures, signature])];
-    cache.updated_at = new Date().toISOString();
-    await writeHookCache(home, cache);
-    return {
-      hookSpecificOutput: {
-        hookEventName: event,
-        additionalContext: buildNoMatchContext({
-          gcBranch,
-          currentRepo,
-          query,
-          cached: false,
-        }),
-      },
-    };
-  }
-
-  cache.no_match_signatures = cache.no_match_signatures.filter((entry) => entry !== signature);
   cache.updated_at = new Date().toISOString();
   await writeHookCache(home, cache);
 
-  return {
-    hookSpecificOutput: {
-      hookEventName: event,
-      additionalContext: buildMatchContext({
-        gcBranch,
-        currentRepo,
-        repoScopeStatus,
-        query,
-        matches: result.matches,
-      }),
-    },
-  };
+  return { hookSpecificOutput: { hookEventName: event, additionalContext } };
 }
