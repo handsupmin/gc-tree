@@ -14,11 +14,12 @@ const STOP_WORDS = new Set([
 ]);
 
 function tokenize(text: string): string[] {
-  // Split on whitespace, punctuation, and symbols — preserving Unicode letters
-  // and digits (including Korean, Japanese, CJK, etc.).
   return String(text || '')
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
+    // Split at ASCII/non-ASCII boundaries so Korean particles don't corrupt ASCII tokens
+    // e.g. "fco가" → ["fco", "가"], "g3에서" → ["g3", "에서"]
+    .flatMap((t) => t.split(/(?<=[a-z0-9])(?=[^\x00-\x7f])|(?<=[^\x00-\x7f])(?=[a-z0-9])/))
     .filter((t) => t.length >= 2 && !STOP_WORDS.has(t));
 }
 
