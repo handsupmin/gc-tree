@@ -141,9 +141,9 @@ function buildMatchContext({
   return [
     `[gc-tree] PRE-TASK CONTEXT — read before any tool use or code exploration.`,
     `gc-branch: "${gcBranch}" | repo: "${currentRepo || 'unscoped'}" (scope: ${repoScopeStatus}) | query: "${query}".`,
-    `Do NOT call Explore, grep, or read code files until you have read and internalized these summaries:`,
+    `If these summaries contain enough information to answer the question or complete the task, respond directly from them WITHOUT calling any tools. Do not grep, explore, or read code to confirm what the summaries already cover. Only use tools if the summaries are clearly insufficient.`,
     formatMatches(matches),
-    `Read full docs (gctree resolve --id <id>) only if summaries are insufficient. Each doc has a ## Summary section — read that first.`,
+    `Read full docs (gctree resolve --id <id>) only if summaries are clearly insufficient — meaning the answer cannot be derived from them at all.`,
   ].join('\n');
 }
 
@@ -152,7 +152,7 @@ function buildSelfReviewAppend(promptCount: number): string {
     `\n[gc-tree] CONTEXT SELF-REVIEW (every ${SELF_REVIEW_INTERVAL} prompts — this is prompt #${promptCount}):`,
     `At the END of your response to this task, review the current gc-tree global context and compare it against what you have observed or changed in this session.`,
     `If any docs need updating (new conventions discovered, corrected info, new repos or workflows, outdated content), propose the specific changes to the user and ask whether to apply them.`,
-    `Use \`/gc-update-global-context\` (Claude Code) or \`gctree update-global-context\` (CLI) to apply.`,
+    `Use \`/gc-update-global-context\` (Claude Code), \`$gc-update-global-context\` (Codex), or \`gctree update-global-context\` (CLI) to apply.`,
     `If nothing meaningful changed, skip silently — do not mention this review to the user.`,
   ].join('\n');
 }
