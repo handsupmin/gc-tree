@@ -104,7 +104,7 @@ function ensureObject(value: unknown): Record<string, any> {
 function isGcTreeHook(entry: Record<string, unknown>, event: HookEventName): boolean {
   const command = String(entry.command || '');
   const owner = ensureObject(entry.metadata).owner;
-  return owner === 'gctree' || command === `gctree __hook --event ${event}`;
+  return owner === 'gctree' || command.includes(`gctree __hook --event ${event}`);
 }
 
 function mergeHookJson(raw: string | null, target: 'codex' | 'claude-code'): string {
