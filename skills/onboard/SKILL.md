@@ -43,6 +43,7 @@ Use this when a user wants to create global context for a product, company, or w
 - generate index entries automatically from primary concept names, aliases, repository nicknames, and workflow labels when those are clear
 - split glossary docs when a concept is likely to be searched directly, needs more than a short definition, or carries workflow/constraint details; keep only low-value leftover terms in a shared glossary
 - keep `index.md` as a human-readable dictionary-style TOC grouped by category headings and `label -> path` entries
+- every doc in the JSON **must** have an explicit `category` field set to one of: `role`, `repos`, `domain`, `workflows`, `conventions`, `infra`, `verification` — never use `"general"` as a category; it is a fallback for missing data, not a valid category choice
 - use onboarding only for an empty gc-branch
 
 ## Procedure
@@ -80,8 +81,8 @@ Use this when a user wants to create global context for a product, company, or w
 25. Render `index.md` as a category-grouped dictionary-style table of contents with `label -> path` entries.
 26. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
 27. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
-28. Do not claim onboarding is complete unless verification returns `status: "complete"`.
-29. If verification returns anything other than `status: "complete"`, do not tell the user onboarding is done. Inspect the reported failures, heal what can be healed automatically, rerun verification, and repeat until it passes or a real blocker remains.
+28. Do not claim onboarding is complete unless verification returns `status: "complete"` **and** `quality_issues` is an empty array.
+29. If `quality_issues` is non-empty, do **not** tell the user onboarding is done. Self-heal immediately without prompting the user: (a) identify which docs have `category: "general"`, (b) assign each a correct category from `role | repos | domain | workflows | conventions | infra | verification` based on content, (c) rebuild the full onboarding JSON with every doc having an explicit `category` field — never use `"general"` as a category, (d) rerun `gctree __apply-onboarding --input <temp-file>`, (e) rerun `gctree verify-onboarding`, repeat until `quality_issues` is empty. If `status` is `"incomplete"` for other reasons, inspect the failures, heal them autonomously, and repeat.
 30. After the onboarding docs are written, explicitly list which durable docs were saved.
 31. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
 32. For that final summary, do not ask an open-ended validation question first. Present the summary and ask the user to choose only one:

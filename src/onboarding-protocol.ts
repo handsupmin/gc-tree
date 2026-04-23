@@ -41,8 +41,9 @@ export function onboardingProtocolLines(): string[] {
 export function onboardingCompletionLines(): string[] {
   return [
     'Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.',
-    'Do not claim onboarding is complete unless verification returns `status: "complete"`.',
-    'If verification returns anything other than `status: "complete"`, do not tell the user onboarding is done; inspect the reported failures, heal what can be healed automatically, rerun verification, and repeat until it passes or a real blocker remains.',
+    'Do not claim onboarding is complete unless verification returns `status: "complete"` **and** `quality_issues` is an empty array.',
+    'If `quality_issues` is non-empty, do **not** tell the user onboarding is done. Self-heal immediately without asking the user: (a) identify which docs have `category: "general"`, (b) assign each a correct category from `role | repos | domain | workflows | conventions | infra | verification` based on content, (c) rebuild the full onboarding JSON with every doc having an explicit `category` field set to one of those values, (d) run `gctree __apply-onboarding --input <temp-file>` again, (e) rerun `gctree verify-onboarding` and repeat until `quality_issues` is empty. Never use `"general"` as a category in the JSON — it is a fallback for missing data, not a valid category.',
+    'If verification returns `status: "incomplete"` for reasons other than quality_issues, do not tell the user onboarding is done; inspect the reported failures, heal what can be healed automatically, rerun verification, and repeat until it passes or a real blocker remains.',
     'After applying the onboarding docs, explicitly list which durable docs were saved.',
     'Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.',
     'For that final summary, do not ask an open-ended validation question first; present the summary and ask the user to choose only one structured confirmation: 1. This matches well enough. 2. Some parts are wrong. I will give the delta. 3. The frame is wrong. I will restate it.',

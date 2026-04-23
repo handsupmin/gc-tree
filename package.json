@@ -1,6 +1,6 @@
 {
   "name": "@handsupmin/gc-tree",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
   "type": "module",
   "private": false,
