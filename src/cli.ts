@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { stdin, stderr, stdout } from 'node:process';
 
 import { readAsciiLogo, readAsciiTree } from './ascii.js';
+import { gctreeGlobalRoot } from './integration-files.js';
 import { dispatchGcTreeHook } from './hook.js';
 import { onboardBranch } from './onboard.js';
 import {
@@ -623,9 +625,12 @@ async function main(): Promise<void> {
       const host = normalizeProviderMode(readArg('--host'));
       if (!host) usage();
       const explicitTarget = readArg('--target');
+      const isGlobal = !explicitTarget || Object.values({ codex: gctreeGlobalRoot('codex'), claude: gctreeGlobalRoot('claude-code') }).some(
+        (r) => resolve(explicitTarget) === resolve(r),
+      );
       const result = await ensureScaffold({
         providerMode: host,
-        ...(explicitTarget ? { targetDir: explicitTarget, scope: 'local' } : { scope: 'global' }),
+        ...(isGlobal ? { scope: 'global' } : { targetDir: explicitTarget!, scope: 'local' }),
         force: hasFlag('--force'),
       });
       console.log(JSON.stringify(result, null, 2));
