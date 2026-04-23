@@ -31,6 +31,39 @@ function parseDocReference(value: string): { category: string; slug: string; lab
   return null;
 }
 
+function parseTitlePlacement(value: string): { category: string; slug: string; label: string } | null {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return null;
+  if (/^index$/i.test(trimmed)) return { category: 'index', slug: 'index', label: 'Index' };
+
+  const match = trimmed.match(/^(role|repo|repos|repository|repositories|domain|workflow|workflows|convention|conventions|infra|verification)\s*:\s*(.+)$/i);
+  if (!match) return null;
+
+  const rawCategory = match[1]!.toLowerCase();
+  const categoryMap: Record<string, string> = {
+    role: 'role',
+    repo: 'repos',
+    repos: 'repos',
+    repository: 'repos',
+    repositories: 'repos',
+    domain: 'domain',
+    workflow: 'workflows',
+    workflows: 'workflows',
+    convention: 'conventions',
+    conventions: 'conventions',
+    infra: 'infra',
+    verification: 'verification',
+  };
+  const label = match[2]!.trim();
+  const category = categoryMap[rawCategory];
+  if (!category || !label) return null;
+  return {
+    category,
+    slug: slugify(label),
+    label,
+  };
+}
+
 export function ensureSummary(summary: string): string {
   const trimmed = String(summary || '').trim();
   if (!trimmed) {
@@ -42,6 +75,10 @@ export function ensureSummary(summary: string): string {
 export function renderDocMarkdown(doc: GcTreeDocInput): string {
   const summary = ensureSummary(doc.summary);
   const body = String(doc.body || '').trim();
+  const normalizedIndexEntries = [...new Set([
+    ...(doc.indexLabel?.trim() ? [doc.indexLabel.trim()] : []),
+    ...(doc.indexEntries || []).map((entry) => String(entry || '').trim()).filter(Boolean),
+  ])];
   return [
     `# ${doc.title.trim()}`,
     '',
@@ -52,8 +89,8 @@ export function renderDocMarkdown(doc: GcTreeDocInput): string {
     ...(doc.tags && doc.tags.length > 0
       ? ['## Tags', '', ...doc.tags.map((tag) => `- ${tag}`), '']
       : []),
-    ...(doc.indexEntries && doc.indexEntries.length > 0
-      ? ['## Index Entries', '', ...doc.indexEntries.map((entry) => `- ${entry}`), '']
+    ...(normalizedIndexEntries.length > 0
+      ? ['## Index Entries', '', ...normalizedIndexEntries.map((entry) => `- ${entry}`), '']
       : []),
     '## Details',
     '',
@@ -214,6 +251,15 @@ export function normalizeIndexEntry(
   if (!trimmed) return null;
   if (/^docs\/index\.md$/i.test(trimmed) || /^index\.md$/i.test(trimmed)) return null;
 
+  const titlePlacement = parseTitlePlacement(trimmed);
+  if (titlePlacement) {
+    if (titlePlacement.category === 'index') return null;
+    return {
+      category: titlePlacement.category,
+      label: titlePlacement.label,
+    };
+  }
+
   return {
     category: fallback.category,
     label: trimmed,
@@ -225,17 +271,34 @@ export function inferDocPlacement(input: {
   indexLabel?: string;
   title: string;
   category?: string;
-}): { category: string | null; slug: string } {
+}): { category: string | null; slug: string; label: string; isIndexDoc: boolean } {
   for (const candidate of [input.slug, input.indexLabel]) {
     const reference = parseDocReference(candidate || '');
     if (reference) {
-      return { category: reference.category, slug: reference.slug };
+      return { category: reference.category, slug: reference.slug, label: reference.label, isIndexDoc: false };
     }
+  }
+
+  const titlePlacement = parseTitlePlacement(input.title);
+  const explicitLabel = String(input.indexLabel || '').trim();
+  const preferredLabel = explicitLabel && !parseDocReference(explicitLabel) ? explicitLabel : input.title.trim();
+  if (titlePlacement) {
+    return {
+      category: titlePlacement.category === 'index' ? null : titlePlacement.category,
+      slug: titlePlacement.slug,
+      label: explicitLabel && !parseDocReference(explicitLabel) ? explicitLabel : titlePlacement.label,
+      isIndexDoc: titlePlacement.category === 'index',
+    };
   }
 
   const explicitCategory = input.category ? slugify(input.category) : null;
   const slug = slugify(input.slug || input.indexLabel || input.title);
-  return { category: explicitCategory, slug };
+  return {
+    category: explicitCategory,
+    slug,
+    label: preferredLabel,
+    isIndexDoc: slug === 'index' && explicitCategory === null,
+  };
 }
 
 export function extractSummary(markdown: string): string {

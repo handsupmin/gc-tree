@@ -187,6 +187,11 @@ async function launchGuidedFlow({
   return maybeLaunchProvider(plan);
 }
 
+function printJsonUnlessLaunched(payload: unknown, launch: { launched: boolean } | null | undefined): void {
+  if (launch?.launched) return;
+  console.log(JSON.stringify(payload, null, 2));
+}
+
 async function main(): Promise<void> {
   if (hasFlag('--version') || hasFlag('-v')) {
     stdout.write(`${await readPackageVersion()}\n`);
@@ -236,20 +241,17 @@ async function main(): Promise<void> {
             noLaunch: hasFlag('--no-launch'),
           })
         : null;
-      console.log(
-        JSON.stringify(
-          {
-            ...result,
-            provider_mode: settings.provider_mode,
-            preferred_provider: settings.preferred_provider,
-            preferred_language: settings.preferred_language,
-            global_scaffold: globalScaffold,
-            scaffold,
-            launch,
-          },
-          null,
-          2,
-        ),
+      printJsonUnlessLaunched(
+        {
+          ...result,
+          provider_mode: settings.provider_mode,
+          preferred_provider: settings.preferred_provider,
+          preferred_language: settings.preferred_language,
+          global_scaffold: globalScaffold,
+          scaffold,
+          launch,
+        },
+        launch,
       );
       return;
     }
@@ -354,7 +356,7 @@ async function main(): Promise<void> {
         command: 'gc-onboard',
         noLaunch: hasFlag('--no-launch'),
       });
-      console.log(JSON.stringify({ mode: 'guided_onboarding', gc_branch: gcBranch, preferred_provider: provider, scaffold, launch }, null, 2));
+      printJsonUnlessLaunched({ mode: 'guided_onboarding', gc_branch: gcBranch, preferred_provider: provider, scaffold, launch }, launch);
       return;
     }
     case 'verify-onboarding': {
@@ -590,7 +592,7 @@ async function main(): Promise<void> {
         command: 'gc-update-global-context',
         noLaunch: hasFlag('--no-launch'),
       });
-      console.log(JSON.stringify({ mode: 'guided_update', gc_branch: gcBranch, preferred_provider: provider, scaffold, launch }, null, 2));
+      printJsonUnlessLaunched({ mode: 'guided_update', gc_branch: gcBranch, preferred_provider: provider, scaffold, launch }, launch);
       return;
     }
     case '__apply-update': {

@@ -87,6 +87,42 @@ const pathishOnboardingInput = {
   ],
 };
 
+const prefixedOnboardingInput = {
+  branchSummary: 'Prefixed onboarding input.',
+  docs: [
+    {
+      title: 'Repo: airflow',
+      summary: 'Airflow repository.',
+      body: 'Scheduler and DAG code.',
+    },
+    {
+      title: 'Workflow: g3 feature development',
+      summary: 'Feature development workflow.',
+      body: 'Ticket, PR, review, deploy.',
+    },
+    {
+      title: 'Conventions: backend coding and DTO rules',
+      summary: 'Coding conventions.',
+      body: 'DTO and validation rules.',
+    },
+    {
+      title: 'Domain: Cosmo backend glossary',
+      summary: 'Glossary.',
+      body: 'Como, Gravity, Objekt.',
+    },
+    {
+      title: 'Role: Cosmo backend developer workflow',
+      summary: 'Role overview.',
+      body: 'Main responsibilities.',
+    },
+    {
+      title: 'Index',
+      summary: 'Search index.',
+      body: '# Repositories\n- airflow -> docs/repos/airflow.md',
+    },
+  ],
+};
+
 test('init creates the home and default gc-branch', async () => {
   const home = await createHome('gctree-home-');
   try {
@@ -185,6 +221,33 @@ test('onboard normalizes path-like index labels into categorized docs and clean 
 
     const airflowDoc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'repos', 'airflow.md'), 'utf8');
     assert.match(airflowDoc, /# Airflow/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('onboard infers categories from prefixed titles and skips docs/index.md', async () => {
+  const home = await createHome('gctree-onboard-prefixed-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: prefixedOnboardingInput });
+
+    const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
+    assert.match(index, /## Repos/);
+    assert.match(index, /- airflow\n  - docs\/repos\/airflow\.md/);
+    assert.match(index, /## Workflows/);
+    assert.match(index, /- g3 feature development\n  - docs\/workflows\/g3-feature-development\.md/);
+    assert.match(index, /## Conventions/);
+    assert.match(index, /- backend coding and DTO rules\n  - docs\/conventions\/backend-coding-and-dto-rules\.md/);
+    assert.match(index, /## Domain/);
+    assert.match(index, /- Cosmo backend glossary\n  - docs\/domain\/cosmo-backend-glossary\.md/);
+    assert.match(index, /## Role/);
+    assert.match(index, /- Cosmo backend developer workflow\n  - docs\/role\/cosmo-backend-developer-workflow\.md/);
+    assert.doesNotMatch(index, /docs\/index\.md/);
+    assert.doesNotMatch(index, /## General/);
+
+    const docsIndexPath = join(branchDocsDir(home, DEFAULT_BRANCH), 'index.md');
+    await assert.rejects(() => readFile(docsIndexPath, 'utf8'));
   } finally {
     await rm(home, { recursive: true, force: true });
   }

@@ -132,18 +132,19 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
   await mkdir(docsDir, { recursive: true });
   const files = await listDocRelativePaths(docsDir);
   const docs = await Promise.all(
-    files.map(async (file) => {
+    files.filter((file) => !/(^|\/)index\.md$/i.test(file)).map(async (file) => {
       const raw = await readFile(join(docsDir, file), 'utf8');
       const title = raw.match(/^#\s+(.+)$/m)?.[1]?.trim() || file.replace(/\.md$/i, '').replace(/-/g, ' ');
       const parts = file.replace(/\.md$/i, '').split('/').filter(Boolean);
       const fallbackCategory = parts.length > 1 ? parts[0]! : 'general';
       const fallbackLabel = parts.length > 1 ? parts[parts.length - 1]! : title;
-      const inferred = inferDocPlacement({ title, indexLabel: title });
+      const inferred = inferDocPlacement({ title });
       const docCategory = inferred.category || fallbackCategory;
+      const docLabel = inferred.label || fallbackLabel;
       const indexEntries = extractIndexEntries(raw)
-        .map((entry) => normalizeIndexEntry(entry, { category: docCategory, label: fallbackLabel }))
+        .map((entry) => normalizeIndexEntry(entry, { category: docCategory, label: docLabel }))
         .filter((entry): entry is { category: string; label: string } => Boolean(entry));
-      const entryLabels = indexEntries.length > 0 ? indexEntries : [{ category: docCategory, label: fallbackLabel }];
+      const entryLabels = indexEntries.length > 0 ? indexEntries : [{ category: docCategory, label: docLabel }];
       const uniqueEntries = [...new Map(entryLabels.map((entry) => [`${entry.category}::${entry.label}`, entry])).values()];
       return uniqueEntries.map((entry) => ({
         title,

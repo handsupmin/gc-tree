@@ -29,6 +29,8 @@ export async function onboardBranch({
 
   const written: string[] = [];
   for (const doc of input.docs) {
+    const inferred = inferDocPlacement(doc);
+    if (inferred.isIndexDoc) continue;
     const fullPath = join(branchDocsDir(home, targetBranch), docRelativePath(doc));
     await mkdir(dirname(fullPath), { recursive: true });
     await writeFile(fullPath, renderDocMarkdown(doc), 'utf8');
