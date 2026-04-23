@@ -136,11 +136,11 @@ function buildMatchContext({
   matches: GcTreeResolveMatch[];
 }): string {
   return [
-    `gc-tree auto-resolve checked gc-branch "${gcBranch}" for repo "${currentRepo || 'unscoped'}" (scope: ${repoScopeStatus}) before this prompt.`,
-    `Query: "${query}".`,
-    `Use these matching gc-tree summaries before planning or implementation:`,
+    `[gc-tree] PRE-TASK CONTEXT — read before any tool use or code exploration.`,
+    `gc-branch: "${gcBranch}" | repo: "${currentRepo || 'unscoped'}" (scope: ${repoScopeStatus}) | query: "${query}".`,
+    `Do NOT call Explore, grep, or read code files until you have read and internalized these summaries:`,
     formatMatches(matches),
-    `Read full docs only if the summaries are insufficient. Each doc has a ## Summary section at the top — read that before the full body.`,
+    `Read full docs (gctree resolve --id <id>) only if summaries are insufficient. Each doc has a ## Summary section — read that first.`,
   ].join('\n');
 }
 
