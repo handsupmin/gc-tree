@@ -1,7 +1,8 @@
 export function onboardingProtocolLines(): string[] {
   return [
     'This is **global context onboarding**, not repo-local onboarding.',
-    'Ask **one question at a time** and keep using the saved workflow language all the way through.',
+    'Ask **one question at a time**.',
+    '**Language lock**: detect the language the user writes in from their very first response and use it for every subsequent message without exception — numbered confirmations (1/2/3), hypotheses, summaries, doc content, and wrap-up must all be in that language. Never revert to English mid-session regardless of what language appears in repo names, code comments, or source docs.',
     'Wait for the user\'s first answer before you inspect docs, repos, directories, or files on your own.',
     'Start by asking the user to paste or share organized docs or reference material if they have any; otherwise ask what kind of work they mainly do.',
     'Do **not** start with a repo scan, a company guess, or a broad hypothesis built from directories like `~/sources`.',

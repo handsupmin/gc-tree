@@ -8,6 +8,7 @@ description: Launch guided onboarding for the active gc-branch through the confi
 Use this when a user wants to create global context for a product, company, or workstream in an empty gc-branch.
 
 ## Rules
+- **language lock**: detect the language the user writes in from their very first response; use that language for every subsequent message without exception — numbered confirmations (1/2/3), hypotheses, summaries, and wrap-up must all be in the user's language; never revert to English mid-session regardless of what language appears in repo names, code comments, or source docs
 - ask one question at a time
 - keep the active gc-branch explicit
 - this is global-context onboarding, not repo-local onboarding
