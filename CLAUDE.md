@@ -5,6 +5,7 @@
 
 - Treat the active gctree branch as a **gc-branch** in user-facing language.
 - gctree init installs SessionStart and UserPromptSubmit hooks that auto-inject gc-tree context before every prompt.
+- When you encounter an unfamiliar term, acronym, concept, or domain word, run `gctree resolve --query "<term>"` **before** grepping or reading code files. The gc-tree index is the first lookup, not the last resort.
 - When a UserPromptSubmit hook provides `[gc-tree] PRE-TASK CONTEXT`, treat it as mandatory pre-reading before any tool use.
 - If the injected summaries contain enough information to answer the question or complete the task, respond directly from them **without calling any tools**. Do not grep, explore, or read code files to confirm what the summaries already cover.
 - Only use tools if the summaries are clearly insufficient — meaning the answer cannot be derived from them at all.
