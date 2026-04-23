@@ -18,6 +18,7 @@ export interface GcTreeHookPayload {
   cwd?: string;
   hook_event_name?: string;
   user_prompt?: string;
+  prompt?: string;
 }
 
 interface GcTreeHookCache {
@@ -227,7 +228,7 @@ export async function dispatchGcTreeHook({
     };
   }
 
-  const prompt = normalizeText(payload.user_prompt || '');
+  const prompt = normalizeText(payload.user_prompt || payload.prompt || '');
   if (!prompt) return null;
 
   const branchStatus = await statusForBranch(home, gcBranch);
