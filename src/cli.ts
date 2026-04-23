@@ -622,10 +622,10 @@ async function main(): Promise<void> {
     case 'scaffold': {
       const host = normalizeProviderMode(readArg('--host'));
       if (!host) usage();
-      const targetDir = readArg('--target') || process.cwd();
+      const explicitTarget = readArg('--target');
       const result = await ensureScaffold({
         providerMode: host,
-        targetDir,
+        ...(explicitTarget ? { targetDir: explicitTarget, scope: 'local' } : { scope: 'global' }),
         force: hasFlag('--force'),
       });
       console.log(JSON.stringify(result, null, 2));
