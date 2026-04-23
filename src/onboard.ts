@@ -1,15 +1,15 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import { renderDocMarkdown, slugify } from './markdown.js';
+import { inferDocPlacement, renderDocMarkdown } from './markdown.js';
 import { branchDocsDir, DEFAULT_BRANCH } from './paths.js';
 import { ensureBranchExists, updateBranchMeta, writeIndexFromDocs } from './store.js';
 import type { GcTreeOnboardingInput } from './types.js';
 
 function docRelativePath(doc: GcTreeOnboardingInput['docs'][number]): string {
   if (doc.slug?.includes('/')) return `${doc.slug.replace(/\.md$/i, '')}.md`;
-  const fileBase = slugify(doc.slug || doc.indexLabel || doc.title);
-  const category = doc.category ? slugify(doc.category) : '';
+  const { category, slug } = inferDocPlacement(doc);
+  const fileBase = slug;
   return category ? `${category}/${fileBase}.md` : `${fileBase}.md`;
 }
 

@@ -11,7 +11,7 @@ import {
   DEFAULT_BRANCH,
   headPath,
 } from './paths.js';
-import { extractIndexEntries, renderIndexMarkdown } from './markdown.js';
+import { extractIndexEntries, inferDocPlacement, normalizeIndexEntry, renderIndexMarkdown } from './markdown.js';
 import type { GcTreeBranchMeta } from './types.js';
 
 async function listDocRelativePaths(dir: string, prefix = ''): Promise<string[]> {
@@ -136,14 +136,19 @@ export async function writeIndexFromDocs(home: string, branch: string): Promise<
       const raw = await readFile(join(docsDir, file), 'utf8');
       const title = raw.match(/^#\s+(.+)$/m)?.[1]?.trim() || file.replace(/\.md$/i, '').replace(/-/g, ' ');
       const parts = file.replace(/\.md$/i, '').split('/').filter(Boolean);
-      const category = parts.length > 1 ? parts[0] : 'general';
-      const label = parts.length > 1 ? parts[parts.length - 1] : title;
-      const indexEntries = extractIndexEntries(raw);
-      const entryLabels = indexEntries.length > 0 ? indexEntries : [label];
-      return entryLabels.map((entryLabel) => ({
+      const fallbackCategory = parts.length > 1 ? parts[0]! : 'general';
+      const fallbackLabel = parts.length > 1 ? parts[parts.length - 1]! : title;
+      const inferred = inferDocPlacement({ title, indexLabel: title });
+      const docCategory = inferred.category || fallbackCategory;
+      const indexEntries = extractIndexEntries(raw)
+        .map((entry) => normalizeIndexEntry(entry, { category: docCategory, label: fallbackLabel }))
+        .filter((entry): entry is { category: string; label: string } => Boolean(entry));
+      const entryLabels = indexEntries.length > 0 ? indexEntries : [{ category: docCategory, label: fallbackLabel }];
+      const uniqueEntries = [...new Map(entryLabels.map((entry) => [`${entry.category}::${entry.label}`, entry])).values()];
+      return uniqueEntries.map((entry) => ({
         title,
-        label: entryLabel,
-        category,
+        label: entry.label,
+        category: entry.category,
         path: `docs/${file}`,
       }));
     }),

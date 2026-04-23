@@ -10,6 +10,27 @@ export function slugify(value: string): string {
   return normalized || 'doc';
 }
 
+function parseDocReference(value: string): { category: string; slug: string; label: string } | null {
+  const trimmed = String(value || '').trim().replace(/^\.?\//, '');
+  if (!trimmed) return null;
+  const normalized = trimmed.replace(/\\/g, '/');
+  const docsMatch = normalized.match(/^docs\/([^/]+)\/([^/]+?)(?:\.md)?$/i);
+  if (docsMatch) {
+    const category = normalizeCategory(docsMatch[1]!);
+    const slug = slugify(docsMatch[2]!);
+    if (slug === 'index') return null;
+    return { category, slug, label: docsMatch[2]!.replace(/\.md$/i, '').trim() };
+  }
+  const directMatch = normalized.match(/^(role|repos|domain|workflows|conventions|infra|verification)\/([^/]+?)(?:\.md)?$/i);
+  if (directMatch) {
+    const category = normalizeCategory(directMatch[1]!);
+    const slug = slugify(directMatch[2]!);
+    if (slug === 'index') return null;
+    return { category, slug, label: directMatch[2]!.replace(/\.md$/i, '').trim() };
+  }
+  return null;
+}
+
 export function ensureSummary(summary: string): string {
   const trimmed = String(summary || '').trim();
   if (!trimmed) {
@@ -175,6 +196,46 @@ export function extractIndexEntries(markdown: string): string[] {
     .filter((line) => line.startsWith('- '))
     .map((line) => line.slice(2).trim())
     .filter(Boolean);
+}
+
+export function normalizeIndexEntry(
+  value: string,
+  fallback: { category: string; label: string },
+): { category: string; label: string } | null {
+  const reference = parseDocReference(value);
+  if (reference) {
+    return {
+      category: reference.category,
+      label: reference.label,
+    };
+  }
+
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return null;
+  if (/^docs\/index\.md$/i.test(trimmed) || /^index\.md$/i.test(trimmed)) return null;
+
+  return {
+    category: fallback.category,
+    label: trimmed,
+  };
+}
+
+export function inferDocPlacement(input: {
+  slug?: string;
+  indexLabel?: string;
+  title: string;
+  category?: string;
+}): { category: string | null; slug: string } {
+  for (const candidate of [input.slug, input.indexLabel]) {
+    const reference = parseDocReference(candidate || '');
+    if (reference) {
+      return { category: reference.category, slug: reference.slug };
+    }
+  }
+
+  const explicitCategory = input.category ? slugify(input.category) : null;
+  const slug = slugify(input.slug || input.indexLabel || input.title);
+  return { category: explicitCategory, slug };
 }
 
 export function extractSummary(markdown: string): string {

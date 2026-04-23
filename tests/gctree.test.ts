@@ -67,6 +67,26 @@ const categorizedOnboardingInput = {
   ],
 };
 
+const pathishOnboardingInput = {
+  branchSummary: 'Path-like onboarding input.',
+  docs: [
+    {
+      title: 'Airflow',
+      indexLabel: 'docs/repos/airflow.md',
+      indexEntries: ['docs/repos/airflow.md'],
+      summary: 'Airflow repository.',
+      body: 'Scheduler and DAG code.',
+    },
+    {
+      title: 'Como',
+      indexLabel: 'docs/domain/como.md',
+      indexEntries: ['docs/domain/como.md', 'como'],
+      summary: 'Como domain concept.',
+      body: 'Voting token concept.',
+    },
+  ],
+};
+
 test('init creates the home and default gc-branch', async () => {
   const home = await createHome('gctree-home-');
   try {
@@ -143,6 +163,28 @@ test('onboard can write categorized docs and render a sectioned dictionary index
     const comoDoc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'domain', 'como.md'), 'utf8');
     assert.match(comoDoc, /## Summary/);
     assert.match(comoDoc, /투표권 토큰 도메인 개념/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('onboard normalizes path-like index labels into categorized docs and clean index entries', async () => {
+  const home = await createHome('gctree-onboard-pathish-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: pathishOnboardingInput });
+
+    const index = await readFile(branchIndexPath(home, DEFAULT_BRANCH), 'utf8');
+    assert.match(index, /## Repos/);
+    assert.match(index, /- airflow\n  - docs\/repos\/airflow\.md/);
+    assert.match(index, /## Domain/);
+    assert.match(index, /- como\n  - docs\/domain\/como\.md/);
+    assert.doesNotMatch(index, /docs\/docs-repos-airflow-md\.md/);
+    assert.doesNotMatch(index, /^- docs\/repos\/airflow\.md$/m);
+    assert.equal((index.match(/- como\n  - docs\/domain\/como\.md/g) || []).length, 1);
+
+    const airflowDoc = await readFile(join(branchDocsDir(home, DEFAULT_BRANCH), 'repos', 'airflow.md'), 'utf8');
+    assert.match(airflowDoc, /# Airflow/);
   } finally {
     await rm(home, { recursive: true, force: true });
   }
