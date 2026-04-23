@@ -24,11 +24,19 @@ export interface GcTreeContextUpdateInput {
   docs: GcTreeDocInput[];
 }
 
+export interface ScaffoldedHostRecord {
+  host: 'claude-code' | 'codex';
+  scope: 'global' | 'local';
+  target_dir?: string;
+  scaffolded_at: string;
+}
+
 export interface GcTreeSettings {
   version: 1;
   provider_mode: GcTreeProviderMode;
   preferred_provider: GcTreeProvider;
   preferred_language: string;
+  scaffolded_hosts?: ScaffoldedHostRecord[];
   updated_at: string;
 }
 

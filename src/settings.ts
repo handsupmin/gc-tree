@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import { settingsPath } from './paths.js';
-import type { GcTreeProvider, GcTreeProviderMode, GcTreeSettings } from './types.js';
+import type { GcTreeProvider, GcTreeProviderMode, GcTreeSettings, ScaffoldedHostRecord } from './types.js';
 
 export async function readSettings(home: string): Promise<GcTreeSettings | null> {
   try {
@@ -33,6 +33,22 @@ export async function writeSettings({
   };
   await writeFile(settingsPath(home), `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
   return settings;
+}
+
+export async function appendScaffoldedHost(
+  home: string,
+  record: Omit<ScaffoldedHostRecord, 'scaffolded_at'>,
+): Promise<void> {
+  const settings = await readSettings(home);
+  if (!settings) return;
+  const existing = settings.scaffolded_hosts || [];
+  const filtered = existing.filter(
+    (h) => !(h.host === record.host && h.scope === record.scope && h.target_dir === record.target_dir),
+  );
+  filtered.push({ ...record, scaffolded_at: new Date().toISOString() });
+  const updated: GcTreeSettings = { ...settings, scaffolded_hosts: filtered, updated_at: new Date().toISOString() };
+  await mkdir(home, { recursive: true });
+  await writeFile(settingsPath(home), `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
 }
 
 export async function requirePreferredProvider(home: string): Promise<GcTreeProvider> {

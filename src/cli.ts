@@ -28,10 +28,10 @@ import {
 } from './repo-map.js';
 import { findRelatedDocs, getDocById, resolveContext } from './resolve.js';
 import { scaffoldHostIntegration } from './scaffold.js';
-import { requirePreferredProvider, writeSettings, readSettings } from './settings.js';
+import { appendScaffoldedHost, requirePreferredProvider, writeSettings, readSettings } from './settings.js';
 import { checkoutBranch, initHome, listBranches, readHead, resetBranchContext, statusForBranch, ensureBranchExists, isBranchContextEmpty } from './store.js';
 import type { GcTreeContextUpdateInput, GcTreeOnboardingInput, GcTreeProvider, GcTreeProviderMode } from './types.js';
-import { updateBranchContext } from './update.js';
+import { selfUpdate, updateBranchContext } from './update.js';
 import { uninstallGcTree } from './uninstall.js';
 import { verifyOnboarding } from './verify-onboarding.js';
 
@@ -79,6 +79,7 @@ function usage(): never {
   gctree update-gc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree ugc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree scaffold --host <codex|claude-code|both> [--target DIR] [--force]
+  gctree update
 
 Internal commands:
   gctree __apply-onboarding --input FILE [--home DIR] [--branch NAME]
@@ -130,11 +131,13 @@ async function ensureScaffold({
   targetDir,
   force = false,
   scope = 'local',
+  home: scaffoldHome,
 }: {
   providerMode: GcTreeProviderMode;
   targetDir?: string;
   force?: boolean;
   scope?: 'local' | 'global';
+  home?: string;
 }): Promise<{ hosts: GcTreeProviderMode; target_dir: string; written: string[]; skipped_existing: string[] }> {
   const hosts: GcTreeProvider[] = providerMode === 'both' ? ['claude-code', 'codex'] : [providerMode];
   const combined = { hosts: providerMode, target_dir: scope === 'global' ? '(global)' : (targetDir || process.cwd()), written: [] as string[], skipped_existing: [] as string[] };
@@ -142,6 +145,9 @@ async function ensureScaffold({
     const result = await scaffoldHostIntegration({ host, targetDir, force, scope });
     combined.written.push(...result.written);
     combined.skipped_existing.push(...result.skipped_existing);
+    if (scaffoldHome && result.written.length > 0) {
+      await appendScaffoldedHost(scaffoldHome, { host, scope, target_dir: scope === 'local' ? (targetDir || process.cwd()) : undefined });
+    }
   }
   return combined;
 }
@@ -228,9 +234,9 @@ async function main(): Promise<void> {
         preferredProvider: provider,
         preferredLanguage,
       });
-      const globalScaffold = await ensureScaffold({ providerMode, scope: 'global', force: hasFlag('--force') });
+      const globalScaffold = await ensureScaffold({ providerMode, scope: 'global', force: hasFlag('--force'), home });
       const scaffold = explicitTargetDir
-        ? await ensureScaffold({ providerMode, targetDir: explicitTargetDir, scope: 'local', force: hasFlag('--force') })
+        ? await ensureScaffold({ providerMode, targetDir: explicitTargetDir, scope: 'local', force: hasFlag('--force'), home })
         : null;
       const launch = (await isBranchContextEmpty(home, result.gc_branch))
         ? await launchGuidedFlow({
@@ -347,7 +353,7 @@ async function main(): Promise<void> {
       const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
       const scaffold = readArg('--target')
-        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force') })
+        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force'), home })
         : null;
       const launch = await launchGuidedFlow({
         provider,
@@ -583,7 +589,7 @@ async function main(): Promise<void> {
       const settings = await readSettings(home);
       const targetDir = readArg('--target') || process.cwd();
       const scaffold = readArg('--target')
-        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force') })
+        ? await ensureScaffold({ providerMode: settings?.provider_mode || provider, targetDir, scope: 'local', force: hasFlag('--force'), home })
         : null;
       const launch = await launchGuidedFlow({
         provider,
@@ -632,8 +638,13 @@ async function main(): Promise<void> {
         providerMode: host,
         ...(isGlobal ? { scope: 'global' } : { targetDir: explicitTarget!, scope: 'local' }),
         force: hasFlag('--force'),
+        home,
       });
       console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+    case 'update': {
+      await selfUpdate(home);
       return;
     }
     default:

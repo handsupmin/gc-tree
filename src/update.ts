@@ -1,10 +1,11 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { renderDocMarkdown, slugify } from './markdown.js';
-import { branchDocsDir, DEFAULT_BRANCH } from './paths.js';
+import { branchDocsDir, DEFAULT_BRANCH, settingsPath } from './paths.js';
 import { ensureBranchExists, updateBranchMeta, writeIndexFromDocs } from './store.js';
-import type { GcTreeContextUpdateInput } from './types.js';
+import type { GcTreeContextUpdateInput, GcTreeSettings, ScaffoldedHostRecord } from './types.js';
 
 function docRelativePath(doc: GcTreeContextUpdateInput['docs'][number]): string {
   if (doc.slug?.includes('/')) return `${doc.slug.replace(/\.md$/i, '')}.md`;
@@ -44,4 +45,39 @@ export async function updateBranchContext({
     updated_docs: written,
     index_path: index.index_path,
   };
+}
+
+async function readScaffoldedHosts(home: string): Promise<ScaffoldedHostRecord[]> {
+  try {
+    const raw = await readFile(settingsPath(home), 'utf8');
+    const settings = JSON.parse(raw) as GcTreeSettings;
+    return settings.scaffolded_hosts || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function selfUpdate(home: string): Promise<void> {
+  const hosts = await readScaffoldedHosts(home);
+
+  if (hosts.length === 0) {
+    process.stderr.write('No scaffolded providers found in settings. Run `gctree scaffold --host <host>` first.\n');
+  } else {
+    process.stderr.write(`Found ${hosts.length} scaffolded provider(s): ${hosts.map((h) => `${h.host}(${h.scope})`).join(', ')}\n`);
+  }
+
+  process.stderr.write('\nUpdating gctree to latest...\n');
+  execSync('npm install -g @handsupmin/gc-tree@latest', { stdio: 'inherit' });
+
+  if (hosts.length > 0) {
+    process.stderr.write('\nRe-scaffolding providers with new version...\n');
+    for (const record of hosts) {
+      const args = ['gctree', 'scaffold', '--host', record.host, '--force'];
+      if (record.scope === 'local' && record.target_dir) args.push('--target', record.target_dir);
+      process.stderr.write(`  ${args.join(' ')}\n`);
+      execSync(args.join(' '), { stdio: 'inherit' });
+    }
+  }
+
+  process.stderr.write('\ngctree update complete.\n');
 }
