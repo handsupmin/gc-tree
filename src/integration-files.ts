@@ -204,7 +204,7 @@ export function gctreeManagedMarkdownTargets(targetDir: string) {
 export function gctreeHookJsonTargets(targetDir: string) {
   return {
     codex: join(targetDir, '.codex', 'hooks.json'),
-    claude: join(targetDir, '.claude', 'settings.json'),
+    claude: join(targetDir, '.claude', 'hooks', 'hooks.json'),
   };
 }
 
@@ -217,5 +217,5 @@ export function gctreeGlobalRoot(host: 'codex' | 'claude-code'): string {
 
 export function gctreeGlobalHookJsonTarget(host: 'codex' | 'claude-code'): string {
   const root = gctreeGlobalRoot(host);
-  return host === 'codex' ? join(root, 'hooks.json') : join(root, 'settings.json');
+  return host === 'codex' ? join(root, 'hooks.json') : join(root, 'hooks', 'hooks.json');
 }

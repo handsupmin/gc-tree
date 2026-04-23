@@ -432,7 +432,7 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /1\. Map these candidates\./i);
     assert.match(codexOnboardSkill, /2\. Map these, but with corrections\./i);
     assert.match(codexOnboardSkill, /3\. Skip repo mapping for now\./i);
-    assert.match(codexOnboardSkill, /If verification returns anything other than `status: "complete"`/i);
+    assert.match(codexOnboardSkill, /quality_issues|verification returns anything other than `status: "complete"`/i);
     assert.match(codexOnboardSkill, /heal what can be healed automatically/i);
     assert.match(codexOnboardSkill, /onboarding is finished/i);
     assert.match(codexOnboardSkill, /gctree update-global-context/i);
@@ -497,7 +497,7 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /1\. Map these candidates\./i);
     assert.match(claudeOnboardCommand, /2\. Map these, but with corrections\./i);
     assert.match(claudeOnboardCommand, /3\. Skip repo mapping for now\./i);
-    assert.match(claudeOnboardCommand, /If verification returns anything other than `status: "complete"`/i);
+    assert.match(claudeOnboardCommand, /quality_issues|verification returns anything other than `status: "complete"`/i);
     assert.match(claudeOnboardCommand, /heal what can be healed automatically/i);
     assert.match(claudeOnboardCommand, /onboarding is finished/i);
     assert.match(claudeOnboardCommand, /gctree update-global-context/i);
