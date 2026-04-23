@@ -102,11 +102,15 @@ export async function detectCurrentRepoId(startDir = process.cwd()): Promise<str
   return root ? basename(root) : null;
 }
 
+function repoMatches(entry: string, repo: string): boolean {
+  return entry === repo || basename(entry) === repo || entry === basename(repo);
+}
+
 export function branchScopeStatus(mapping: GcTreeBranchRepoMap, branch: string, repo: string | null): GcTreeResolveScopeStatus {
   if (!repo) return 'unscoped';
   const rule = normalizeRule(mapping[branch]);
-  if (rule.exclude?.includes(repo)) return 'excluded';
-  if (rule.include?.includes(repo)) return 'included';
+  if (rule.exclude?.some((e) => repoMatches(e, repo))) return 'excluded';
+  if (rule.include?.some((e) => repoMatches(e, repo))) return 'included';
   if ((rule.include?.length || 0) > 0 || (rule.exclude?.length || 0) > 0) return 'unmapped';
   return 'unscoped';
 }
@@ -136,7 +140,7 @@ export async function resolveBranchForRepo({
 
   if (currentRepo) {
     const includedBranches = Object.entries(mapping)
-      .filter(([, rule]) => !rule.exclude?.includes(currentRepo) && rule.include?.includes(currentRepo))
+      .filter(([, rule]) => !rule.exclude?.some((e) => repoMatches(e, currentRepo)) && rule.include?.some((e) => repoMatches(e, currentRepo)))
       .map(([branch]) => branch)
       .sort();
 
