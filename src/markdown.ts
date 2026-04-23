@@ -72,9 +72,22 @@ export function ensureSummary(summary: string): string {
   return trimmed;
 }
 
+function normalizeBody(raw: string, title: string): string {
+  let s = raw.trim();
+  // Strip leading "# <title>" line (already rendered at top level)
+  const titleLine = `# ${title.trim()}`;
+  if (s.startsWith(titleLine)) s = s.slice(titleLine.length).trimStart();
+  // Strip leading "## Summary" block (already rendered at top level)
+  if (s.startsWith('## Summary')) {
+    const next = s.match(/\n(?=## )/);
+    s = next ? s.slice(next.index!).trimStart() : '';
+  }
+  return s;
+}
+
 export function renderDocMarkdown(doc: GcTreeDocInput): string {
   const summary = ensureSummary(doc.summary);
-  const body = String(doc.body || '').trim();
+  const body = normalizeBody(String(doc.body || ''), doc.title);
   const normalizedIndexEntries = [...new Set([
     ...(doc.indexLabel?.trim() ? [doc.indexLabel.trim()] : []),
     ...(doc.indexEntries || []).map((entry) => String(entry || '').trim()).filter(Boolean),
