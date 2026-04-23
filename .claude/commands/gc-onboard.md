@@ -37,13 +37,15 @@ Use this only when the active gc-branch is empty.
 31. Run `gctree __apply-onboarding --input <temp-file>`.
 32. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
 33. Do not claim onboarding is complete unless verification returns `status: "complete"`.
-34. After applying the onboarding docs, explicitly list which durable docs were saved.
-35. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
-36. For that final summary, do not ask an open-ended validation question first; present the summary and ask the user to choose only one structured confirmation: 1. This matches well enough. 2. Some parts are wrong. I will give the delta. 3. The frame is wrong. I will restate it.
-37. If the user picks 2 or 3 for the final summary, ask only for the correction delta or replacement frame, then update the saved understanding instead of restarting the interview.
-38. Ask whether anything else should be saved while the context is still fresh.
-39. After docs are confirmed correct, do not ask the user to recall repo-scope mappings from scratch; propose the concrete repository candidates that appear materially tied to this gc-branch, then ask the user to choose only one structured confirmation: 1. Map these candidates. 2. Map these, but with corrections. 3. Skip repo mapping for now.
-40. If the user picks 2 for repo mapping, ask only for the repo delta to add or remove. If the user picks 1 or gives corrected candidates, navigate to each confirmed repository and run `gctree set-repo-scope --branch <current-gc-branch> --include`. Skip mapping only if the user picks 3 or explicitly says mapping is not needed.
-41. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
-42. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.
-43. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.
+34. If verification returns anything other than `status: "complete"`, do not tell the user onboarding is done; inspect the reported failures, heal what can be healed automatically, rerun verification, and repeat until it passes or a real blocker remains.
+35. After applying the onboarding docs, explicitly list which durable docs were saved.
+36. Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.
+37. For that final summary, do not ask an open-ended validation question first; present the summary and ask the user to choose only one structured confirmation: 1. This matches well enough. 2. Some parts are wrong. I will give the delta. 3. The frame is wrong. I will restate it.
+38. If the user picks 2 or 3 for the final summary, ask only for the correction delta or replacement frame, then update the saved understanding instead of restarting the interview.
+39. Ask whether anything else should be saved while the context is still fresh.
+40. After docs are confirmed correct, do not ask the user to recall repo-scope mappings from scratch; propose the concrete repository candidates that appear materially tied to this gc-branch, then ask the user to choose only one structured confirmation: 1. Map these candidates. 2. Map these, but with corrections. 3. Skip repo mapping for now.
+41. If the user picks 2 for repo mapping, ask only for the repo delta to add or remove. If the user picks 1 or gives corrected candidates, navigate to each confirmed repository and run `gctree set-repo-scope --branch <current-gc-branch> --include`. Skip mapping only if the user picks 3 or explicitly says mapping is not needed.
+42. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+43. Only after the related repos, workflows, glossary, and default verification commands are either captured or explicitly unavailable should you wrap up.
+44. When you wrap up, explicitly tell the user three things in plain language: onboarding is finished; future durable changes can be made with `gctree update-global-context`, or directly through the provider command surface as Codex `$gc-update-global-context {prompt}` and Claude Code `/gc-update-global-context {prompt}`; and they can close this session and start fresh in a new one.
+45. If the gc-branch is not empty, stop and tell the user to run `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context` instead.

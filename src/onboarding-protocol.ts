@@ -42,6 +42,7 @@ export function onboardingCompletionLines(): string[] {
   return [
     'Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.',
     'Do not claim onboarding is complete unless verification returns `status: "complete"`.',
+    'If verification returns anything other than `status: "complete"`, do not tell the user onboarding is done; inspect the reported failures, heal what can be healed automatically, rerun verification, and repeat until it passes or a real blocker remains.',
     'After applying the onboarding docs, explicitly list which durable docs were saved.',
     'Then summarize what you now understand from the saved docs instead of stopping at the filenames alone.',
     'For that final summary, do not ask an open-ended validation question first; present the summary and ask the user to choose only one structured confirmation: 1. This matches well enough. 2. Some parts are wrong. I will give the delta. 3. The frame is wrong. I will restate it.',
@@ -50,6 +51,7 @@ export function onboardingCompletionLines(): string[] {
     'After docs are confirmed correct, do not ask the user to recall repo-scope mappings from scratch; propose the concrete repository candidates that appear materially tied to this gc-branch, then ask the user to choose only one structured confirmation: 1. Map these candidates. 2. Map these, but with corrections. 3. Skip repo mapping for now.',
     'If the user picks 2 for repo mapping, ask only for the repo delta to add or remove. If the user picks 1 or gives corrected candidates, navigate to each confirmed repository and run `gctree set-repo-scope --branch <current-gc-branch> --include`. Skip mapping only if the user picks 3 or explicitly says mapping is not needed.',
     'Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.',
-    'Only after the related repos, workflows, glossary, default verification commands, and repo-scope mapping are either captured or explicitly skipped should you wrap up, then remind the user that future changes belong in `gctree update-global-context`.',
+    'Only after the related repos, workflows, glossary, default verification commands, repo-scope mapping, and verification gate are all complete should you wrap up.',
+    'When you do wrap up, explicitly tell the user three things in plain language: onboarding is finished; future durable changes can be made with `gctree update-global-context`, or directly through the provider command surface as Codex `$gc-update-global-context {prompt}` and Claude Code `/gc-update-global-context {prompt}`; and they can close this session and start fresh in a new one.',
   ];
 }

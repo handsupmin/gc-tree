@@ -36,6 +36,13 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[0]!, /1\. Map these candidates\./i);
   assert.match(contents[0]!, /2\. Map these, but with corrections\./i);
   assert.match(contents[0]!, /3\. Skip repo mapping for now\./i);
+  assert.match(contents[0]!, /If verification returns anything other than `status: "complete"`/i);
+  assert.match(contents[0]!, /heal what can be healed automatically/i);
+  assert.match(contents[0]!, /onboarding is finished/i);
+  assert.match(contents[0]!, /gctree update-global-context/i);
+  assert.match(contents[0]!, /\$gc-update-global-context \{prompt\}/i);
+  assert.match(contents[0]!, /\/gc-update-global-context \{prompt\}/i);
+  assert.match(contents[0]!, /close this session and start fresh in a new one/i);
   assert.match(contents[0]!, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
   assert.match(contents[0]!, /verify-onboarding/i);
   assert.match(contents[0]!, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);

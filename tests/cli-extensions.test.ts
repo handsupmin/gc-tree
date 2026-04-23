@@ -432,6 +432,13 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /1\. Map these candidates\./i);
     assert.match(codexOnboardSkill, /2\. Map these, but with corrections\./i);
     assert.match(codexOnboardSkill, /3\. Skip repo mapping for now\./i);
+    assert.match(codexOnboardSkill, /If verification returns anything other than `status: "complete"`/i);
+    assert.match(codexOnboardSkill, /heal what can be healed automatically/i);
+    assert.match(codexOnboardSkill, /onboarding is finished/i);
+    assert.match(codexOnboardSkill, /gctree update-global-context/i);
+    assert.match(codexOnboardSkill, /\$gc-update-global-context \{prompt\}/i);
+    assert.match(codexOnboardSkill, /\/gc-update-global-context \{prompt\}/i);
+    assert.match(codexOnboardSkill, /close this session and start fresh in a new one/i);
     assert.match(codexOnboardSkill, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
     assert.match(codexOnboardSkill, /verify-onboarding/i);
     assert.match(codexOnboardSkill, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
@@ -490,6 +497,13 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /1\. Map these candidates\./i);
     assert.match(claudeOnboardCommand, /2\. Map these, but with corrections\./i);
     assert.match(claudeOnboardCommand, /3\. Skip repo mapping for now\./i);
+    assert.match(claudeOnboardCommand, /If verification returns anything other than `status: "complete"`/i);
+    assert.match(claudeOnboardCommand, /heal what can be healed automatically/i);
+    assert.match(claudeOnboardCommand, /onboarding is finished/i);
+    assert.match(claudeOnboardCommand, /gctree update-global-context/i);
+    assert.match(claudeOnboardCommand, /\$gc-update-global-context \{prompt\}/i);
+    assert.match(claudeOnboardCommand, /\/gc-update-global-context \{prompt\}/i);
+    assert.match(claudeOnboardCommand, /close this session and start fresh in a new one/i);
     assert.match(claudeOnboardCommand, /do not finish onboarding while material related repos, workflows, or domain terms remain uninspected/i);
     assert.match(claudeOnboardCommand, /verify-onboarding/i);
     assert.match(claudeOnboardCommand, /do not claim onboarding is complete unless verification returns `status: "complete"`/i);
