@@ -157,6 +157,8 @@ gctree ugc
 
 `gctree init`은 전역 프로바이더 훅 표면을 설치합니다. `gctree scaffold`는 특정 저장소에 자체 markdown 스니펫이나 로컬 명령 표면이 필요할 때 대상 디렉토리에 로컬 override를 설치합니다.
 
+UserPromptSubmit 훅은 compact pre-task context만 주입합니다: 찾음/no-match 상태, 매칭된 문서 ID, 요약입니다. 기본적으로 긴 excerpt를 인라인하지 않으며, 요약만으로 부족할 때 `gctree resolve --id <id>`로 전체 문서를 엽니다.
+
 ```bash
 gctree scaffold --host codex --target /path/to/repo
 gctree scaffold --host claude-code --target /path/to/repo

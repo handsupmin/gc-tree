@@ -157,6 +157,8 @@ gctree ugc
 
 `gctree init` はグローバルなプロバイダーフック面をインストールします。`gctree scaffold` は特定のリポジトリに独自の markdown スニペットやローカルなコマンド面が必要なときに、ターゲットディレクトリへローカル override をインストールします。
 
+UserPromptSubmit フックが注入するのは compact な pre-task context だけです。found/no-match 状態、マッチしたドキュメント ID、要約を示し、長い excerpt はデフォルトではインラインしません。要約だけで足りない場合は `gctree resolve --id <id>` で全文を開きます。
+
 ```bash
 gctree scaffold --host codex --target /path/to/repo
 gctree scaffold --host claude-code --target /path/to/repo

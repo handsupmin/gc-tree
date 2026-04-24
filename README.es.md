@@ -74,7 +74,7 @@ gctree init
 2. Instalar los archivos de integración en el repositorio actual
 3. Completar el onboarding guiado para el gc-branch `main`
 
-Después, tu herramienta de IA instala integración real de hooks SessionStart/UserPromptSubmit: revisa gc-tree automáticamente antes de trabajar y cachea resultados vacíos/no-match durante la sesión.
+Después, tu herramienta de IA instala integración real de hooks SessionStart/UserPromptSubmit: revisa gc-tree automáticamente antes de trabajar y cachea resultados vacíos/no-match durante la sesión. La salida del hook se mantiene compacta: muestra el estado found/no-match junto con IDs y resúmenes, y deja el documento completo detrás de `gctree resolve --id <id>`.
 
 - **CLI:** `gctree`
 - **Requisito:** Node.js 20+

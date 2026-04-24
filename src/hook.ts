@@ -52,7 +52,7 @@ function formatMatches(matches: GcTreeResolveMatch[]): string {
   return limitMatches(matches)
     .map(
       (match, index) =>
-        `${index + 1}. ${match.title} [id=${match.id}]\n   Summary: ${match.summary}\n   Excerpt: ${match.excerpt}`,
+        `${index + 1}. ${match.title} [id=${match.id}]: ${match.summary}`,
     )
     .join('\n');
 }
@@ -84,11 +84,7 @@ function buildEmptyBranchContext({
   currentRepo: string | null;
   cached: boolean;
 }): string {
-  return [
-    `gc-tree auto-resolve ${cached ? 'used cached state' : 'checked the active gc-branch'} and found no reusable global context for this session because gc-branch "${gcBranch}" currently has 0 docs.`,
-    `Repo: ${currentRepo || 'unscoped'}.`,
-    `Treat this as "no reusable global context yet" until the gc-branch content changes or a different repo/gc-branch is active.`,
-  ].join(' ');
+  return `[gc-tree] no context docs in gc-branch "${gcBranch}" for repo "${currentRepo || 'unscoped'}"${cached ? ' (cached)' : ''}.`;
 }
 
 function buildExcludedContext({
@@ -100,50 +96,36 @@ function buildExcludedContext({
   currentRepo: string | null;
   cached: boolean;
 }): string {
-  return [
-    `gc-tree auto-resolve ${cached ? 'used cached state' : 'checked the active gc-branch'} and found that repo "${currentRepo || 'unknown'}" is excluded from gc-branch "${gcBranch}".`,
-    `No reusable global context applies here unless the branch-repo mapping changes.`,
-  ].join(' ');
+  return `[gc-tree] repo "${currentRepo || 'unknown'}" is excluded from gc-branch "${gcBranch}"${cached ? ' (cached)' : ''}.`;
 }
 
 function buildNoMatchContext({
   gcBranch,
   currentRepo,
-  query,
   cached,
 }: {
   gcBranch: string;
   currentRepo: string | null;
-  query: string;
   cached: boolean;
 }): string {
-  return [
-    `gc-tree auto-resolve ${cached ? 'skipped a redundant lookup using cached no-match state' : 'checked the active gc-branch'} and found no reusable global context for this prompt in gc-branch "${gcBranch}".`,
-    `Repo: ${currentRepo || 'unscoped'}.`,
-    `Query: "${query}".`,
-    `Only re-run resolve if the repo, gc-branch, or task changes materially.`,
-  ].join(' ');
+  return `[gc-tree] no matching context in gc-branch "${gcBranch}" for repo "${currentRepo || 'unscoped'}"${cached ? ' (cached)' : ''}.`;
 }
 
 function buildMatchContext({
   gcBranch,
   currentRepo,
   repoScopeStatus,
-  query,
   matches,
 }: {
   gcBranch: string;
   currentRepo: string | null;
   repoScopeStatus: GcTreeResolveScopeStatus;
-  query: string;
   matches: GcTreeResolveMatch[];
 }): string {
   return [
-    `[gc-tree] PRE-TASK CONTEXT — read before any tool use or code exploration.`,
-    `gc-branch: "${gcBranch}" | repo: "${currentRepo || 'unscoped'}" (scope: ${repoScopeStatus}) | query: "${query}".`,
-    `If these summaries contain enough information to answer the question or complete the task, respond directly from them WITHOUT calling any tools. Do not grep, explore, or read code to confirm what the summaries already cover. Only use tools if the summaries are clearly insufficient.`,
+    `[gc-tree] found ${Math.min(matches.length, 3)} matching context doc(s) in gc-branch "${gcBranch}" for repo "${currentRepo || 'unscoped'}" (scope: ${repoScopeStatus}).`,
     formatMatches(matches),
-    `Read full docs (gctree resolve --id <id>) only if summaries are clearly insufficient — meaning the answer cannot be derived from them at all.`,
+    `Use these summaries first; read full docs with \`gctree resolve --id <id>\` only if needed.`,
   ].join('\n');
 }
 
@@ -272,16 +254,16 @@ export async function dispatchGcTreeHook({
     const signature = hashQuery(query);
 
     if (cache.no_match_signatures.includes(signature)) {
-      additionalContext = buildNoMatchContext({ gcBranch, currentRepo, query, cached: true });
+      additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: true });
     } else {
       const result = await resolveContext({ home, branch: gcBranch, query });
 
       if (result.matches.length === 0) {
         cache.no_match_signatures = [...new Set([...cache.no_match_signatures, signature])];
-        additionalContext = buildNoMatchContext({ gcBranch, currentRepo, query, cached: false });
+        additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: false });
       } else {
         cache.no_match_signatures = cache.no_match_signatures.filter((entry) => entry !== signature);
-        additionalContext = buildMatchContext({ gcBranch, currentRepo, repoScopeStatus, query, matches: result.matches });
+        additionalContext = buildMatchContext({ gcBranch, currentRepo, repoScopeStatus, matches: result.matches });
       }
     }
 

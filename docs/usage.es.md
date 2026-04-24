@@ -157,6 +157,8 @@ Si un repositorio recién relevante también debería pasar a formar parte del c
 
 `gctree init` instala la superficie global de hooks orientada al proveedor. `gctree scaffold` instala un override local en un directorio de destino cuando un repositorio concreto necesita sus propios snippets markdown o una superficie de comandos local.
 
+El hook UserPromptSubmit solo inyecta contexto previo compacto: estado found/no-match, IDs de documentos coincidentes y resúmenes. No incluye excerpts largos por defecto; abre documentos completos con `gctree resolve --id <id>` cuando el resumen no sea suficiente.
+
 ```bash
 gctree scaffold --host codex --target /path/to/repo
 gctree scaffold --host claude-code --target /path/to/repo

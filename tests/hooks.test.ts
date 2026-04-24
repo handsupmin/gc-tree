@@ -132,7 +132,9 @@ test('UserPromptSubmit hook resolves matching gc-tree docs into additionalContex
       hookSpecificOutput?: { additionalContext?: string };
     };
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /Resolve Policy/);
-    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /auth token rotation policy/i);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /Always resolve auth policy/i);
+    assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /Excerpt:/);
+    assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /user_prompt|Please check auth token/i);
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -175,7 +177,7 @@ test('UserPromptSubmit hook caches empty-branch no-match state per session', asy
       hookSpecificOutput?: { additionalContext?: string };
     };
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /cached/i);
-    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /no reusable global context/i);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /no context docs/i);
   } finally {
     await rm(home, { recursive: true, force: true });
   }
