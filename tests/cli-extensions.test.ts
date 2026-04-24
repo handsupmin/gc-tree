@@ -252,6 +252,24 @@ test('status before init shows a guided error instead of raw ENOENT', async () =
   }
 });
 
+test('init does not persist temporary local scaffold targets in settings', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-cli-home-'));
+  const targetDir = await mkdtemp(join(tmpdir(), 'gctree-cli-target-'));
+
+  try {
+    const result = await runCli(['init', '--home', home, '--provider', 'codex', '--target', targetDir, '--no-launch']);
+    assert.equal(result.code, 0, result.stderr);
+
+    const settings = JSON.parse(await readFile(join(home, 'settings.json'), 'utf8')) as {
+      scaffolded_hosts?: Array<{ scope: string; target_dir?: string }>;
+    };
+    assert.equal(settings.scaffolded_hosts?.some((record) => record.scope === 'local'), false);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(targetDir, { recursive: true, force: true });
+  }
+});
+
 
 test('init skips auto-onboarding when main gc-branch already has context', async () => {
   const home = await mkdtemp(join(tmpdir(), 'gctree-cli-home-'));

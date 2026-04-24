@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -153,5 +153,33 @@ test('related returns explicit supporting docs for a selected match id', async (
     assert.equal(parsed.matches[0]?.id, 'domain-glossary');
   } finally {
     await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('readSettings self-heals temporary scaffolded host records before later commands', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-cli-related-'));
+  const tempTarget = await mkdtemp(join(tmpdir(), 'gctree-codex-target-'));
+
+  try {
+    let result = await runCli(['init', '--home', home, '--provider', 'codex', '--no-launch']);
+    assert.equal(result.code, 0, result.stderr);
+
+    const settingsPath = join(home, 'settings.json');
+    const settings = JSON.parse(await readFile(settingsPath, 'utf8')) as any;
+    settings.scaffolded_hosts = [
+      { host: 'codex', scope: 'global', scaffolded_at: '2026-01-01T00:00:00.000Z' },
+      { host: 'codex', scope: 'local', target_dir: tempTarget, scaffolded_at: '2026-01-01T00:00:00.000Z' },
+    ];
+    await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+
+    result = await runCli(['status', '--home', home]);
+    assert.equal(result.code, 0, result.stderr);
+
+    const next = JSON.parse(await readFile(settingsPath, 'utf8')) as any;
+    assert.equal(next.scaffolded_hosts.some((record: any) => record.scope === 'local'), false);
+    assert.equal(next.scaffolded_hosts.some((record: any) => record.scope === 'global'), true);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(tempTarget, { recursive: true, force: true });
   }
 });
