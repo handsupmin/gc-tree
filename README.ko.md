@@ -74,7 +74,7 @@ gctree init
 2. 현재 레포에 통합 파일 스캐폴딩
 3. `main` gc-branch 가이드형 온보딩 실행
 
-이후 AI 도구에 실제 SessionStart/UserPromptSubmit 훅 통합이 설치되어, 작업 전에 gc-tree를 자동 확인하고 세션 동안 빈 결과·no-match를 캐시합니다. 훅 출력은 짧게 유지됩니다: 찾음/no-match 상태와 문서 ID, 요약만 보여주고 전체 문서는 `gctree resolve --id <id>`로 필요할 때 엽니다.
+이후 AI 도구에 실제 SessionStart/UserPromptSubmit 훅 통합이 설치되어, 작업 전에 gc-tree를 자동 확인하고 세션 동안 빈 결과·no-match를 캐시합니다. 훅 출력은 짧게 유지됩니다: 찾음/no-match 상태와 매칭된 문서 제목/ID만 보여주고 전체 문서는 `gctree resolve --id <id>`로 필요할 때 엽니다.
 
 - **CLI:** `gctree`
 - **요구 사항:** Node.js 20+

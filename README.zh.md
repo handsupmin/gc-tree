@@ -61,7 +61,7 @@ gctree init
 2. 在当前仓库安装集成文件
 3. 为 `main` gc-branch 完成引导式 onboarding
 
-之后，AI 工具会安装真正的 SessionStart / UserPromptSubmit hook 集成：在开始工作前自动检查 gc-tree，并在整个会话内缓存空结果和 no-match。Hook 输出保持紧凑：只显示 found/no-match 状态、文档 ID 和摘要，完整文档需要时再通过 `gctree resolve --id <id>` 打开。
+之后，AI 工具会安装真正的 SessionStart / UserPromptSubmit hook 集成：在开始工作前自动检查 gc-tree，并在整个会话内缓存空结果和 no-match。Hook 输出保持紧凑：只显示 found/no-match 状态以及匹配文档的标题和 ID，完整文档需要时再通过 `gctree resolve --id <id>` 打开。
 
 - **CLI：** `gctree`
 - **要求：** Node.js 20+

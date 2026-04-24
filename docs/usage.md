@@ -157,7 +157,7 @@ If a newly relevant repo should also become part of the durable context, the nat
 
 `gctree init` installs the provider-facing hook surface globally. `gctree scaffold` installs a local override into one target directory when a specific repository needs its own markdown snippets or local command surface.
 
-The UserPromptSubmit hook injects compact pre-task context only: found/no-match state, matched document IDs, and summaries. It does not inline long excerpts by default; open full documents with `gctree resolve --id <id>` when the summary is not enough.
+The UserPromptSubmit hook injects compact pre-task context only: found/no-match state plus matched document titles and IDs. It does not inline summaries or long excerpts by default; open full documents with `gctree resolve --id <id>` when needed.
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo

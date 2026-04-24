@@ -132,9 +132,69 @@ test('UserPromptSubmit hook resolves matching gc-tree docs into additionalContex
       hookSpecificOutput?: { additionalContext?: string };
     };
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /Resolve Policy/);
-    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /Always resolve auth policy/i);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /USE FIRST/i);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /before tools/i);
     assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /Excerpt:/);
+    assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /Always resolve auth policy/i);
     assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /user_prompt|Please check auth token/i);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('hooks suppress immediate duplicate SessionStart and UserPromptSubmit events', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-hook-home-'));
+
+  try {
+    const init = await runCli(['init', '--home', home, '--provider', 'codex', '--no-launch']);
+    assert.equal(init.code, 0, init.stderr);
+
+    const onboardingInputPath = join(home, 'onboard.json');
+    await writeFile(
+      onboardingInputPath,
+      JSON.stringify(
+        {
+          branchSummary: 'Main branch summary',
+          docs: [
+            {
+              title: 'Resolve Policy',
+              summary: 'Always resolve auth policy before implementation.',
+              body: '## Summary\nAlways resolve auth policy before implementation.',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    const onboard = await runCli(['__apply-onboarding', '--home', home, '--input', onboardingInputPath]);
+    assert.equal(onboard.code, 0, onboard.stderr);
+
+    const sessionPayload = {
+      session_id: 'session-dedupe',
+      cwd: REPO_ROOT,
+      hook_event_name: 'SessionStart',
+    };
+    const firstSession = await runCli(['__hook', '--home', home, '--event', 'SessionStart'], { stdinJson: sessionPayload });
+    const secondSession = await runCli(['__hook', '--home', home, '--event', 'SessionStart'], { stdinJson: sessionPayload });
+    assert.equal(firstSession.code, 0, firstSession.stderr);
+    assert.equal(secondSession.code, 0, secondSession.stderr);
+    assert.match(firstSession.stdout, /active gc-branch/);
+    assert.equal(secondSession.stdout, '');
+
+    const promptPayload = {
+      session_id: 'session-dedupe',
+      cwd: REPO_ROOT,
+      hook_event_name: 'UserPromptSubmit',
+      user_prompt: 'Please check auth token rotation policy before implementation',
+    };
+    const firstPrompt = await runCli(['__hook', '--home', home, '--event', 'UserPromptSubmit'], { stdinJson: promptPayload });
+    const secondPrompt = await runCli(['__hook', '--home', home, '--event', 'UserPromptSubmit'], { stdinJson: promptPayload });
+    assert.equal(firstPrompt.code, 0, firstPrompt.stderr);
+    assert.equal(secondPrompt.code, 0, secondPrompt.stderr);
+    assert.match(firstPrompt.stdout, /Resolve Policy/);
+    assert.equal(secondPrompt.stdout, '');
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -177,7 +237,7 @@ test('UserPromptSubmit hook caches empty-branch no-match state per session', asy
       hookSpecificOutput?: { additionalContext?: string };
     };
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /cached/i);
-    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /no context docs/i);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /no docs/i);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

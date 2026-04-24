@@ -11,9 +11,9 @@
   3. If the concept exists in a doc but was not indexed → propose adding it as an Index Entry to that doc.
   4. If it does not exist anywhere → decide whether a new doc is needed and propose it to the user.
   — If the repo is **unmapped** or **excluded**: do step 1 only; if no match, skip and proceed normally.
-- When a UserPromptSubmit hook provides `[gc-tree] PRE-TASK CONTEXT`, treat it as mandatory pre-reading before any tool use.
-- If the injected summaries contain enough information to answer the question or complete the task, respond directly from them **without calling any tools**. Do not grep, explore, or read code files to confirm what the summaries already cover.
-- Only use tools if the summaries are clearly insufficient — meaning the answer cannot be derived from them at all.
+- When a UserPromptSubmit hook provides `[gc-tree] USE FIRST`, treat matched docs as mandatory grounding before any tool use.
+- Do not ignore matched gc-tree docs and jump straight to grep/Explore. Use the listed docs directly, or open the full doc with `gctree resolve --id <id>` if the summary is not enough.
+- Only use tools after the matched docs are clearly insufficient for the task.
 - If hooks are unavailable or clearly stale, run `gctree status` and `gctree resolve --query "<task>"` yourself before planning or implementation.
 - Use `/gc-onboard` only for an empty gc-branch.
 - Use `/gc-update-global-context` when durable context in the active gc-branch should change.

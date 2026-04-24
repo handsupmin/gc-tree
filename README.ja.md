@@ -74,7 +74,7 @@ gctree init
 2. 現在のリポジトリへの統合ファイルのインストール
 3. `main` gc-branch のガイド付きオンボーディング実行
 
-その後は、AI ツールに実際の SessionStart / UserPromptSubmit フック統合が入り、作業前に gc-tree を自動確認し、空結果や no-match をセッション中キャッシュします。フック出力はコンパクトに保たれ、found/no-match 状態、ドキュメント ID、要約だけを示し、全文は必要なときに `gctree resolve --id <id>` で開きます。
+その後は、AI ツールに実際の SessionStart / UserPromptSubmit フック統合が入り、作業前に gc-tree を自動確認し、空結果や no-match をセッション中キャッシュします。フック出力はコンパクトに保たれ、found/no-match 状態、マッチしたドキュメントのタイトルと ID だけを示し、全文は必要なときに `gctree resolve --id <id>` で開きます。
 
 - **CLI：** `gctree`
 - **動作条件：** Node.js 20+

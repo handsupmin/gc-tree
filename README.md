@@ -74,7 +74,7 @@ gctree init
 2. Scaffold the integration files into your current repo
 3. Run guided onboarding for the `main` gc-branch
 
-After that, your AI tool gets real SessionStart/UserPromptSubmit hook integration, so it auto-checks gc-tree before work and caches empty/no-match results for the session. Hook output stays compact: it reports found/no-match state plus document IDs and summaries, and full docs stay behind `gctree resolve --id <id>`.
+After that, your AI tool gets real SessionStart/UserPromptSubmit hook integration, so it auto-checks gc-tree before work and caches empty/no-match results for the session. Hook output stays compact: it reports found/no-match state plus matching document titles and IDs, and full docs stay behind `gctree resolve --id <id>`.
 
 - **CLI:** `gctree`
 - **Requires:** Node.js 20+

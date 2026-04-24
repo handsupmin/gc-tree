@@ -157,7 +157,7 @@ gctree ugc
 
 `gctree init` 会安装全局 provider hook 表面。`gctree scaffold` 则在某个仓库需要自己的 markdown 片段或本地命令表面时，将本地 override 安装到目标目录中。
 
-UserPromptSubmit hook 只注入紧凑的 pre-task context：found/no-match 状态、匹配文档 ID 和摘要。默认不内联长 excerpt；当摘要不够时，用 `gctree resolve --id <id>` 打开完整文档。
+UserPromptSubmit hook 只注入紧凑的 pre-task context：found/no-match 状态以及匹配文档的标题/ID。默认不内联摘要或长 excerpt；需要时用 `gctree resolve --id <id>` 打开完整文档。
 
 ```bash
 gctree scaffold --host codex --target /path/to/repo
