@@ -179,9 +179,8 @@ export async function promptResolveScopeDecision(
   preferredLanguage = 'English',
 ): Promise<GcTreeResolveScopeDecision> {
   if (!stdin.isTTY && process.env.GCTREE_ALLOW_STDIN_PROMPT !== '1') {
-    throw new Error(
-      `current repo \"${repo}\" is not mapped to gc-branch \"${branch}\". Run interactively to choose whether to continue, include this repo, or ignore this gc-branch here.`,
-    );
+    process.stderr.write(`gc-tree: repo "${repo}" is not mapped to gc-branch "${branch}" — continuing without scope decision.\n`);
+    return 'continue-once';
   }
 
   const rl = createInterface({ input: stdin, output: stderr });
