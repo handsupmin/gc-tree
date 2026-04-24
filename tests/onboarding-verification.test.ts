@@ -157,3 +157,78 @@ test('verify-onboarding catches branches with docs present but empty index links
     await rm(inputDir, { recursive: true, force: true });
   }
 });
+
+test('verify-onboarding catches dictionary quality issues before completion', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-verify-home-'));
+  const inputDir = await mkdtemp(join(tmpdir(), 'gctree-verify-input-'));
+  try {
+    let result = await runCli(['init', '--home', home, '--provider', 'codex', '--no-launch']);
+    assert.equal(result.code, 0, result.stderr);
+
+    const inputPath = join(inputDir, 'onboard.json');
+    await writeFile(
+      inputPath,
+      JSON.stringify(
+        {
+          branchSummary: 'Bad dictionary branch.',
+          docs: [
+            {
+              title: 'Repo: api',
+              summary: 'API repo.',
+              body: 'API repo.',
+            },
+            {
+              title: 'Workflow: feature work',
+              summary: 'Feature workflow.',
+              body: 'Feature workflow.',
+            },
+            {
+              title: 'Domain: glossary',
+              summary: 'Glossary.',
+              body: 'Glossary.',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    result = await runCli(['__apply-onboarding', '--home', home, '--input', inputPath]);
+    assert.equal(result.code, 0, result.stderr);
+
+    await writeFile(
+      join(home, 'branches', 'main', 'docs', 'index.md'),
+      '# Index\n\n## Summary\n\nDuplicate index doc.\n\n## Details\n\nBad.\n',
+      'utf8',
+    );
+    await writeFile(
+      join(home, 'branches', 'main', 'index.md'),
+      [
+        '# gc-tree Index',
+        '',
+        '- gc-branch: main',
+        '- summary: bad',
+        '',
+        '## General',
+        '',
+        '- docs/repos/api.md',
+        '  - docs/repos/api.md',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+
+    result = await runCli(['verify-onboarding', '--home', home]);
+    assert.equal(result.code, 0, result.stderr);
+
+    const parsed = JSON.parse(result.stdout) as { status: string; quality_issues: string[] };
+    assert.equal(parsed.status, 'incomplete');
+    assert.equal(parsed.quality_issues.some((issue) => /docs\/index\.md/i.test(issue)), true);
+    assert.equal(parsed.quality_issues.some((issue) => /search terms, not paths/i.test(issue)), true);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(inputDir, { recursive: true, force: true });
+  }
+});
