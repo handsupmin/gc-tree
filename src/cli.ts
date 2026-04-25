@@ -634,13 +634,36 @@ async function main(): Promise<void> {
       const isGlobal = !explicitTarget || Object.values({ codex: gctreeGlobalRoot('codex'), claude: gctreeGlobalRoot('claude-code') }).some(
         (r) => resolve(explicitTarget) === resolve(r),
       );
-      const result = await ensureScaffold({
+      if (isGlobal) {
+        const result = await ensureScaffold({
+          providerMode: host,
+          scope: 'global',
+          force: hasFlag('--force'),
+          home,
+        });
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      const globalResult = await ensureScaffold({
         providerMode: host,
-        ...(isGlobal ? { scope: 'global' } : { targetDir: explicitTarget!, scope: 'local' }),
+        scope: 'global',
         force: hasFlag('--force'),
         home,
       });
-      console.log(JSON.stringify(result, null, 2));
+      const localResult = await ensureScaffold({
+        providerMode: host,
+        targetDir: explicitTarget!,
+        scope: 'local',
+        force: hasFlag('--force'),
+        home,
+      });
+      console.log(JSON.stringify({
+        hosts: host,
+        target_dir: explicitTarget!,
+        written: [...globalResult.written, ...localResult.written],
+        skipped_existing: [...globalResult.skipped_existing, ...localResult.skipped_existing],
+      }, null, 2));
       return;
     }
     case 'update': {

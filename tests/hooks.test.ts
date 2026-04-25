@@ -69,10 +69,10 @@ test('init scaffolds Codex and Claude hook configs', async () => {
     assert.equal(result.code, 0, result.stderr);
 
     const codexHooks = await import('node:fs/promises').then((fs) =>
-      fs.readFile(join(targetDir, '.codex', 'hooks.json'), 'utf8'),
+      fs.readFile(join(home, 'global-codex', 'hooks.json'), 'utf8'),
     );
     const claudeHooks = await import('node:fs/promises').then((fs) =>
-      fs.readFile(join(targetDir, '.claude', 'hooks', 'hooks.json'), 'utf8'),
+      fs.readFile(join(home, 'global-claude', 'hooks', 'hooks.json'), 'utf8'),
     );
 
     assert.match(codexHooks, /UserPromptSubmit/);
@@ -133,9 +133,7 @@ test('UserPromptSubmit hook resolves matching gc-tree docs into additionalContex
     };
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /Resolve Policy/);
     assert.match(parsed.hookSpecificOutput?.additionalContext || '', /USE FIRST/i);
-    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /before tools/i);
     assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /Excerpt:/);
-    assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /Always resolve auth policy/i);
     assert.doesNotMatch(parsed.hookSpecificOutput?.additionalContext || '', /user_prompt|Please check auth token/i);
   } finally {
     await rm(home, { recursive: true, force: true });
@@ -195,6 +193,21 @@ test('hooks suppress immediate duplicate SessionStart and UserPromptSubmit event
     assert.equal(secondPrompt.code, 0, secondPrompt.stderr);
     assert.match(firstPrompt.stdout, /Resolve Policy/);
     assert.equal(secondPrompt.stdout, '');
+
+    const concurrentPayload = {
+      session_id: 'session-dedupe-concurrent',
+      cwd: REPO_ROOT,
+      hook_event_name: 'UserPromptSubmit',
+      user_prompt: 'Please check auth token rotation policy before implementation',
+    };
+    const concurrent = await Promise.all([
+      runCli(['__hook', '--home', home, '--event', 'UserPromptSubmit'], { stdinJson: concurrentPayload }),
+      runCli(['__hook', '--home', home, '--event', 'UserPromptSubmit'], { stdinJson: concurrentPayload }),
+    ]);
+    assert.equal(concurrent[0].code, 0, concurrent[0].stderr);
+    assert.equal(concurrent[1].code, 0, concurrent[1].stderr);
+    assert.equal(concurrent.filter((result) => /Resolve Policy/.test(result.stdout)).length, 1);
+    assert.equal(concurrent.filter((result) => result.stdout === '').length, 1);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

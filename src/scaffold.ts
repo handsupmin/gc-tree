@@ -349,11 +349,18 @@ export async function scaffoldHostIntegration({
     }
   }
 
-  await mergeGcTreeHooksJson({
-    filePath: hookPath,
-    target: isCodex ? 'codex' : 'claude-code',
-  });
-  written.push(hookPath);
+  if (scope === 'local') {
+    const status = await unmergeGcTreeHooksJson(hookPath);
+    if (status !== 'missing') {
+      written.push(hookPath);
+    }
+  } else {
+    await mergeGcTreeHooksJson({
+      filePath: hookPath,
+      target: isCodex ? 'codex' : 'claude-code',
+    });
+    written.push(hookPath);
+  }
 
   const targets = files.map((file) => ({
     ...file,

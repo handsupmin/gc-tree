@@ -1,10 +1,11 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname } from 'node:path';
 
 import { DEFAULT_BRANCH } from './paths.js';
 import {
   hookCachePath,
+  hookCacheDir,
 } from './paths.js';
 import { branchScopeStatus, readBranchRepoMap, resolveBranchForRepo } from './repo-map.js';
 import { resolveContext } from './resolve.js';
@@ -211,6 +212,41 @@ function readSessionId(payload: GcTreeHookPayload): string {
   return raw || 'default-session';
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function acquireHookLock(home: string, sessionId: string): Promise<() => Promise<void>> {
+  const lockPath = `${hookCachePath(home, sessionId)}.lock`;
+  await mkdir(hookCacheDir(home), { recursive: true });
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      const handle = await open(lockPath, 'wx');
+      await handle.close();
+      return async () => {
+        await rm(lockPath, { force: true });
+      };
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'EEXIST') throw error;
+
+      try {
+        const info = await stat(lockPath);
+        if (Date.now() - info.mtimeMs > 10_000) {
+          await rm(lockPath, { force: true });
+          continue;
+        }
+      } catch {
+        continue;
+      }
+      await sleep(25);
+    }
+  }
+
+  return async () => {};
+}
+
 export async function dispatchGcTreeHook({
   event,
   home,
@@ -220,6 +256,9 @@ export async function dispatchGcTreeHook({
   home: string;
   payload: GcTreeHookPayload;
 }): Promise<{ hookSpecificOutput: { hookEventName: string; additionalContext: string } } | null> {
+  const sessionId = readSessionId(payload);
+  const releaseLock = await acquireHookLock(home, sessionId);
+  try {
   const cwd = payload.cwd || process.cwd();
   const head = (await readHead(home)) || DEFAULT_BRANCH;
   const resolved = await resolveBranchForRepo({ home, head, cwd });
@@ -227,7 +266,6 @@ export async function dispatchGcTreeHook({
   const currentRepo = resolved.current_repo;
   const mapping = await readBranchRepoMap(home);
   const repoScopeStatus = branchScopeStatus(mapping, gcBranch, currentRepo);
-  const sessionId = readSessionId(payload);
   const now = new Date();
 
   if (event === 'SessionStart') {
@@ -349,4 +387,7 @@ export async function dispatchGcTreeHook({
   await writeHookCache(home, cache);
 
   return { hookSpecificOutput: { hookEventName: event, additionalContext } };
+  } finally {
+    await releaseLock();
+  }
 }

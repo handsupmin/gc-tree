@@ -74,8 +74,8 @@ test('uninstall removes both scaffold files and gc-tree home state', async () =>
 
     assert.equal(await exists(join(targetDir, 'AGENTS.md')), true);
     assert.equal(await exists(join(targetDir, 'CLAUDE.md')), true);
-    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), true);
-    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), true);
+    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), false);
+    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), false);
     assert.equal(await exists(join(globals.codex, 'hooks.json')), true);
     assert.equal(await exists(join(globals.claude, 'hooks', 'hooks.json')), true);
     assert.equal(await exists(home), true);
@@ -164,7 +164,7 @@ test('init/scaffold merges gctree hook entries without overwriting unrelated hoo
       codexHooks.hooks.SessionStart.some((group: any) =>
         group.hooks.some((entry: any) => entry.command === 'gctree __hook --event SessionStart'),
       ),
-      true,
+      false,
     );
     assert.equal(
       claudeHooks.hooks.UserPromptSubmit[0].hooks.some((entry: any) => entry.command === 'other-tool prompt-submit'),
@@ -174,7 +174,7 @@ test('init/scaffold merges gctree hook entries without overwriting unrelated hoo
       claudeHooks.hooks.UserPromptSubmit.some((group: any) =>
         group.hooks.some((entry: any) => entry.command === 'gctree __hook --event UserPromptSubmit'),
       ),
-      true,
+      false,
     );
     assert.match(agents, /User content/);
     assert.match(agents, /gctree:codex:start/);
@@ -205,7 +205,6 @@ test('uninstall can keep gc-tree home while removing local scaffold files', asyn
     assert.equal(await exists(home), true);
     assert.equal(await exists(join(targetDir, 'AGENTS.md')), false);
     assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), false);
-    assert.equal(parsed.removed.some((entry) => entry.endsWith('.codex/hooks.json')), true);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });
@@ -230,8 +229,8 @@ test('uninstall without --target removes scaffold files from repo root when run 
 
     assert.equal(await exists(join(targetDir, 'AGENTS.md')), true);
     assert.equal(await exists(join(targetDir, 'CLAUDE.md')), true);
-    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), true);
-    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), true);
+    assert.equal(await exists(join(targetDir, '.codex', 'hooks.json')), false);
+    assert.equal(await exists(join(targetDir, '.claude', 'hooks', 'hooks.json')), false);
     assert.equal(await exists(join(globals.codex, 'hooks.json')), false);
     assert.equal(await exists(join(globals.claude, 'hooks', 'hooks.json')), false);
   } finally {
