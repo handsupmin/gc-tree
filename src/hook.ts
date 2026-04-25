@@ -64,9 +64,13 @@ function limitMatches(matches: GcTreeResolveMatch[], max = 3): GcTreeResolveMatc
 function formatMatches(matches: GcTreeResolveMatch[]): string {
   return limitMatches(matches)
     .map((match, index) => {
-      const summary = match.summary?.trim();
-      return summary
-        ? `${index + 1}. ${match.title} [${match.id}]\n   > ${summary}`
+      const summary = match.summary?.trim() ?? '';
+      const excerpt = match.excerpt?.trim() ?? '';
+      // Use summary if it looks actionable (long enough to contain patterns).
+      // Fall back to a trimmed excerpt when summary is a short description-only sentence.
+      const context = summary.length >= 60 ? summary : (excerpt.slice(0, 300) || summary);
+      return context
+        ? `${index + 1}. ${match.title} [${match.id}]\n   > ${context}`
         : `${index + 1}. ${match.title} [${match.id}]`;
     })
     .join('\n');

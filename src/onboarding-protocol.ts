@@ -36,7 +36,7 @@ export function onboardingProtocolLines(): string[] {
     'Treat `index.md` as concept-first: show the keywords a user or AI would search for, not just broad document titles.',
     'Generate index entries automatically from primary concept names, aliases, repository nicknames, and workflow labels when those are clear.',
     'Split glossary docs when a concept is likely to be searched directly, needs more than a short definition, or carries workflow/constraint details; keep only low-value leftover terms in a shared glossary.',
-    'Keep each doc summary-first so the top section gives the gist before deeper details.',
+    'The `## Summary` section of every doc must be actionable, not descriptive — write the actual patterns, commands, or constraints a developer needs, not a sentence about what the doc covers. Bad: "이 문서는 updateCollection 패턴을 설명합니다." Good: "updateCollection: { ...dto } spread 필수. return plainToInstance(Res, result satisfies Res). 새 필드 추가 = DTO → 서비스 → 컨트롤러 순서." The summary is injected into the AI context before every task — if it reads like a table of contents entry, it is useless.',
     'Treat `index.md` as a human-readable dictionary-style table of contents grouped by category headings and `label -> path` entries.',
   ];
 }

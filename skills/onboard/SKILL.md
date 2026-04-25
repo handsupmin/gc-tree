@@ -39,7 +39,7 @@ Use this when a user wants to create global context for a product, company, or w
 - when the inspected evidence already covers a repository well enough, ask only for missing deltas instead of re-asking role, paths, and workflow from scratch
 - only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence
 - ask about glossary terms and default verification commands before you finish
-- write compact source docs with a required `## Summary` section near the top
+- write compact source docs with a required `## Summary` section near the top; the `## Summary` must be actionable — write the actual patterns, commands, or constraints a developer needs, not a sentence about what the doc covers (bad: "이 문서는 X를 설명합니다"; good: "updateX: { ...dto } spread 필수. return plainToInstance(Res, result satisfies Res). 새 필드 추가 = DTO → 서비스 → 컨트롤러 순서."); the summary is injected into AI context before every task — if it reads like a table of contents entry, it is useless
 - prefer an encyclopedia-style context set with many small docs instead of a few broad docs
 - prefer category directories like `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/`
 - prefer one concept, one repository, one workflow, or one convention per file when possible
