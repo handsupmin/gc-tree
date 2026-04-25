@@ -5,8 +5,9 @@
 
 - Treat the active gctree branch as a **gc-branch** when you describe it to users.
 - gctree init installs SessionStart and UserPromptSubmit hooks that auto-check gc-tree before work.
-- When you encounter an unfamiliar term, acronym, concept, or domain word, follow this scope-aware protocol **before** grepping or reading code files:
-  1. Always run `gctree resolve --query "<term>"` first. If matched, use the result directly.
+- Before starting ANY codebase task — new feature, schema change, bug fix, admin work, or any question about how something works — run `gctree resolve` first. Do not assume you know the domain from code alone. Field names, model names, repo names, and feature names are NOT self-explanatory; always verify workflows and cross-repo relationships via gc-tree before touching code.
+- Follow this scope-aware protocol before any grep, file read, or code exploration:
+  1. Always run `gctree resolve --query "<task or term>"` first. If matched, use the result directly.
   2. Only if the current repo scope is **included** (not unmapped/excluded): if step 1 found nothing, try broader related queries to check if the concept exists in any doc.
   3. If the concept exists in a doc but was not indexed → propose adding it as an Index Entry to that doc.
   4. If it does not exist anywhere → decide whether a new doc is needed and propose it to the user.

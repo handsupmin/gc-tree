@@ -67,7 +67,12 @@ export async function selfUpdate(home: string): Promise<void> {
   }
 
   process.stderr.write('\nUpdating gctree to latest...\n');
-  execSync('npm install -g @handsupmin/gc-tree@latest', { stdio: 'inherit' });
+  try {
+    execSync('npm install -g @handsupmin/gc-tree', { stdio: 'inherit' });
+  } catch {
+    process.stderr.write('\nnpm registry may not have propagated the latest version yet. Wait a minute and retry: gctree update\n');
+    process.exit(1);
+  }
 
   if (hosts.length > 0) {
     process.stderr.write('\nRe-scaffolding providers with new version...\n');

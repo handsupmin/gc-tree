@@ -21,6 +21,9 @@ Use this when a user wants to create global context for a product, company, or w
 - if no docs are available, continue from the user's own description first, then after the user's first answer, proactively inspect related repos, docs, paths, and workflows that appear materially connected
 - use bounded local inspection to confirm or challenge the user's description instead of waiting for them to enumerate every related repo manually
 - do not inspect every source file; prefer docs, READMEs, summaries, and a few pointed paths first
+- for every repo that can be inspected locally, go beyond READMEs: sample at least one controller or route handler, one service or use-case file, and one DTO or schema definition — extract concrete patterns directly from code rather than asking the user to describe them
+- every repo doc must include a `## Patterns` section documenting conventions visible in the actual code: naming conventions, validation style, error handling, response shape, dependency injection style, and any notable quirks
+- capture cross-repo workflows explicitly: for any domain action that spans repos (schema change, new feature, admin work, migration, deployment), document which repos are involved and in what order as a dedicated workflow doc in `docs/workflows/`
 - when you do present a hypothesis, keep it lightweight and only after the user has narrowed the scope
 - offer only these structured numbered confirmations:
   1. This is mostly correct.
@@ -68,7 +71,11 @@ Use this when a user wants to create global context for a product, company, or w
 14. For each work type, ask how it shows up in day-to-day work.
 15. Only after that ask which repositories are involved in that work type, and ask whether there are more repositories for that same work type.
 16. Once the user names concrete repositories, do not ask them to explain those repositories from scratch when recoverable local evidence exists.
-17. For each repository that can be inspected locally, read the strongest available evidence first, then present a short hypothesis covering repo role, important paths, workflow, and notable conventions.
+17. For each repository that can be inspected locally:
+   a. Read README and any existing docs first to get orientation.
+   b. Then actively sample code — find and read at minimum: one controller or route handler, one service or use-case file, one DTO or schema definition. Use `find` to locate representative files if needed.
+   c. Extract concrete patterns from the sampled code: naming conventions, validation approach, error handling style, response shape, spread vs. assign patterns, decorator usage, etc.
+   d. Present a short hypothesis covering: repo role, important paths, cross-repo dependencies, workflow (e.g. "schema changes go to db-migration repo"), and the concrete patterns you observed in code.
 18. After each repository-level hypothesis, ask the user to choose only one:
    - 1. This is mostly correct.
    - 2. Some parts are wrong. Please explain what differs.
@@ -76,6 +83,8 @@ Use this when a user wants to create global context for a product, company, or w
 19. When the inspected evidence already covers the repository well enough, ask only for the missing deltas instead of re-asking role, paths, and workflow from scratch.
 20. Only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence.
 21. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
+21a. For each confirmed repo, write a `docs/conventions/<repo>.md` file that includes: repo role, key paths, and a `## Patterns` section with the concrete code patterns extracted from sampled files. Do not skip this file — it is what Claude will use instead of re-reading code on every task.
+21b. After covering individual repos, ask explicitly about cross-repo workflows. For each domain action the user names (e.g. "add a DB column", "add an admin endpoint", "deploy a feature"), document the exact sequence of repos and steps as a dedicated file in `docs/workflows/`. These workflow docs are the highest-value output of onboarding.
 22. Ask for company/domain glossary terms and acronyms that should become durable context.
 23. Ask which verification commands should be treated as defaults for this gc-branch.
 24. Structure the durable docs as a small encyclopedia: split by category directory, keep one concept/repo/workflow/convention per file when possible, and keep a short `## Summary` at the top of each doc.

@@ -1,8 +1,8 @@
 # gctree Bootstrap
 
 - Keep the active gc-branch explicit whenever global context matters.
-- If you encounter an unfamiliar term, acronym, concept, domain word, or internal name, do **not** grep or read code first. Follow this exact order:
-  1. Run `gctree resolve --query "<term>"`.
+- Before any codebase task — feature, schema change, bug fix, admin work — do **not** grep or read code first. Follow this exact order:
+  1. Run `gctree resolve --query "<task or term>"`.
   2. If that misses, run broader related `gctree resolve` queries.
   3. If the concept is documented but not indexed, propose adding it as an Index Entry to the right doc.
   4. Only if gc-tree still does not answer it should you search code or repo docs.

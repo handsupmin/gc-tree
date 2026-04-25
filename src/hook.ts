@@ -63,10 +63,12 @@ function limitMatches(matches: GcTreeResolveMatch[], max = 3): GcTreeResolveMatc
 
 function formatMatches(matches: GcTreeResolveMatch[]): string {
   return limitMatches(matches)
-    .map(
-      (match, index) =>
-        `${index + 1}. ${match.title} [${match.id}]`,
-    )
+    .map((match, index) => {
+      const summary = match.summary?.trim();
+      return summary
+        ? `${index + 1}. ${match.title} [${match.id}]\n   > ${summary}`
+        : `${index + 1}. ${match.title} [${match.id}]`;
+    })
     .join('\n');
 }
 
@@ -132,7 +134,7 @@ function buildMatchContext({
   const lines = [
     `[gc-tree] USE FIRST: ${Math.min(matches.length, 3)} docs gc-branch="${gcBranch}" repo="${currentRepo || 'unscoped'}" scope=${repoScopeStatus}.`,
     formatMatches(matches),
-    `Rule: apply these docs before tools; if insufficient, open full doc: gctree resolve --id <id>`,
+    `Rule: summaries above are mandatory context — read them now. Only run \`gctree resolve --id <id>\` if a summary is insufficient for the task.`,
   ];
   if (repoScopeStatus === 'unmapped' && currentRepo) {
     lines.push(`Note: repo "${currentRepo}" is unmapped. If it belongs here, offer to run: gctree set-repo-scope --branch ${gcBranch} --include`);
