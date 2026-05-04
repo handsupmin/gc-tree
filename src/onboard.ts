@@ -1,0 +1,49 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+
+import { inferDocPlacement, renderDocMarkdown } from './markdown.js';
+import { branchDocsDir, DEFAULT_BRANCH } from './paths.js';
+import { ensureBranchExists, updateBranchMeta, writeIndexFromDocs } from './store.js';
+import type { GcTreeOnboardingInput } from './types.js';
+
+function docRelativePath(doc: GcTreeOnboardingInput['docs'][number]): string {
+  if (doc.slug?.includes('/')) return `${doc.slug.replace(/\.md$/i, '')}.md`;
+  const { category, slug } = inferDocPlacement(doc);
+  const fileBase = slug;
+  return category ? `${category}/${fileBase}.md` : `${fileBase}.md`;
+}
+
+export async function onboardBranch({
+  home,
+  input,
+  branch,
+}: {
+  home: string;
+  input: GcTreeOnboardingInput;
+  branch?: string;
+}): Promise<{ gc_branch: string; docs_written: string[]; index_path: string }> {
+  const targetBranch = branch || input.branch || DEFAULT_BRANCH;
+  await ensureBranchExists(home, targetBranch);
+  await rm(branchDocsDir(home, targetBranch), { recursive: true, force: true });
+  await mkdir(branchDocsDir(home, targetBranch), { recursive: true });
+
+  const written: string[] = [];
+  for (const doc of input.docs) {
+    const inferred = inferDocPlacement(doc);
+    if (inferred.isIndexDoc) continue;
+    const fullPath = join(branchDocsDir(home, targetBranch), docRelativePath(doc));
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, renderDocMarkdown(doc), 'utf8');
+    written.push(fullPath);
+  }
+
+  if (input.branchSummary?.trim()) {
+    await updateBranchMeta(home, targetBranch, { summary: input.branchSummary.trim() });
+  }
+  const index = await writeIndexFromDocs(home, targetBranch);
+  return {
+    gc_branch: targetBranch,
+    docs_written: written,
+    index_path: index.index_path,
+  };
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@handsupmin/gc-tree",
+  "version": "1.0.0",
+  "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
+  "type": "module",
+  "private": false,
+  "files": [
+    "dist",
+    "skills",
+    "scaffolds",
+    "docs",
+    "ascii-logo.txt",
+    "ascii-tree.txt",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "gctree": "dist/src/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "prepack": "npm run build",
+    "eval": "node --import tsx tests/eval/index.ts",
+    "eval:verbose": "node --import tsx tests/eval/index.ts --verbose",
+    "eval:multi-repo": "node --import tsx tests/eval/multi-repo.ts",
+    "eval:multi-repo:verbose": "node --import tsx tests/eval/multi-repo.ts --verbose",
+    "eval:autoresearch": "node --import tsx tests/eval/autoresearch.ts",
+    "eval:multilingual": "node --import tsx tests/eval/multilingual.ts",
+    "eval:multilingual:verbose": "node --import tsx tests/eval/multilingual.ts --verbose",
+    "eval:real-docs": "node --import tsx tests/eval/real-docs.ts",
+    "eval:real-docs:verbose": "node --import tsx tests/eval/real-docs.ts --verbose"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/handsupmin/gc-tree.git"
+  },
+  "homepage": "https://github.com/handsupmin/gc-tree",
+  "bugs": {
+    "url": "https://github.com/handsupmin/gc-tree/issues"
+  }
+}

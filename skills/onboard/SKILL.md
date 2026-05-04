@@ -1,0 +1,114 @@
+---
+name: onboard
+description: Launch guided onboarding for the active gc-branch through the configured provider.
+---
+
+# gctree Onboard
+
+Use this when a user wants to create global context for a product, company, or workstream in an empty gc-branch.
+
+## Rules
+- **language lock**: detect the language the user writes in from their very first response; use that language for every subsequent message without exception — numbered confirmations (1/2/3), hypotheses, summaries, and wrap-up must all be in the user's language; never revert to English mid-session regardless of what language appears in repo names, code comments, or source docs
+- ask one question at a time
+- keep the active gc-branch explicit
+- this is global-context onboarding, not repo-local onboarding
+- wait for the user's first answer before inspecting anything on your own
+- start by asking the user to paste or share organized docs or reference material if they have any; otherwise ask what kind of work they mainly do
+- do not start with a repo scan, a company guess, or a broad hypothesis built from directories like `~/sources`
+- do not ask for a full information dump up front
+- if docs, reference material, or reference paths are provided, read them first and summarize your understanding back before asking for more
+- ask whether that summary is correct before continuing, let the user correct it, and skip questions the docs already answered well
+- if no docs are available, continue from the user's own description first, then after the user's first answer, proactively inspect related repos, docs, paths, and workflows that appear materially connected
+- use bounded local inspection to confirm or challenge the user's description instead of waiting for them to enumerate every related repo manually
+- do not inspect every source file; prefer docs, READMEs, summaries, and a few pointed paths first
+- for every repo that can be inspected locally, go beyond READMEs: sample at least one controller or route handler, one service or use-case file, and one DTO or schema definition — extract concrete patterns directly from code rather than asking the user to describe them
+- every repo doc must include a `## Patterns` section documenting conventions visible in the actual code: naming conventions, validation style, error handling, response shape, dependency injection style, and any notable quirks
+- capture cross-repo workflows explicitly: for any domain action that spans repos (schema change, new feature, admin work, migration, deployment), document which repos are involved and in what order as a dedicated workflow doc in `docs/workflows/`
+- when you do present a hypothesis, keep it lightweight and only after the user has narrowed the scope
+- offer only these structured numbered confirmations:
+  1. This is mostly correct.
+  2. Some parts are wrong. Please explain what differs.
+  3. Most of this is wrong. Please explain the right frame.
+- if the user picks 2 or 3, ask only for the delta or right frame instead of restarting from scratch
+- ask whether anything important is still missing before continuing deeper
+- do not start by asking what one repo does
+- ask who the person is and what work they usually own only after the provided docs or description still leave real gaps
+- ask for multiple work types if needed, then multiple repos inside each work type if needed
+- once the user names concrete repositories, do not ask them to explain those repositories from scratch when recoverable local evidence exists
+- for each repository that can be inspected locally, read the strongest available evidence first, summarize your current understanding back, and have the user confirm with 1/2/3
+- when the inspected evidence already covers a repository well enough, ask only for missing deltas instead of re-asking role, paths, and workflow from scratch
+- only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence
+- ask about glossary terms and default verification commands before you finish
+- write compact source docs with a required `## Summary` section near the top; the `## Summary` must be actionable — write the actual patterns, commands, or constraints a developer needs, not a sentence about what the doc covers (bad: "이 문서는 X를 설명합니다"; good: "updateX: { ...dto } spread 필수. return plainToInstance(Res, result satisfies Res). 새 필드 추가 = DTO → 서비스 → 컨트롤러 순서."); the summary is injected into AI context before every task — if it reads like a table of contents entry, it is useless
+- prefer an encyclopedia-style context set with many small docs instead of a few broad docs
+- prefer category directories like `docs/role/`, `docs/repos/`, `docs/domain/`, `docs/workflows/`, `docs/conventions/`, and `docs/infra/`
+- prefer one concept, one repository, one workflow, or one convention per file when possible
+- treat `index.md` as the search surface — maximize keyword density; for each doc generate entries from: primary names, aliases, nicknames, field names, command names, acronyms, related terms a developer might search for; do NOT be conservative — more keywords = more chances of being found; fewer than 5 index entries per doc almost certainly means more are needed
+- generate index entries automatically from primary concept names, aliases, repository nicknames, and workflow labels when those are clear
+- split glossary docs when a concept is likely to be searched directly, needs more than a short definition, or carries workflow/constraint details; keep only low-value leftover terms in a shared glossary
+- index format: top-level `- docs/path.md` with indented `  - keyword` lines under it — groups all keywords per doc, eliminates path duplication
+- every doc in the JSON **must** have an explicit `category` field set to one of: `role`, `repos`, `domain`, `workflows`, `conventions`, `infra`, `verification` — never use `"general"` as a category; it is a fallback for missing data, not a valid category choice
+- use onboarding only for an empty gc-branch
+
+## Procedure
+1. Confirm which gc-branch should hold this context. Offer `main` as the default.
+2. If the gc-branch already contains docs, stop and direct the user to `gctree reset-gc-branch --branch <current-gc-branch> --yes` or `gctree update-global-context`.
+3. Wait for the user's first answer. Start by asking them to paste or share organized docs or reference material if they have any; otherwise ask what kind of work they mainly do.
+4. Do not scan broad directories like `~/sources`, guess the company/product from unrelated repos, or inspect every source file before the user narrows the scope.
+5. If docs, reference material, or reference paths are provided, read those first, summarize your understanding back, ask whether that summary is correct, and ask whether anything important is still missing before moving on.
+6. If no docs are available, continue from the user's own description first, then after the user's first answer, proactively inspect related repos, docs, paths, and workflows that appear materially connected.
+7. Use bounded local inspection to confirm or challenge the user's description instead of waiting for them to enumerate every relevant repo manually. Prefer docs, READMEs, summaries, and a few pointed paths first.
+8. Once the scope is narrow enough, present a lightweight hypothesis from the evidence you inspected, then ask the user to choose one:
+   1. This is mostly correct.
+   2. Some parts are wrong. Please explain what differs.
+   3. Most of this is wrong. Please explain the right frame.
+9. If the user picks 2 or 3, ask only for the delta or right frame instead of requesting a full rewrite of the context, then continue inspecting.
+10. When the inspected evidence already covers the basics well, confirm that and skip ahead to the missing parts instead of re-asking everything from scratch.
+12. Start from the person only when the provided docs or description still do not make that clear:
+   - who they are
+   - what kind of work they usually own or lead
+13. Ask for one core recurring work type only when the provided docs or description still do not make the work types clear, then ask whether there are more work types to capture.
+14. For each work type, ask how it shows up in day-to-day work.
+15. Only after that ask which repositories are involved in that work type, and ask whether there are more repositories for that same work type.
+16. Once the user names concrete repositories, do not ask them to explain those repositories from scratch when recoverable local evidence exists.
+17. For each repository that can be inspected locally:
+   a. Read README and any existing docs first to get orientation.
+   b. Then actively sample code — find and read at minimum: one controller or route handler, one service or use-case file, one DTO or schema definition. Use `find` to locate representative files if needed.
+   c. Extract concrete patterns from the sampled code: naming conventions, validation approach, error handling style, response shape, spread vs. assign patterns, decorator usage, etc.
+   d. Present a short hypothesis covering: repo role, important paths, cross-repo dependencies, workflow (e.g. "schema changes go to db-migration repo"), and the concrete patterns you observed in code.
+18. After each repository-level hypothesis, ask the user to choose only one:
+   - 1. This is mostly correct.
+   - 2. Some parts are wrong. Please explain what differs.
+   - 3. Most of this is wrong. Please explain the right frame.
+19. When the inspected evidence already covers the repository well enough, ask only for the missing deltas instead of re-asking role, paths, and workflow from scratch.
+20. Only ask open-ended repository questions when the needed detail cannot be recovered responsibly from local evidence.
+21. After the user's first answer, proactively inspect relevant local repos, docs, paths, and workflows whenever the connection is strong enough to test your current frame.
+21a. For each confirmed repo, write a `docs/conventions/<repo>.md` file that includes: repo role, key paths, and a `## Patterns` section with the concrete code patterns extracted from sampled files. Do not skip this file — it is what Claude will use instead of re-reading code on every task.
+21b. After covering individual repos, ask explicitly about cross-repo workflows. For each domain action the user names (e.g. "add a DB column", "add an admin endpoint", "deploy a feature"), document the exact sequence of repos and steps as a dedicated file in `docs/workflows/`. These workflow docs are the highest-value output of onboarding.
+22. Ask for company/domain glossary terms and acronyms that should become durable context.
+23. Ask which verification commands should be treated as defaults for this gc-branch.
+24. Structure the durable docs as a small encyclopedia: split by category directory, keep one concept/repo/workflow/convention per file when possible, and keep a short `## Summary` at the top of each doc.
+25. Render `index.md` grouped by category; within each category list each doc path as a top-level item with all its keywords as indented children. Maximize keywords per doc — aliases, related terms, command names, field names, workflow names.
+26. Launch the guided onboarding flow with `gctree onboard [--branch <name>]`.
+27. Before you claim onboarding is complete, run `gctree verify-onboarding --branch <current-gc-branch>` and inspect the real gc-tree files.
+28. Do not claim onboarding is complete unless verification returns `status: "complete"` **and** `quality_issues` is an empty array.
+29. If `quality_issues` is non-empty, do **not** tell the user onboarding is done. Self-heal immediately without prompting the user: (a) identify which docs have `category: "general"`, (b) assign each a correct category from `role | repos | domain | workflows | conventions | infra | verification` based on content, (c) rebuild the full onboarding JSON with every doc having an explicit `category` field — never use `"general"` as a category, (d) rerun `gctree __apply-onboarding --input <temp-file>`, (e) rerun `gctree verify-onboarding`, repeat until `quality_issues` is empty. If `status` is `"incomplete"` for other reasons, inspect the failures, heal them autonomously, and repeat.
+30. After the onboarding docs are written, explicitly list which durable docs were saved.
+30a. Run a coverage checklist before the final summary. Ask the user to confirm each area: (a) workflows — are key cross-repo action sequences documented? (b) conventions — are code patterns for each repo documented with a `## Patterns` section? (c) repos — is each relevant repo covered with role, paths, and cross-repo deps? (d) domain/glossary — are important acronyms and terms indexed with enough keywords? Present as a numbered checklist: "이 중 빠진 것이 있으면 말씀해주세요. 없으면 완료하겠습니다." If the user identifies gaps, gather and add before continuing. Do not skip this step.
+30b. Check index keyword density: read the `## Index Entries` section of each written doc. If any doc has fewer than 5 entries, add more — aliases, related terms, command names, field names, workflow names. Re-apply if entries were added.
+31. Summarize what you now understand from the saved docs instead of ending at the filenames alone.
+32. For that final summary, do not ask an open-ended validation question first. Present the summary and ask the user to choose only one:
+   - 1. This matches well enough.
+   - 2. Some parts are wrong. I will give the delta.
+   - 3. The frame is wrong. I will restate it.
+33. If the user picks 2 or 3 for the final summary, ask only for the correction delta or replacement frame, then update the saved understanding instead of restarting the interview.
+34. Ask whether anything else should be saved while the context is still fresh.
+35. After docs are confirmed correct, do not ask the user to recall repo-scope mappings from scratch. Propose the concrete repository candidates that appear materially tied to this gc-branch, then ask the user to choose only one:
+   - 1. Map these candidates.
+   - 2. Map these, but with corrections.
+   - 3. Skip repo mapping for now.
+36. If the user picks 2 for repo mapping, ask only for the repo delta to add or remove. If the user picks 1 or gives corrected candidates, navigate to each confirmed repo and run `gctree set-repo-scope --branch <gc-branch> --include`. Skip mapping only if the user picks 3 or explicitly says mapping is not needed.
+37. Do not finish onboarding while material related repos, workflows, or domain terms remain uninspected when recoverable local evidence is still available.
+38. Only after the related repos, workflows, glossary, default verification commands, repo-scope mapping, and verification gate are all complete should you wrap up.
+39. When you wrap up, explicitly tell the user three things in plain language: onboarding is finished; future durable changes can be made with `gctree update-global-context`, or directly through the provider command surface as Codex `$gc-update-global-context {prompt}` and Claude Code `/gc-update-global-context {prompt}`; and they can close this session and start fresh in a new one.
+40. Keep the current gc-branch explicit while gathering context.
