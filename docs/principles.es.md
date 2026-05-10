@@ -77,3 +77,12 @@ En la práctica, esto significa que se inyecta aproximadamente el 4 % del contex
 `gctree` almacena el contexto en archivos markdown simples que cualquier herramienta puede leer.
 Claude Code y Codex usan el mismo almacén subyacente. `gctree init` instala la superficie global de hooks orientada al proveedor, y `gctree scaffold` es la ruta de override local para un repositorio o workspace concreto.
 Agregar soporte para un nuevo proveedor significa escribir una nueva plantilla de scaffold — sin cambios en la lógica central de almacenamiento ni de resolve.
+
+## 9. Entradas de índice bilingües cuando el idioma del flujo no es inglés
+
+`gctree resolve` se basa en superposición de tokens — no traduce en el momento de la consulta.
+Un documento escrito solo en español (o coreano, japonés, chino) nunca coincidirá con una consulta en inglés, y viceversa.
+
+Para evitarlo, los flujos de onboarding y de actualización durable exigen **`## Index Entries` bilingües siempre que el idioma del flujo no sea inglés**. Cada término técnico, nombre de repositorio, nombre de workflow y concepto aparece tanto en el idioma del flujo como en inglés. Las siglas (JWT, EMPI, VCF, FHIR) se mantienen en su forma original en ambas listas.
+
+El cuerpo del documento y `## Summary` se mantienen en el idioma del flujo por legibilidad; la cobertura bilingüe vive en el índice, donde la recuperación la necesita. `## Summary` conserva los términos técnicos de nombre propio (Stripe, MLflow, JWT, FHIR, Kubernetes) en su idioma original y agrega una paráfrasis en el idioma del flujo solo cuando el significado no es obvio — p. ej. `invalidación de token JWT (token invalidation)`.

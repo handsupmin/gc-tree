@@ -38,9 +38,17 @@ function countTokenMatches(text: string, tokens: string[]): number {
   const haystack = String(text || '').toLowerCase();
   return tokens.reduce((sum, token) => {
     try {
-      return sum + (makeTokenRegex(token).test(haystack) ? 1 : 0);
+      if (makeTokenRegex(token).test(haystack)) return sum + 1;
+      // Prefix-stem fallback for long ASCII tokens. Conservative: token must be
+      // >=9 chars and the prefix is 7 chars, so words like "Suspense" (8 chars)
+      // are skipped and cannot collide with unrelated stems like "suspension".
+      // Catches persists/persistence, reconciled/reconciliation, replicated/replication.
+      if (token.length >= 9 && /^[a-z]+$/.test(token)) {
+        const stem = token.slice(0, 7);
+        if (new RegExp(`\\b${stem}[a-z]*\\b`).test(haystack)) return sum + 1;
+      }
+      return sum;
     } catch {
-      // Regex construction failed (e.g. special chars in token) — fall back to substring
       return sum + (haystack.includes(token) ? 1 : 0);
     }
   }, 0);

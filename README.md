@@ -137,15 +137,18 @@ The moment you have multiple repos, projects, or workstreams:
 
 ## Validated performance
 
-Tested against synthetic multi-domain fixtures and Korean + English mixed queries:
+Two-fixture eval — **DEV** is visible to the tuning loop, **HOLDOUT** is reserved for honest reporting (different domains, hard negatives, paraphrase, mixed Korean+English queries). 38 labeled cases across 8 categories: exact-keyword, paraphrase, glossary, mixed-language, same-domain distractor, same-domain negative, cross-branch negative.
 
-| Metric                                       | Result           |
-| -------------------------------------------- | ---------------- |
-| Recall — relevant queries find the right doc | **100%** (16/16) |
-| Precision — irrelevant queries return empty  | **80%** (4/5)    |
-| F1 score                                     | **88.9%**        |
-| Tokens injected per query vs. total context  | **~4%**          |
-| Works with mixed Korean + English queries    | ✅               |
+| Metric                                          | DEV          | HOLDOUT      |
+| ----------------------------------------------- | ------------ | ------------ |
+| recall@1                                        | **100.0%**   | **85.7%**    |
+| recall@3                                        | **100.0%**   | **92.9%**    |
+| MRR                                             | **100.0%**   | **89.3%**    |
+| Negative precision (irrelevant queries → empty) | **100.0%**   | **100.0%**   |
+| Tokens injected per query vs. total context     | **~7%**      | **~13%**     |
+| Mixed-script queries (Korean + English)         | ✅           | ✅           |
+
+Generalization gap (DEV − HOLDOUT) = **10.0 pts**. The HOLDOUT fixture is reserved for reporting only — the autoresearch loop never tunes against it. Reproduce with `npm run eval:ranked`; see [`tests/eval/RUBRIC.md`](https://github.com/handsupmin/gc-tree/blob/main/tests/eval/RUBRIC.md) for the scoring rules.
 
 ---
 

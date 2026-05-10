@@ -137,15 +137,18 @@ En el momento en que tienes múltiples repos, proyectos o workstreams:
 
 ## Rendimiento validado
 
-Probado con fixtures sintéticos multidominio y consultas mixtas en español e inglés:
+Evaluación con dos fixtures — **DEV** es visible para el bucle de tuning, **HOLDOUT** se reserva para reporte honesto (dominios distintos, negativos difíciles, paráfrasis, consultas mixtas español + inglés). 38 casos etiquetados en 8 categorías: exact-keyword, paraphrase, glossary, mixed-language, same-domain distractor, same-domain negative, cross-branch negative.
 
-| Métrica                                                      | Resultado        |
-| ------------------------------------------------------------ | ---------------- |
-| Recall — consultas relevantes que encuentran el doc correcto | **100%** (16/16) |
-| Precision — consultas irrelevantes que devuelven vacío       | **80%** (4/5)    |
-| F1 score                                                     | **88.9%**        |
-| Tokens inyectados por consulta vs. contexto total            | **~4%**          |
-| Compatible con consultas mixtas en varios idiomas            | ✅               |
+| Métrica                                            | DEV          | HOLDOUT      |
+| -------------------------------------------------- | ------------ | ------------ |
+| recall@1                                           | **100.0%**   | **85.7%**    |
+| recall@3                                           | **100.0%**   | **92.9%**    |
+| MRR                                                | **100.0%**   | **89.3%**    |
+| Consultas irrelevantes → vacío (neg. precision)    | **100.0%**   | **100.0%**   |
+| Tokens inyectados por consulta vs. contexto total  | **~7%**      | **~13%**     |
+| Consultas con scripts mixtos (varios idiomas)      | ✅           | ✅           |
+
+Brecha de generalización (DEV − HOLDOUT) = **10.0 pts**. El fixture HOLDOUT se reserva solo para reporte — el bucle de autoresearch nunca se ajusta contra él. Reproducible con `npm run eval:ranked`; reglas de scoring en [`tests/eval/RUBRIC.md`](https://github.com/handsupmin/gc-tree/blob/main/tests/eval/RUBRIC.md).
 
 ---
 

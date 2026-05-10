@@ -77,3 +77,12 @@ In practice this means roughly 4% of total stored context is injected per query.
 `gctree` stores context in plain markdown files that any tool can read.
 Claude Code and Codex both use the same underlying store. `gctree init` installs the global provider-facing hook surface, and `gctree scaffold` is the local override path for one repository or workspace.
 Adding support for a new provider means writing a new scaffold template — no changes to the core storage or resolve logic.
+
+## 9. Bilingual index entries when the workflow language is not English
+
+`gctree resolve` is token-overlap based — it does not translate at query time.
+A doc written purely in Korean (or Japanese, Chinese, Spanish, etc.) will silently miss any English query, and vice versa.
+
+The onboarding and durable-update flows enforce **bilingual `## Index Entries`** whenever the workflow language is not English. Every technical term, repo name, workflow name, and concept appears in BOTH the workflow language and English. Acronyms (JWT, EMPI, VCF, FHIR) stay in their original form in both lists.
+
+Doc body and `## Summary` stay in the workflow language for readability; bilingual coverage lives in the index, where retrieval needs it. `## Summary` preserves canonical proper-noun technical terms (Stripe, MLflow, JWT, FHIR, Kubernetes) in their original language and adds a workflow-language paraphrase only when the meaning is non-obvious — e.g. `JWT 토큰 무효화 (token invalidation)`.

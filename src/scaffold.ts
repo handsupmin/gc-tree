@@ -139,6 +139,7 @@ function renderUpdateProtocol(): string[] {
     '   - `docs/role/<name>.md` — team member roles, responsibilities',
     '4. Write a `## Summary` that is actionable: actual patterns/commands/constraints a developer needs — not a sentence about what the doc covers.',
     '5. Include a `## Index Entries` section in each doc\'s content with many keywords: aliases, related terms, command names, field names, workflow names, acronyms. More entries = more chances of being found by `gctree resolve`. Fewer than 5 entries almost always means more are needed.',
+    '5a. **Bilingual index entries**: when the workflow language is not English, every doc\'s `## Index Entries` MUST contain BOTH the workflow language AND English forms for every technical term, repo name, workflow name, and concept. gc-tree retrieval is token-overlap based and cannot translate at query time, so a Korean-language doc that omits English aliases will silently miss any English query (and vice versa). Acronyms (JWT, EMPI, VCF) stay in original form in both. Body and `## Summary` stay in the workflow language; bilingual coverage lives in the index.',
     '6. Create a temporary JSON file with the updated `docs[]` and run `gctree __apply-update --input <temp-file>`.',
     '7. Run `gctree verify-onboarding --branch <gc-branch>` and inspect the output:',
     '   - Check that every updated doc appears in the verified doc list.',

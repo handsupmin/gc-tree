@@ -77,3 +77,12 @@ Onboarding 仅适用于空的 gc-branch。
 `gctree` 将上下文存储在任何工具都能读取的纯 Markdown 文件中。
 Claude Code 和 Codex 使用同一个底层存储。`gctree init` 安装全局 provider hook 表面，`gctree scaffold` 则是针对单个仓库或工作区的本地 override 路径。
 添加对新提供商的支持，意味着编写一个新的 scaffold 模板——无需对核心存储或 resolve 逻辑做任何修改。
+
+## 9. 工作流语言不是英文时，索引条目必须双语
+
+`gctree resolve` 基于 token 重叠匹配——查询时不做翻译。
+仅用中文撰写的文档不会匹配任何英文查询，反之亦然。
+
+为防止这种漏检，onboarding 和 durable 更新流程在 **工作流语言不是英文时强制 `## Index Entries` 双语**。每个技术术语、仓库名、工作流名和概念都同时列出工作流语言和英文。缩写（JWT、EMPI、VCF、FHIR）在两侧都保持原形。
+
+文档正文和 `## Summary` 保持工作流语言以便阅读；双语覆盖只放在检索发生的索引中。`## Summary` 保留专有名词技术术语（Stripe、MLflow、JWT、FHIR、Kubernetes）的原文形式，仅在含义不明显时附上工作流语言的同义表达。例如：`JWT 令牌失效 (token invalidation)`。
