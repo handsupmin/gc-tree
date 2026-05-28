@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -68,17 +69,91 @@ test('init scaffolds Codex and Claude hook configs', async () => {
     const result = await runCli(['init', '--home', home, '--provider', 'both', '--target', targetDir]);
     assert.equal(result.code, 0, result.stderr);
 
-    const codexHooks = await import('node:fs/promises').then((fs) =>
-      fs.readFile(join(home, 'global-codex', 'hooks.json'), 'utf8'),
-    );
-    const claudeHooks = await import('node:fs/promises').then((fs) =>
-      fs.readFile(join(home, 'global-claude', 'hooks', 'hooks.json'), 'utf8'),
-    );
+    const codexHooks = await readFile(join(home, 'global-codex', 'hooks.json'), 'utf8');
+    const claudeSettings = await readFile(join(home, 'global-claude', 'settings.json'), 'utf8');
 
     assert.match(codexHooks, /UserPromptSubmit/);
     assert.match(codexHooks, /gctree __hook --event UserPromptSubmit/);
-    assert.match(claudeHooks, /SessionStart/);
-    assert.match(claudeHooks, /gctree __hook --event SessionStart/);
+    assert.match(claudeSettings, /SessionStart/);
+    assert.match(claudeSettings, /gctree __hook --event SessionStart/);
+    assert.doesNotMatch(claudeSettings, /hooks\/hooks\.json/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(targetDir, { recursive: true, force: true });
+  }
+});
+
+test('init merges Claude hooks into settings.json without overwriting unrelated hooks', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-hooks-home-'));
+  const targetDir = await mkdtemp(join(tmpdir(), 'gctree-hooks-target-'));
+
+  try {
+    const claudeRoot = join(home, 'global-claude');
+    await mkdir(join(claudeRoot, 'hooks'), { recursive: true });
+    await writeFile(
+      join(claudeRoot, 'settings.json'),
+      JSON.stringify(
+        {
+          hooks: {
+            SessionStart: [
+              {
+                matcher: '',
+                hooks: [{ type: 'command', command: 'other-tool session-start' }],
+              },
+            ],
+            UserPromptSubmit: [
+              {
+                matcher: '',
+                hooks: [{ type: 'command', command: 'other-tool prompt-submit', timeout: 3 }],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
+      join(claudeRoot, 'hooks', 'hooks.json'),
+      JSON.stringify(
+        {
+          hooks: {
+            SessionStart: [
+              {
+                matcher: '*',
+                hooks: [{ type: 'command', command: 'gctree __hook --event SessionStart' }],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    const result = await runCli(['init', '--home', home, '--provider', 'claude-code', '--target', targetDir]);
+    assert.equal(result.code, 0, result.stderr);
+
+    const settings = JSON.parse(await readFile(join(claudeRoot, 'settings.json'), 'utf8')) as any;
+    assert.equal(
+      settings.hooks.SessionStart[0].hooks.some((entry: any) => entry.command === 'other-tool session-start'),
+      true,
+    );
+    assert.equal(
+      settings.hooks.SessionStart[0].hooks.some((entry: any) => entry.command === 'gctree __hook --event SessionStart' && entry.metadata?.owner === 'gctree'),
+      true,
+    );
+    assert.equal(
+      settings.hooks.UserPromptSubmit[0].hooks.some((entry: any) => entry.command === 'other-tool prompt-submit'),
+      true,
+    );
+    assert.equal(
+      settings.hooks.UserPromptSubmit[0].hooks.some((entry: any) => entry.command === 'gctree __hook --event UserPromptSubmit' && entry.metadata?.owner === 'gctree'),
+      true,
+    );
+    assert.equal(existsSync(join(claudeRoot, 'hooks', 'hooks.json')), false);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });

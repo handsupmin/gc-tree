@@ -181,7 +181,7 @@ AGENTS.md                                  ← gctree snippet appended to agent 
 **Global files for Claude Code (`gctree init`):**
 
 ```
-~/.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit auto-resolve hooks
+~/.claude/settings.json                            ← SessionStart/UserPromptSubmit auto-resolve hooks block
 ~/.claude/hooks/gctree-session-start.md            ← session-start fallback note
 ~/.claude/commands/gc-resolve-context.md           ← resolve slash command
 ~/.claude/commands/gc-onboard.md                   ← onboard slash command
@@ -190,9 +190,10 @@ AGENTS.md                                  ← gctree snippet appended to agent 
 
 **Local override files for `gctree scaffold --host claude-code`:**
 
+Claude Code hooks remain in the global `~/.claude/settings.json`; local scaffolding does not write a duplicate hook file.
+
 ```
 CLAUDE.md                                        ← gctree snippet appended
-.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit auto-resolve hooks
 .claude/hooks/gctree-session-start.md            ← session-start fallback note
 .claude/commands/gc-resolve-context.md           ← resolve slash command
 .claude/commands/gc-onboard.md                   ← onboard slash command

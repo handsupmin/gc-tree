@@ -5,6 +5,8 @@ import {
   gctreeGlobalHookJsonTarget,
   gctreeGlobalRoot,
   gctreeHookJsonTargets,
+  gctreeLegacyClaudeHooksJsonTarget,
+  gctreeLegacyLocalClaudeHooksJsonTarget,
   gctreeManagedMarkdownTargets,
   mergeGcTreeHooksJson,
   unmergeGcTreeHooksJson,
@@ -208,11 +210,15 @@ function renderClaudeHooksJson(): string {
       hooks: {
         SessionStart: [
           {
-            matcher: '*',
+            matcher: '',
             hooks: [
               {
                 type: 'command',
                 command: 'gctree __hook --event SessionStart',
+                metadata: {
+                  owner: 'gctree',
+                  managed_by: '@handsupmin/gc-tree',
+                },
                 timeout: 10,
               },
             ],
@@ -220,11 +226,15 @@ function renderClaudeHooksJson(): string {
         ],
         UserPromptSubmit: [
           {
-            matcher: '*',
+            matcher: '',
             hooks: [
               {
                 type: 'command',
                 command: 'gctree __hook --event UserPromptSubmit',
+                metadata: {
+                  owner: 'gctree',
+                  managed_by: '@handsupmin/gc-tree',
+                },
                 timeout: 10,
               },
             ],
@@ -307,7 +317,7 @@ export function scaffoldFiles(host: GcTreeHost, scope: GcTreeScaffoldScope = 'lo
 
   if (scope === 'global') {
     return [
-      { path: 'hooks/hooks.json', content: renderClaudeHooksJson() },
+      { path: 'settings.json', content: renderClaudeHooksJson() },
       { path: 'hooks/gctree-session-start.md', content: renderClaudeSessionStartHook() },
       { path: 'commands/gc-resolve-context.md', content: renderClaudeResolveCommand() },
       { path: 'commands/gc-onboard.md', content: renderClaudeOnboardCommand() },
@@ -317,7 +327,7 @@ export function scaffoldFiles(host: GcTreeHost, scope: GcTreeScaffoldScope = 'lo
 
   return [
     { path: 'CLAUDE.md', content: renderClaudeSnippet() },
-    { path: '.claude/hooks/hooks.json', content: renderClaudeHooksJson() },
+    { path: '.claude/settings.json', content: renderClaudeHooksJson() },
     { path: '.claude/hooks/gctree-session-start.md', content: renderClaudeSessionStartHook() },
     { path: '.claude/commands/gc-resolve-context.md', content: renderClaudeResolveCommand() },
     { path: '.claude/commands/gc-onboard.md', content: renderClaudeOnboardCommand() },
@@ -358,14 +368,20 @@ export async function scaffoldHostIntegration({
     hookPath = isCodex ? hookTargets.codex : hookTargets.claude;
 
     if (!isCodex) {
-      const oldHooksPath = join(resolvedTargetDir, '.claude', 'settings.json');
-      await unmergeGcTreeHooksJson(oldHooksPath);
+      const legacyHooksPath = gctreeLegacyLocalClaudeHooksJsonTarget(resolvedTargetDir);
+      const legacyStatus = await unmergeGcTreeHooksJson(legacyHooksPath);
+      if (legacyStatus !== 'missing') {
+        written.push(legacyHooksPath);
+      }
     }
   } else {
     hookPath = gctreeGlobalHookJsonTarget(host);
     if (!isCodex) {
-      const oldHooksPath = join(resolvedTargetDir, 'settings.json');
-      await unmergeGcTreeHooksJson(oldHooksPath);
+      const legacyHooksPath = gctreeLegacyClaudeHooksJsonTarget(resolvedTargetDir);
+      const legacyStatus = await unmergeGcTreeHooksJson(legacyHooksPath);
+      if (legacyStatus !== 'missing') {
+        written.push(legacyHooksPath);
+      }
     }
   }
 

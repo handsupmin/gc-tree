@@ -179,8 +179,9 @@ test('init supports provider mode both, scaffolds both runtimes, and stores pref
     assert.match(await readFile(join(targetDir, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
     assert.equal(existsSync(join(targetDir, '.codex', 'hooks.json')), false);
     assert.equal(existsSync(join(targetDir, '.claude', 'hooks', 'hooks.json')), false);
+    assert.equal(existsSync(join(targetDir, '.claude', 'settings.json')), false);
     assert.match(await readFile(join(home, 'global-codex', 'hooks.json'), 'utf8'), /SessionStart/);
-    assert.match(await readFile(join(home, 'global-claude', 'hooks', 'hooks.json'), 'utf8'), /UserPromptSubmit/);
+    assert.match(await readFile(join(home, 'global-claude', 'settings.json'), 'utf8'), /UserPromptSubmit/);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(targetDir, { recursive: true, force: true });
@@ -498,7 +499,8 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.equal(parsed.written.length, 10);
     assert.match(await readFile(join(claudeTarget, 'CLAUDE.md'), 'utf8'), /gc-branch/i);
     assert.equal(existsSync(join(claudeTarget, '.claude', 'hooks', 'hooks.json')), false);
-    assert.match(await readFile(join(home, 'global-claude', 'hooks', 'hooks.json'), 'utf8'), /gctree __hook --event SessionStart/);
+    assert.equal(existsSync(join(claudeTarget, '.claude', 'settings.json')), false);
+    assert.match(await readFile(join(home, 'global-claude', 'settings.json'), 'utf8'), /gctree __hook --event SessionStart/);
     const claudeOnboardCommand = await readFile(join(claudeTarget, '.claude', 'commands', 'gc-onboard.md'), 'utf8');
     assert.match(claudeOnboardCommand, /gc-branch/i);
     assert.match(claudeOnboardCommand, /wait for the user's first answer/i);

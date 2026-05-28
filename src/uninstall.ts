@@ -5,6 +5,8 @@ import {
   gctreeGlobalHookJsonTarget,
   gctreeGlobalRoot,
   gctreeHookJsonTargets,
+  gctreeLegacyClaudeHooksJsonTarget,
+  gctreeLegacyLocalClaudeHooksJsonTarget,
   gctreeManagedMarkdownTargets,
   pathExists,
   removeManagedMarkdownBlock,
@@ -51,6 +53,14 @@ async function uninstallHostScaffold({
   const hookPath = scope === 'local'
     ? (isCodex ? gctreeHookJsonTargets(targetDir).codex : gctreeHookJsonTargets(targetDir).claude)
     : gctreeGlobalHookJsonTarget(host);
+  const hookPaths = isCodex
+    ? [hookPath]
+    : [
+        hookPath,
+        scope === 'local'
+          ? gctreeLegacyLocalClaudeHooksJsonTarget(targetDir)
+          : gctreeLegacyClaudeHooksJsonTarget(targetDir),
+      ];
 
   if (managedMarkdownPath) {
     const markdownStatus = await removeManagedMarkdownBlock({
@@ -63,15 +73,17 @@ async function uninstallHostScaffold({
     }
   }
 
-  const hookStatus = await unmergeGcTreeHooksJson(hookPath);
-  if (hookStatus !== 'missing') {
-    removed.push(hookPath);
-    await pruneEmptyParents(hookPath, targetDir);
+  for (const candidate of [...new Set(hookPaths)]) {
+    const hookStatus = await unmergeGcTreeHooksJson(candidate);
+    if (hookStatus !== 'missing') {
+      removed.push(candidate);
+      await pruneEmptyParents(candidate, targetDir);
+    }
   }
 
   const extraTargets = scaffoldFiles(host, scope)
     .map((file) => join(targetDir, file.path))
-    .filter((path) => path !== hookPath && path !== managedMarkdownPath);
+    .filter((path) => !hookPaths.includes(path) && path !== managedMarkdownPath);
 
   for (const target of [...new Set(extraTargets)]) {
     if (!(await pathExists(target))) continue;

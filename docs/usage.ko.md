@@ -181,7 +181,7 @@ AGENTS.md                                  ← 에이전트 지시사항에 gctr
 **Claude Code 전역 파일 (`gctree init`):**
 
 ```
-~/.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit 자동 resolve 훅
+~/.claude/settings.json                            ← SessionStart/UserPromptSubmit 자동 resolve 훅 블록
 ~/.claude/hooks/gctree-session-start.md            ← 세션 시작 fallback 메모
 ~/.claude/commands/gc-resolve-context.md           ← resolve 슬래시 명령
 ~/.claude/commands/gc-onboard.md                   ← onboard 슬래시 명령
@@ -190,9 +190,10 @@ AGENTS.md                                  ← 에이전트 지시사항에 gctr
 
 **`gctree scaffold --host claude-code` 로컬 override 파일:**
 
+Claude Code 훅은 전역 `~/.claude/settings.json`에 유지됩니다. 로컬 scaffold는 중복 훅 파일을 쓰지 않습니다.
+
 ```
 CLAUDE.md                                        ← gctree 스니펫 추가
-.claude/hooks/hooks.json                         ← SessionStart/UserPromptSubmit 자동 resolve 훅
 .claude/hooks/gctree-session-start.md            ← 세션 시작 fallback 메모
 .claude/commands/gc-resolve-context.md           ← resolve 슬래시 명령
 .claude/commands/gc-onboard.md                   ← onboard 슬래시 명령

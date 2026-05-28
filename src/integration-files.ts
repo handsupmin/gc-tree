@@ -86,14 +86,15 @@ export async function removeManagedMarkdownBlock({
   return 'removed';
 }
 
-function buildHookEntry(event: HookEventName) {
+function buildHookEntry(event: HookEventName, target: 'codex' | 'claude-code') {
   return {
     type: 'command',
     command: `gctree __hook --event ${event}`,
     metadata: {
       owner: 'gctree',
+      managed_by: '@handsupmin/gc-tree',
     },
-    ...(event === 'UserPromptSubmit' ? { timeout: 10 } : {}),
+    ...(target === 'claude-code' || event === 'UserPromptSubmit' ? { timeout: 10 } : {}),
   } as Record<string, unknown>;
 }
 
@@ -122,21 +123,29 @@ function mergeHookJson(raw: string | null, target: 'codex' | 'claude-code'): str
 
   const upsertGroup = (event: HookEventName, matcher?: string) => {
     const groups = ensureEventArray(event);
-    let group = groups.find((candidate) => {
-      const hooksArr = Array.isArray(candidate?.hooks) ? candidate.hooks : [];
-      return hooksArr.some((entry: Record<string, unknown>) => isGcTreeHook(ensureObject(entry), event));
+    hooks[event] = groups
+      .map((candidate) => {
+        const group = ensureObject(candidate);
+        const hooksArr = Array.isArray(group.hooks) ? group.hooks : [];
+        const nextHooks = hooksArr.filter((entry: Record<string, unknown>) => !isGcTreeHook(ensureObject(entry), event));
+        return nextHooks.length > 0 ? { ...group, hooks: nextHooks } : null;
+      })
+      .filter(Boolean);
+
+    let group = hooks[event].find((candidate: Record<string, unknown>) => {
+      if (matcher === undefined) return candidate.matcher === undefined;
+      return String(candidate.matcher ?? '') === matcher;
     });
     if (!group) {
-      group = matcher ? { matcher, hooks: [] } : { hooks: [] };
-      groups.push(group);
+      group = matcher !== undefined ? { matcher, hooks: [] } : { hooks: [] };
+      hooks[event].push(group);
     }
     if (!Array.isArray(group.hooks)) group.hooks = [];
-    group.hooks = group.hooks.filter((entry: Record<string, unknown>) => !isGcTreeHook(ensureObject(entry), event));
-    group.hooks.push(buildHookEntry(event));
+    group.hooks.push(buildHookEntry(event, target));
   };
 
-  upsertGroup(sessionEvent, target === 'codex' ? 'startup|resume' : '*');
-  upsertGroup(promptEvent, target === 'codex' ? undefined : '*');
+  upsertGroup(sessionEvent, target === 'codex' ? 'startup|resume' : '');
+  upsertGroup(promptEvent, target === 'codex' ? undefined : '');
 
   return `${JSON.stringify({ ...parsed, hooks }, null, 2)}\n`;
 }
@@ -204,7 +213,7 @@ export function gctreeManagedMarkdownTargets(targetDir: string) {
 export function gctreeHookJsonTargets(targetDir: string) {
   return {
     codex: join(targetDir, '.codex', 'hooks.json'),
-    claude: join(targetDir, '.claude', 'hooks', 'hooks.json'),
+    claude: join(targetDir, '.claude', 'settings.json'),
   };
 }
 
@@ -217,5 +226,13 @@ export function gctreeGlobalRoot(host: 'codex' | 'claude-code'): string {
 
 export function gctreeGlobalHookJsonTarget(host: 'codex' | 'claude-code'): string {
   const root = gctreeGlobalRoot(host);
-  return host === 'codex' ? join(root, 'hooks.json') : join(root, 'hooks', 'hooks.json');
+  return host === 'codex' ? join(root, 'hooks.json') : join(root, 'settings.json');
+}
+
+export function gctreeLegacyClaudeHooksJsonTarget(targetDir: string): string {
+  return join(targetDir, 'hooks', 'hooks.json');
+}
+
+export function gctreeLegacyLocalClaudeHooksJsonTarget(targetDir: string): string {
+  return join(targetDir, '.claude', 'hooks', 'hooks.json');
 }

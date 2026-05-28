@@ -181,7 +181,7 @@ AGENTS.md                                  ← gctree 代码片段追加到 agen
 **Claude Code 全局文件（`gctree init`）：**
 
 ```
-~/.claude/hooks/hooks.json                         ← SessionStart / UserPromptSubmit 自动 resolve hook
+~/.claude/settings.json                            ← SessionStart / UserPromptSubmit 自动 resolve hook 块
 ~/.claude/hooks/gctree-session-start.md            ← 会话启动 fallback 说明
 ~/.claude/commands/gc-resolve-context.md           ← resolve 斜杠命令
 ~/.claude/commands/gc-onboard.md                   ← onboard 斜杠命令
@@ -190,9 +190,10 @@ AGENTS.md                                  ← gctree 代码片段追加到 agen
 
 **`gctree scaffold --host claude-code` 的本地 override 文件：**
 
+Claude Code hook 保留在全局 `~/.claude/settings.json` 中；本地 scaffold 不写入重复的 hook 文件。
+
 ```
 CLAUDE.md                                        ← gctree 代码片段追加
-.claude/hooks/hooks.json                         ← SessionStart / UserPromptSubmit 自动 resolve hook
 .claude/hooks/gctree-session-start.md            ← 会话启动 fallback 说明
 .claude/commands/gc-resolve-context.md           ← resolve 斜杠命令
 .claude/commands/gc-onboard.md                   ← onboard 斜杠命令
