@@ -7,11 +7,148 @@ import { branchDocsDir, DEFAULT_BRANCH, settingsPath } from './paths.js';
 import { ensureBranchExists, updateBranchMeta, writeIndexFromDocs } from './store.js';
 import type { GcTreeContextUpdateInput, GcTreeSettings, ScaffoldedHostRecord } from './types.js';
 
+const UPDATE_ROOT_KEYS = new Set(['branch', 'branchSummary', 'docs']);
+const UPDATE_DOC_KEYS = new Set(['title', 'slug', 'summary', 'body', 'tags', 'category', 'indexLabel', 'indexEntries']);
+const VALID_UPDATE_CATEGORIES = new Set(['role', 'repos', 'domain', 'workflows', 'conventions', 'infra', 'verification']);
+const LEGACY_DOC_FIELD_HINTS: Record<string, string> = {
+  id: 'use `slug` instead, without `docs/` or `.md`',
+  path: 'use `slug` instead, without `docs/` or `.md`',
+  content: 'use `body` instead, and put search terms in `indexEntries`',
+};
+
 function docRelativePath(doc: GcTreeContextUpdateInput['docs'][number]): string {
   if (doc.slug?.includes('/')) return `${doc.slug.replace(/\.md$/i, '')}.md`;
   const fileBase = slugify(doc.slug || doc.indexLabel || doc.title);
   const category = doc.category ? slugify(doc.category) : '';
   return category ? `${category}/${fileBase}.md` : `${fileBase}.md`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function unknownKeys(record: Record<string, unknown>, allowed: Set<string>): string[] {
+  return Object.keys(record).filter((key) => !allowed.has(key));
+}
+
+function requireNonEmptyString(record: Record<string, unknown>, key: string, subject: string): string {
+  const value = record[key];
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`Invalid gctree update input: ${subject}.${key} must be a non-empty string.`);
+  }
+  return value.trim();
+}
+
+function validateOptionalString(record: Record<string, unknown>, key: string, subject: string): string | undefined {
+  const value = record[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`Invalid gctree update input: ${subject}.${key} must be a non-empty string when provided.`);
+  }
+  return value.trim();
+}
+
+function validateOptionalStringArray(record: Record<string, unknown>, key: string, subject: string): string[] | undefined {
+  const value = record[key];
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new Error(`Invalid gctree update input: ${subject}.${key} must be an array of strings when provided.`);
+  }
+  const entries = value.map((entry) => entry.trim()).filter(Boolean);
+  if (entries.length === 0) {
+    throw new Error(`Invalid gctree update input: ${subject}.${key} must contain at least one non-empty string when provided.`);
+  }
+  return entries;
+}
+
+function validateUpdateSlug(slug: string, subject: string): void {
+  if (slug.startsWith('docs/')) {
+    throw new Error(
+      `Invalid gctree update input: ${subject}.slug must omit the docs/ prefix. Example: use "conventions/example" instead of "docs/conventions/example.md".`,
+    );
+  }
+  if (slug.endsWith('.md')) {
+    throw new Error(
+      `Invalid gctree update input: ${subject}.slug must omit the .md suffix. Example: use "conventions/example" instead of "conventions/example.md".`,
+    );
+  }
+  if (slug.startsWith('/') || slug.includes('\\') || slug.split('/').includes('..')) {
+    throw new Error(`Invalid gctree update input: ${subject}.slug must be a relative doc slug without absolute paths, backslashes, or "..".`);
+  }
+  if (slug.includes('/')) {
+    const category = slug.split('/')[0]!;
+    if (!VALID_UPDATE_CATEGORIES.has(category)) {
+      throw new Error(
+        `Invalid gctree update input: ${subject}.slug category must be one of ${[...VALID_UPDATE_CATEGORIES].join(', ')}.`,
+      );
+    }
+  }
+}
+
+function validateUpdateBody(body: string, subject: string): void {
+  if (/^\s*#\s+/.test(body)) {
+    throw new Error(`Invalid gctree update input: ${subject}.body must not include the top-level markdown title; use the title field.`);
+  }
+  if (/^## Summary\b/m.test(body)) {
+    throw new Error(`Invalid gctree update input: ${subject}.body must not include ## Summary; use the summary field.`);
+  }
+  if (/^## Index Entries\b/m.test(body)) {
+    throw new Error(`Invalid gctree update input: ${subject}.body must not include ## Index Entries; use the indexEntries array.`);
+  }
+}
+
+function validateContextUpdateInput(input: unknown): asserts input is GcTreeContextUpdateInput {
+  if (!isRecord(input)) {
+    throw new Error('Invalid gctree update input: root must be an object with docs[].');
+  }
+
+  const extraRootKeys = unknownKeys(input, UPDATE_ROOT_KEYS);
+  if (extraRootKeys.length > 0) {
+    throw new Error(`Invalid gctree update input: unsupported root field(s): ${extraRootKeys.join(', ')}.`);
+  }
+
+  validateOptionalString(input, 'branch', 'input');
+  validateOptionalString(input, 'branchSummary', 'input');
+
+  if (!Array.isArray(input.docs) || input.docs.length === 0) {
+    throw new Error('Invalid gctree update input: docs must be a non-empty array.');
+  }
+
+  input.docs.forEach((doc, index) => {
+    const subject = `docs[${index}]`;
+    if (!isRecord(doc)) {
+      throw new Error(`Invalid gctree update input: ${subject} must be an object.`);
+    }
+
+    const extraDocKeys = unknownKeys(doc, UPDATE_DOC_KEYS);
+    if (extraDocKeys.length > 0) {
+      const hints = extraDocKeys
+        .map((key) => LEGACY_DOC_FIELD_HINTS[key])
+        .filter((hint): hint is string => Boolean(hint));
+      const suffix = hints.length > 0 ? ` ${[...new Set(hints)].join('; ')}.` : '';
+      throw new Error(`Invalid gctree update input: ${subject} has unsupported field(s): ${extraDocKeys.join(', ')}.${suffix}`);
+    }
+
+    requireNonEmptyString(doc, 'title', subject);
+    const slug = requireNonEmptyString(doc, 'slug', subject);
+    requireNonEmptyString(doc, 'summary', subject);
+    const body = requireNonEmptyString(doc, 'body', subject);
+    const category = validateOptionalString(doc, 'category', subject);
+    validateOptionalString(doc, 'indexLabel', subject);
+    validateOptionalStringArray(doc, 'tags', subject);
+    const indexEntries = validateOptionalStringArray(doc, 'indexEntries', subject);
+    if (!indexEntries) {
+      throw new Error(`Invalid gctree update input: ${subject}.indexEntries must be a non-empty array of search terms.`);
+    }
+    validateUpdateSlug(slug, subject);
+    validateUpdateBody(body, subject);
+    if (category && !VALID_UPDATE_CATEGORIES.has(category)) {
+      throw new Error(`Invalid gctree update input: ${subject}.category must be one of ${[...VALID_UPDATE_CATEGORIES].join(', ')}.`);
+    }
+    if (category && slug.includes('/') && slug.split('/')[0] !== category) {
+      throw new Error(`Invalid gctree update input: ${subject}.category must match the first segment of slug "${slug}".`);
+    }
+  });
 }
 
 export async function updateBranchContext({
@@ -23,6 +160,7 @@ export async function updateBranchContext({
   input: GcTreeContextUpdateInput;
   branch?: string;
 }): Promise<{ gc_branch: string; updated_docs: string[]; index_path: string }> {
+  validateContextUpdateInput(input);
   const targetBranch = branch || input.branch || DEFAULT_BRANCH;
   await ensureBranchExists(home, targetBranch);
   await mkdir(branchDocsDir(home, targetBranch), { recursive: true });

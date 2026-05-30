@@ -74,5 +74,8 @@ test('skills mention summary-first docs, gc-branches, and guided updates where r
   assert.match(contents[2]!, /active gc-branch/i);
   assert.match(contents[3]!, /update-gc/i);
   assert.match(contents[3]!, /ugc/i);
+  assert.match(contents[3]!, /"slug": "conventions\/example-repo"/i);
+  assert.match(contents[3]!, /never use `id`, `path`, or `content`/i);
+  assert.match(contents[3]!, /indexEntries/i);
   assert.match(contents[4]!, /reset-gc-branch --branch <name> --yes/i);
 });

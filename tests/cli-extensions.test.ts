@@ -491,7 +491,12 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(codexOnboardSkill, /glossary terms/i);
     assert.match(codexOnboardSkill, /verification commands/i);
     assert.equal(existsSync(join(codexTarget, '.codex', 'hooks.json')), false);
-    assert.match(await readFile(join(codexTarget, '.codex', 'skills', 'gc-update-global-context', 'SKILL.md'), 'utf8'), /__apply-update/i);
+    const codexUpdateSkill = await readFile(join(codexTarget, '.codex', 'skills', 'gc-update-global-context', 'SKILL.md'), 'utf8');
+    assert.match(codexUpdateSkill, /__apply-update/i);
+    assert.match(codexUpdateSkill, /"slug": "conventions\/example-repo"/i);
+    assert.match(codexUpdateSkill, /"body":/i);
+    assert.match(codexUpdateSkill, /"indexEntries":/i);
+    assert.match(codexUpdateSkill, /do not use `id`, `path`, or `content`/i);
 
     result = await runCli(['scaffold', '--home', home, '--host', 'claude-code', '--target', claudeTarget]);
     assert.equal(result.code, 0, result.stderr);
@@ -556,6 +561,12 @@ test('scaffold writes provider-specific gc command files and gc-branch wording',
     assert.match(claudeOnboardCommand, /glossary terms/i);
     assert.match(claudeOnboardCommand, /verification commands/i);
     assert.match(await readFile(join(claudeTarget, '.claude', 'hooks', 'gctree-session-start.md'), 'utf8'), /gctree resolve --query/i);
+    const claudeUpdateCommand = await readFile(join(claudeTarget, '.claude', 'commands', 'gc-update-global-context.md'), 'utf8');
+    assert.match(claudeUpdateCommand, /__apply-update/i);
+    assert.match(claudeUpdateCommand, /"slug": "conventions\/example-repo"/i);
+    assert.match(claudeUpdateCommand, /"body":/i);
+    assert.match(claudeUpdateCommand, /"indexEntries":/i);
+    assert.match(claudeUpdateCommand, /do not use `id`, `path`, or `content`/i);
   } finally {
     await rm(home, { recursive: true, force: true });
     await rm(codexTarget, { recursive: true, force: true });

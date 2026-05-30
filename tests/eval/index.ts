@@ -446,6 +446,7 @@ async function evalGlobalContextUpdate(home: string): Promise<EvalResult> {
           'Cart totals are still validated server-side on checkout.',
         ].join('\n'),
         tags: ['cart', 'zustand', 'sync'],
+        indexEntries: ['cart system', 'cart sync backend debounce', 'Zustand cart state', 'debounced cart sync', 'checkout-only sync'],
       },
     ],
   };

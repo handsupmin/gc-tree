@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -339,6 +340,7 @@ test('updateBranchContext updates targeted docs without replacing the whole gc-b
             slug: 'domain-glossary',
             summary: 'Token rotation, auth policy, and session continuity are core vocabulary.',
             body: 'Token rotation preserves sessions. Auth policy forbids schema drift. Session continuity is a key UX requirement.',
+            indexEntries: ['token rotation', 'auth policy', 'session continuity', 'domain glossary'],
           },
         ],
       },
@@ -349,6 +351,39 @@ test('updateBranchContext updates targeted docs without replacing the whole gc-b
     const identity = await readFile(join(branchDocsDir(home, 'main'), 'project-identity.md'), 'utf8');
     assert.match(glossary, /session continuity/i);
     assert.match(identity, /Auth policy and API ergonomics matter most/i);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('updateBranchContext rejects invented doc fields before writing duplicate stubs', async () => {
+  const home = await createHome('gctree-update-invalid-');
+  try {
+    await initHome(home);
+    await onboardBranch({ home, input: onboardingInput });
+
+    await assert.rejects(
+      updateBranchContext({
+        home,
+        input: {
+          docs: [
+            {
+              title: 'conventions: Example Repo',
+              id: 'conventions/example-repo',
+              path: 'docs/conventions/example-repo.md',
+              content: '# conventions: Example Repo\n\n## Summary\n\nBad schema.\n\n## Details\n\nBad schema.',
+              summary: 'Bad schema should fail before any doc is written.',
+              category: 'conventions',
+            },
+          ],
+        } as never,
+      }),
+      /unsupported field\(s\): id, path, content.*use `slug`.*use `body`/i,
+    );
+
+    const status = await statusForBranch(home, 'main');
+    assert.equal(status.doc_count, 2);
+    assert.equal(existsSync(join(branchDocsDir(home, 'main'), 'conventions', 'conventions-example-repo.md')), false);
   } finally {
     await rm(home, { recursive: true, force: true });
   }
