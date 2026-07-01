@@ -1,6 +1,6 @@
 {
   "name": "@handsupmin/gc-tree",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Global Context Tree, a lightweight branch-aware global context orchestrator for AI coding tools",
   "type": "module",
   "private": false,
@@ -18,7 +18,7 @@
     "gctree": "dist/src/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').chmodSync('dist/src/cli.js', 0o755)\"",
     "test": "node --import tsx --test tests/*.test.ts",
     "prepack": "npm run build",
     "eval": "node --import tsx tests/eval/index.ts",
