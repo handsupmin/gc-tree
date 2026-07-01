@@ -218,6 +218,68 @@ test('UserPromptSubmit hook resolves matching gc-tree docs into additionalContex
   }
 });
 
+test('UserPromptSubmit hook details include the repo-mapped gc-branch', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-hook-home-'));
+
+  try {
+    const init = await runCli(['init', '--home', home, '--provider', 'codex', '--no-launch']);
+    assert.equal(init.code, 0, init.stderr);
+
+    const scoped = await runCli(['checkout', '-b', 'scoped', '--home', home]);
+    assert.equal(scoped.code, 0, scoped.stderr);
+
+    const onboardingInputPath = join(home, 'onboard.json');
+    await writeFile(
+      onboardingInputPath,
+      JSON.stringify(
+        {
+          branchSummary: 'Scoped branch summary',
+          docs: [
+            {
+              title: 'Resolve Policy',
+              summary: 'Always resolve auth policy before implementation.',
+              body: '## Summary\nAlways resolve auth policy before implementation.\n\nAuth token rotation policy lives here.',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    const onboard = await runCli(['__apply-onboarding', '--home', home, '--branch', 'scoped', '--input', onboardingInputPath]);
+    assert.equal(onboard.code, 0, onboard.stderr);
+
+    const other = await runCli(['checkout', '-b', 'other', '--home', home]);
+    assert.equal(other.code, 0, other.stderr);
+
+    const map = await runCli(['set-repo-scope', '--home', home, '--branch', 'scoped', '--repo', 'gc-tree', '--include']);
+    assert.equal(map.code, 0, map.stderr);
+
+    const hook = await runCli(
+      ['__hook', '--home', home, '--event', 'UserPromptSubmit'],
+      {
+        stdinJson: {
+          session_id: 'session-scoped-details',
+          cwd: REPO_ROOT,
+          hook_event_name: 'UserPromptSubmit',
+          user_prompt: 'Please check auth token rotation policy before implementation',
+        },
+      },
+    );
+    assert.equal(hook.code, 0, hook.stderr);
+
+    const parsed = JSON.parse(hook.stdout) as {
+      hookSpecificOutput?: { additionalContext?: string };
+    };
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /gc-branch="scoped"/);
+    assert.match(parsed.hookSpecificOutput?.additionalContext || '', /details: gctree show-doc --id "resolve-policy" --branch "scoped"/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
 test('hooks suppress immediate duplicate SessionStart and UserPromptSubmit events', async () => {
   const home = await mkdtemp(join(tmpdir(), 'gctree-hook-home-'));
 

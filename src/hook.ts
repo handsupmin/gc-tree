@@ -66,14 +66,14 @@ function displayKeyword(match: GcTreeResolveMatch): string {
   return (match.label || match.title || match.id).trim();
 }
 
-function formatMatches(matches: GcTreeResolveMatch[]): string {
+function formatMatches(matches: GcTreeResolveMatch[], gcBranch: string): string {
   return limitMatches(matches)
     .map((match) => {
       const summary = match.summary?.trim() ?? '';
       const excerpt = match.excerpt?.trim() ?? '';
       const context = summary || excerpt;
       const shortContext = context.length > 180 ? `${context.slice(0, 177).trim()}...` : context;
-      const showDoc = `gctree show-doc --id "${match.id}"`;
+      const showDoc = `gctree show-doc --id "${match.id}" --branch "${gcBranch}"`;
       return [
         `[${displayKeyword(match)}]`,
         shortContext,
@@ -145,7 +145,7 @@ function buildMatchContext({
   const lines = [
     `[gc-tree] USE FIRST: ${Math.min(matches.length, 3)} docs gc-branch="${gcBranch}" repo="${currentRepo || 'unscoped'}" scope=${repoScopeStatus}.`,
     '',
-    formatMatches(matches),
+    formatMatches(matches, gcBranch),
     '',
     `Rule: 위 문서를 먼저 근거로 삼고, 부족하면 details 명령으로 세부 정보를 확인.`,
   ];

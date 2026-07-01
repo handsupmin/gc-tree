@@ -18,7 +18,6 @@ import {
 import { DEFAULT_BRANCH, branchDir, resolveHome } from './paths.js';
 import {
   branchRepoMapPath,
-  branchScopeStatus,
   detectCurrentRepoId,
   detectRepoRoot,
   promptResolveScopeDecision,
@@ -67,14 +66,14 @@ function usage(): never {
   gctree branches [--home DIR]
   gctree repo-map [--home DIR]
   gctree set-repo-scope --branch NAME [--repo NAME] [--cwd DIR] (--include|--exclude) [--home DIR]
-  gctree status [--home DIR] [--cwd DIR]
+  gctree status [--home DIR] [--branch NAME] [--cwd DIR]
   gctree onboard [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree verify-onboarding [--home DIR] [--branch NAME]
   gctree reset-gc-branch [--home DIR] [--branch NAME] --yes
   gctree uninstall [--home DIR] [--target DIR] [--host <codex|claude-code|both>] [--keep-home] --yes
   gctree resolve --query TEXT [--home DIR] [--branch NAME] [--cwd DIR]
-  gctree show-doc --id ID [--home DIR] [--branch NAME]
-  gctree related --id ID [--home DIR] [--branch NAME]
+  gctree show-doc --id ID [--home DIR] [--branch NAME] [--cwd DIR]
+  gctree related --id ID [--home DIR] [--branch NAME] [--cwd DIR]
   gctree update-global-context [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree update-gc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
   gctree ugc [--home DIR] [--branch NAME] [--provider <codex|claude-code>] [--target DIR] [--no-launch]
@@ -99,6 +98,24 @@ async function readStdinText(): Promise<string> {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
   }
   return Buffer.concat(chunks).toString('utf8');
+}
+
+async function resolveCommandBranch({
+  home,
+  explicitBranch,
+  cwd,
+}: {
+  home: string;
+  explicitBranch?: string;
+  cwd?: string;
+}): Promise<Awaited<ReturnType<typeof resolveBranchForRepo>>> {
+  const head = (await readHead(home)) || DEFAULT_BRANCH;
+  return resolveBranchForRepo({
+    home,
+    head,
+    explicitBranch,
+    cwd: cwd || process.cwd(),
+  });
 }
 
 function compactMatchCommands(id: string, home: string, branch: string): { show_doc: string; related: string } {
@@ -346,14 +363,17 @@ async function main(): Promise<void> {
       return;
     }
     case 'status': {
-      const gcBranch = (await readHead(home)) || DEFAULT_BRANCH;
+      const resolved = await resolveCommandBranch({
+        home,
+        explicitBranch: readArg('--branch') || undefined,
+        cwd: readArg('--cwd') || process.cwd(),
+      });
+      const gcBranch = resolved.gc_branch;
       if (!existsSync(branchDir(home, gcBranch))) {
         throw new Error('gc-tree is not initialized. Run `gctree init` first.');
       }
       const result = await statusForBranch(home, gcBranch);
       const settings = await readSettings(home);
-      const mapping = await readBranchRepoMap(home);
-      const currentRepo = await detectCurrentRepoId(readArg('--cwd') || process.cwd());
       console.log(
         JSON.stringify(
           {
@@ -361,9 +381,10 @@ async function main(): Promise<void> {
             provider_mode: settings?.provider_mode || null,
             preferred_provider: settings?.preferred_provider || null,
             preferred_language: settings?.preferred_language || null,
-            current_repo: currentRepo,
+            current_repo: resolved.current_repo,
+            source: resolved.source,
             branch_repo_map_path: branchRepoMapPath(home),
-            repo_scope_status: branchScopeStatus(mapping, gcBranch, currentRepo),
+            repo_scope_status: resolved.scope_status,
           },
           null,
           2,
@@ -443,10 +464,8 @@ async function main(): Promise<void> {
     case 'resolve': {
       const query = readArg('--query');
       if (!query) usage();
-      const head = (await readHead(home)) || DEFAULT_BRANCH;
-      const resolved = await resolveBranchForRepo({
+      const resolved = await resolveCommandBranch({
         home,
-        head,
         explicitBranch: readArg('--branch') || undefined,
         cwd: readArg('--cwd') || process.cwd(),
       });
@@ -565,10 +584,30 @@ async function main(): Promise<void> {
     case 'show-doc': {
       const id = readArg('--id');
       if (!id) usage();
-      const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
+      const resolved = await resolveCommandBranch({
+        home,
+        explicitBranch: readArg('--branch') || undefined,
+        cwd: readArg('--cwd') || process.cwd(),
+      });
+      const gcBranch = resolved.gc_branch;
       const branchStatus = await statusForBranch(home, gcBranch);
       if (branchStatus.doc_count === 0) {
-        console.log(JSON.stringify({ status: 'empty_branch', gc_branch: gcBranch, id, message: `gc-branch "${gcBranch}" has no docs yet.`, doc: null }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              status: 'empty_branch',
+              gc_branch: gcBranch,
+              id,
+              current_repo: resolved.current_repo,
+              source: resolved.source,
+              repo_scope_status: resolved.scope_status,
+              message: `gc-branch "${gcBranch}" has no docs yet.`,
+              doc: null,
+            },
+            null,
+            2,
+          ),
+        );
         return;
       }
       const doc = await getDocById({ home, branch: gcBranch, id });
@@ -578,6 +617,9 @@ async function main(): Promise<void> {
             status: doc ? 'matched' : 'doc_not_found',
             gc_branch: gcBranch,
             id,
+            current_repo: resolved.current_repo,
+            source: resolved.source,
+            repo_scope_status: resolved.scope_status,
             message: doc ? `Loaded doc "${id}".` : `Doc "${id}" was not found in gc-branch "${gcBranch}".`,
             doc,
           },
@@ -590,7 +632,12 @@ async function main(): Promise<void> {
     case 'related': {
       const id = readArg('--id');
       if (!id) usage();
-      const gcBranch = readArg('--branch') || (await readHead(home)) || DEFAULT_BRANCH;
+      const resolved = await resolveCommandBranch({
+        home,
+        explicitBranch: readArg('--branch') || undefined,
+        cwd: readArg('--cwd') || process.cwd(),
+      });
+      const gcBranch = resolved.gc_branch;
       const result = await findRelatedDocs({ home, branch: gcBranch, id });
       console.log(
         JSON.stringify(
@@ -598,6 +645,9 @@ async function main(): Promise<void> {
             status: result.status,
             gc_branch: gcBranch,
             id,
+            current_repo: resolved.current_repo,
+            source: resolved.source,
+            repo_scope_status: resolved.scope_status,
             message:
               result.status === 'matched'
                 ? `Found ${result.matches.length} related docs for "${id}".`

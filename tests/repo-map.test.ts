@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
 
 import { branchRepoMapPath, detectCurrentRepoId, resolveBranchForRepo, setRepoScopeForBranch } from '../src/repo-map.js';
-import { initHome } from '../src/store.js';
+import { checkoutBranch, initHome } from '../src/store.js';
 import { onboardBranch } from '../src/onboard.js';
 
 async function makeRepo(root: string, name: string): Promise<string> {
@@ -55,6 +55,27 @@ test('resolveBranchForRepo prefers mapped gc-branch over global HEAD', async () 
   }
 });
 
+test('resolveBranchForRepo supports duplicate includes by preferring the included HEAD branch', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-map-home-'));
+  const reposRoot = await mkdtemp(join(tmpdir(), 'gctree-map-repos-'));
+  try {
+    await initHome(home);
+    await setRepoScopeForBranch({ home, branch: 'main', repo: 'shared-repo', mode: 'include' });
+    await setRepoScopeForBranch({ home, branch: 'client-b', repo: 'shared-repo', mode: 'include' });
+    const repo = await makeRepo(reposRoot, 'shared-repo');
+
+    const resolved = await resolveBranchForRepo({ home, head: 'client-b', cwd: repo });
+
+    assert.equal(resolved.gc_branch, 'client-b');
+    assert.equal(resolved.source, 'repo-map');
+    assert.equal(resolved.scope_status, 'included');
+    assert.equal(resolved.current_repo, 'shared-repo');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(reposRoot, { recursive: true, force: true });
+  }
+});
+
 test('detectCurrentRepoId returns the nearest git repo basename', async () => {
   const reposRoot = await mkdtemp(join(tmpdir(), 'gctree-map-repos-'));
   try {
@@ -63,6 +84,71 @@ test('detectCurrentRepoId returns the nearest git repo basename', async () => {
     await mkdir(nested, { recursive: true });
     assert.equal(await detectCurrentRepoId(nested), 'F');
   } finally {
+    await rm(reposRoot, { recursive: true, force: true });
+  }
+});
+
+test('status show-doc and related default to repo-mapped gc-branch when HEAD differs', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-map-home-'));
+  const reposRoot = await mkdtemp(join(tmpdir(), 'gctree-map-repos-'));
+  try {
+    await initHome(home);
+    await checkoutBranch(home, 'mapped', true);
+    await onboardBranch({
+      home,
+      branch: 'mapped',
+      input: {
+        branchSummary: 'Mapped branch summary.',
+        docs: [
+          {
+            title: 'Scoped Policy',
+            summary: 'Shared token policy for mapped repo.',
+            body: 'Mapped branch owns the scoped token workflow.',
+          },
+          {
+            title: 'Scoped Token Notes',
+            summary: 'Shared token policy support for mapped repo.',
+            body: 'Support notes for the same scoped token workflow.',
+          },
+        ],
+      },
+    });
+    await checkoutBranch(home, 'other', true);
+    await onboardBranch({
+      home,
+      branch: 'other',
+      input: {
+        branchSummary: 'Other branch summary.',
+        docs: [{ title: 'Other Context', summary: 'Wrong branch only.', body: 'This should not answer mapped repo lookups.' }],
+      },
+    });
+    await setRepoScopeForBranch({ home, branch: 'mapped', repo: 'target-repo', mode: 'include' });
+    const repo = await makeRepo(reposRoot, 'target-repo');
+
+    const status = await runCli(['status', '--home', home, '--cwd', repo], process.cwd());
+    assert.equal(status.code, 0, status.stderr);
+    const statusParsed = JSON.parse(status.stdout) as { gc_branch: string; current_repo: string; source: string; repo_scope_status: string };
+    assert.equal(statusParsed.gc_branch, 'mapped');
+    assert.equal(statusParsed.current_repo, 'target-repo');
+    assert.equal(statusParsed.source, 'repo-map');
+    assert.equal(statusParsed.repo_scope_status, 'included');
+
+    const showDoc = await runCli(['show-doc', '--home', home, '--cwd', repo, '--id', 'scoped-policy'], process.cwd());
+    assert.equal(showDoc.code, 0, showDoc.stderr);
+    const showDocParsed = JSON.parse(showDoc.stdout) as { status: string; gc_branch: string; doc?: { id: string; content: string } };
+    assert.equal(showDocParsed.status, 'matched');
+    assert.equal(showDocParsed.gc_branch, 'mapped');
+    assert.equal(showDocParsed.doc?.id, 'scoped-policy');
+    assert.match(showDocParsed.doc?.content || '', /Mapped branch owns/);
+
+    const related = await runCli(['related', '--home', home, '--cwd', repo, '--id', 'scoped-policy'], process.cwd());
+    assert.equal(related.code, 0, related.stderr);
+    const relatedParsed = JSON.parse(related.stdout) as { status: string; gc_branch: string; matches: Array<{ id: string }> };
+    assert.equal(relatedParsed.status, 'matched');
+    assert.equal(relatedParsed.gc_branch, 'mapped');
+    assert.equal(relatedParsed.matches[0]?.id, 'scoped-token-notes');
+  } finally {
+    await rm(home, { recursive: true, force: true });
     await rm(reposRoot, { recursive: true, force: true });
   }
 });
