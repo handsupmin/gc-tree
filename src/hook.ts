@@ -317,7 +317,6 @@ export async function dispatchGcTreeHook({
   const prompt = normalizeText(payload.user_prompt || payload.prompt || '');
   if (!prompt) return null;
 
-  const branchStatus = await statusForBranch(home, gcBranch);
   const previousCache = await readHookCache(home, sessionId);
   const promptSignature = hashQuery(`${event}:${gcBranch}:${currentRepo || ''}:${repoScopeStatus}:${prompt}`);
   if (
@@ -344,44 +343,33 @@ export async function dispatchGcTreeHook({
       currentRepo,
       cached: previousCache?.branch_excluded === true,
     });
-  } else if (branchStatus.doc_count === 0) {
-    const wasCached = cache.branch_empty;
-    cache.branch_empty = true;
-    additionalContext = buildEmptyBranchContext({ gcBranch, currentRepo, cached: wasCached });
-  } else if (repoScopeStatus === 'unmapped' && currentRepo && cache.unmapped_shown_repos.includes(currentRepo)) {
-    // Already showed context for this unmapped repo this session — skip silently.
+  } else if (repoScopeStatus === 'unmapped' && currentRepo) {
     cache.updated_at = now.toISOString();
     await writeHookCache(home, cache);
     return null;
   } else {
-    // For unmapped repos: use prompt only (no repo prefix) to avoid bias; apply higher score threshold.
-    const isUnmapped = repoScopeStatus === 'unmapped';
-    const query = !isUnmapped && currentRepo ? `${currentRepo} ${prompt}` : prompt;
-    const signature = hashQuery(query);
-
-    if (!isUnmapped && cache.no_match_signatures.includes(signature)) {
-      additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: true });
+    const branchStatus = await statusForBranch(home, gcBranch);
+    if (branchStatus.doc_count === 0) {
+      const wasCached = cache.branch_empty;
+      cache.branch_empty = true;
+      additionalContext = buildEmptyBranchContext({ gcBranch, currentRepo, cached: wasCached });
     } else {
-      const result = await resolveContext({ home, branch: gcBranch, query });
-      const effectiveMatches = result.matches;
+      const query = currentRepo ? `${currentRepo} ${prompt}` : prompt;
+      const signature = hashQuery(query);
 
-      if (effectiveMatches.length === 0) {
-        if (isUnmapped) {
-          // Unmapped + no strong match: skip silently, no noise.
-          cache.updated_at = now.toISOString();
-          await writeHookCache(home, cache);
-          return null;
-        }
-        cache.no_match_signatures = [...new Set([...cache.no_match_signatures, signature])];
-        additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: false });
+      if (cache.no_match_signatures.includes(signature)) {
+        additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: true });
       } else {
-        if (!isUnmapped) {
+        const result = await resolveContext({ home, branch: gcBranch, query });
+        const effectiveMatches = result.matches;
+
+        if (effectiveMatches.length === 0) {
+          cache.no_match_signatures = [...new Set([...cache.no_match_signatures, signature])];
+          additionalContext = buildNoMatchContext({ gcBranch, currentRepo, cached: false });
+        } else {
           cache.no_match_signatures = cache.no_match_signatures.filter((entry) => entry !== signature);
-        } else if (currentRepo) {
-          // Mark this unmapped repo as shown so we don't repeat next prompt.
-          cache.unmapped_shown_repos = [...new Set([...cache.unmapped_shown_repos, currentRepo])];
+          additionalContext = buildMatchContext({ gcBranch, currentRepo, repoScopeStatus, matches: effectiveMatches });
         }
-        additionalContext = buildMatchContext({ gcBranch, currentRepo, repoScopeStatus, matches: effectiveMatches });
       }
     }
 

@@ -280,6 +280,61 @@ test('UserPromptSubmit hook details include the repo-mapped gc-branch', async ()
   }
 });
 
+test('UserPromptSubmit hook stays silent for unmapped repos even when HEAD docs match', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'gctree-hook-home-'));
+  const reposRoot = await mkdtemp(join(tmpdir(), 'gctree-hook-repos-'));
+
+  try {
+    const init = await runCli(['init', '--home', home, '--provider', 'codex', '--no-launch']);
+    assert.equal(init.code, 0, init.stderr);
+
+    const onboardingInputPath = join(home, 'onboard.json');
+    await writeFile(
+      onboardingInputPath,
+      JSON.stringify(
+        {
+          branchSummary: 'Princess Maker branch summary',
+          docs: [
+            {
+              title: 'Princess Maker',
+              summary: 'Princess Maker project guidance for dialogue and minigame work.',
+              body: 'Princess Maker docs should not be injected into unrelated repos.',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    const onboard = await runCli(['__apply-onboarding', '--home', home, '--input', onboardingInputPath]);
+    assert.equal(onboard.code, 0, onboard.stderr);
+
+    const map = await runCli(['set-repo-scope', '--home', home, '--branch', 'main', '--repo', 'princess-maker', '--include']);
+    assert.equal(map.code, 0, map.stderr);
+
+    const unrelatedRepo = join(reposRoot, 'slow-life-bar');
+    await mkdir(join(unrelatedRepo, '.git'), { recursive: true });
+
+    const hook = await runCli(
+      ['__hook', '--home', home, '--event', 'UserPromptSubmit'],
+      {
+        stdinJson: {
+          session_id: 'session-unmapped-matching-docs',
+          cwd: unrelatedRepo,
+          hook_event_name: 'UserPromptSubmit',
+          user_prompt: 'Please use Princess Maker dialogue and minigame guidance',
+        },
+      },
+    );
+    assert.equal(hook.code, 0, hook.stderr);
+    assert.equal(hook.stdout, '');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(reposRoot, { recursive: true, force: true });
+  }
+});
+
 test('hooks suppress immediate duplicate SessionStart and UserPromptSubmit events', async () => {
   const home = await mkdtemp(join(tmpdir(), 'gctree-hook-home-'));
 
