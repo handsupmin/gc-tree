@@ -2,5 +2,6 @@ dist/
 node_modules/
 .omx/
 .claude/commands/
+.claude/hooks/gctree-session-start.md
 .npmrc
 .DS_Store
