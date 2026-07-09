@@ -1,5 +1,6 @@
 dist/
 node_modules/
 .omx/
+.claude/commands/
 .npmrc
 .DS_Store
